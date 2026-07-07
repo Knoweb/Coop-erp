@@ -41,16 +41,22 @@ export const shopAdminService = {
 
     // --- USERS ---
     getAllUsers: async (shopId?: string): Promise<UserResponse[]> => {
+        const role = localStorage.getItem('user_role')?.replace(/^ROLE_/, '') || '';
+        const prefix = role === 'ADMIN' ? '/admin' : '/shop';
         const params = shopId ? { shopId } : {};
-        const response = await api.get('/admin/users', { params });
+        const response = await api.get(`${prefix}/users`, { params });
         return response.data;
     },
     createUser: async (user: any): Promise<any> => {
-        const response = await api.post('/admin/users', user);
+        const role = localStorage.getItem('user_role')?.replace(/^ROLE_/, '') || '';
+        const prefix = role === 'ADMIN' ? '/admin' : '/shop';
+        const response = await api.post(`${prefix}/users`, user);
         return response.data;
     },
     toggleUserStatus: async (id: string): Promise<any> => {
-        const response = await api.patch(`/admin/users/${id}/toggle-status`);
+        const role = localStorage.getItem('user_role')?.replace(/^ROLE_/, '') || '';
+        const prefix = role === 'ADMIN' ? '/admin' : '/shop';
+        const response = await api.patch(`${prefix}/users/${id}/toggle-status`);
         return response.data;
     }
 };

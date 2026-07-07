@@ -22,7 +22,7 @@ public class AuditLog {
     private UUID userId;
 
     @Column(name = "service_name", nullable = false)
-    private String serviceName; // e.g., "MILK-SHOP-SERVICE"
+    private String serviceName; // e.g., "INVENTORY-SERVICE"
 
     @Column(nullable = false)
     private String action; // e.g., "CREATE_PURCHASE_INVOICE"
