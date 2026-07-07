@@ -40,14 +40,16 @@ import PurchaseHistory from "./features/beer-garden/PurchaseHistory";
 // --- UPGRADED: Role-Based Protected Route ---
 const ProtectedRoute = ({ allowedRoles }: { allowedRoles: string[] }) => {
   const token = localStorage.getItem('jwt_token');
-  const userRole = localStorage.getItem('user_role');
+  const rawRole = localStorage.getItem('user_role');
+  const userRole = rawRole ? rawRole.replace(/^ROLE_/, '') : null;
+  const normalizedAllowedRoles = allowedRoles.map(r => r.replace(/^ROLE_/, ''));
 
   if (!token) {
     return <Navigate to="/login" replace />;
   }
 
-  if (userRole && !allowedRoles.includes(userRole)) {
-    console.warn(`Security Event: Role ${userRole} attempted unauthorized access.`);
+  if (userRole && !normalizedAllowedRoles.includes(userRole)) {
+    console.warn(`Security Event: Role ${rawRole} attempted unauthorized access.`);
     return <Navigate to="/" replace />; 
   }
 
@@ -56,19 +58,21 @@ const ProtectedRoute = ({ allowedRoles }: { allowedRoles: string[] }) => {
 
 const RootBoundary = () => {
   const token = localStorage.getItem('jwt_token');
-  const role = localStorage.getItem('user_role'); 
+  const rawRole = localStorage.getItem('user_role'); 
+  const role = rawRole ? rawRole.replace(/^ROLE_/, '') : null;
   
   if (!token) return <Navigate to="/login" replace />;
 
   switch (role) {
-    case 'ROLE_ADMIN': 
+    case 'ADMIN': 
         return <Navigate to="/admin/dashboard" replace />;
-    case 'ROLE_MILK_SHOP': 
-        return <Navigate to="/milk-shop/dashboard" replace />;
-    case 'ROLE_BEER_GARDEN': 
-        return <Navigate to="/beer-garden/dashboard" replace />;
-    case 'ROLE_ROOM_BOOKING': 
+    case 'SHOP_ADMIN':
+    case 'SHOP_USER':
+        return <Navigate to="/shop/dashboard" replace />;
+    case 'ROOM_BOOKING': 
         return <Navigate to="/rooms/dashboard" replace />;
+    case 'BEER_GARDEN':
+        return <Navigate to="/beer-garden/dashboard" replace />;
     default: 
         localStorage.clear();
         return <Navigate to="/login" replace />;
@@ -102,8 +106,8 @@ function App() {
           </Route>
         </Route>
 
-        <Route element={<ProtectedRoute allowedRoles={['ROLE_ADMIN', 'ROLE_MILK_SHOP']} />}>
-          <Route path="/milk-shop" element={<MilkShopLayout />}>
+        <Route element={<ProtectedRoute allowedRoles={['ROLE_ADMIN', 'ROLE_SHOP_ADMIN', 'ROLE_SHOP_USER']} />}>
+          <Route path="/shop" element={<MilkShopLayout />}>
             <Route index element={<Navigate to="dashboard" replace />} />
             <Route path="dashboard" element={<MilkShopDashboard />} />
             <Route path="suppliers" element={<SupplierPage />} />

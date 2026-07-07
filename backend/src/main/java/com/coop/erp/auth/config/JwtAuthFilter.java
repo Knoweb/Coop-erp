@@ -24,10 +24,17 @@ public class JwtAuthFilter extends OncePerRequestFilter {
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
+        if (request.getServletPath().startsWith("/api/v1/auth/")) {
+            filterChain.doFilter(request, response);
+            return;
+        }
+
         String authHeader = request.getHeader("Authorization");
         String token = null;
         String username = null;
         String role = null;
+        String loginType = null;
+        String shopId = null;
 
         if (authHeader != null && authHeader.startsWith("Bearer ")) {
             token = authHeader.substring(7);
@@ -35,6 +42,8 @@ public class JwtAuthFilter extends OncePerRequestFilter {
                 jwtService.validateToken(token);
                 username = jwtService.extractUsername(token);
                 role = jwtService.extractRole(token);
+                loginType = jwtService.extractLoginType(token);
+                shopId = jwtService.extractShopId(token);
             } catch (Exception e) {
                 // Invalid token
             }
@@ -45,6 +54,9 @@ public class JwtAuthFilter extends OncePerRequestFilter {
             UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(username, null, Collections.singletonList(authority));
             authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
             SecurityContextHolder.getContext().setAuthentication(authToken);
+            
+            request.setAttribute("loginType", loginType);
+            request.setAttribute("shopId", shopId);
         }
 
         filterChain.doFilter(request, response);

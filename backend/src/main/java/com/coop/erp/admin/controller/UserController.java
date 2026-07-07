@@ -18,14 +18,7 @@ public class UserController {
 
     private final UserService service;
 
-    @PostMapping
-    public ResponseEntity<?> createUser(@Valid @RequestBody UserDto.CreateRequest request) {
-        try {
-            return new ResponseEntity<>(service.createUser(request), HttpStatus.CREATED);
-        } catch (IllegalArgumentException e) {
-            return new ResponseEntity<>(e.getMessage(), HttpStatus.CONFLICT);
-        }
-    }
+
 
     @GetMapping
     public ResponseEntity<List<UserDto.Response>> getAllUsers() {

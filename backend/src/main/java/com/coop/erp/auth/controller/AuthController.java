@@ -1,13 +1,18 @@
 package com.coop.erp.auth.controller;
 
-import com.coop.erp.auth.dto.AuthRequest;
+import com.coop.erp.auth.dto.AuthResponse;
+import com.coop.erp.auth.dto.LoginRequest;
+import com.coop.erp.auth.dto.LoginTypeResponse;
 import com.coop.erp.core.entity.User;
 import com.coop.erp.auth.service.AuthService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+import java.util.Arrays;
+
 @RestController
-@RequestMapping("/auth")
+@RequestMapping("/api/v1/auth")
 public class AuthController {
 
     @Autowired
@@ -18,10 +23,17 @@ public class AuthController {
         return service.saveUser(user);
     }
 
-    @PostMapping("/token")
-    public String getToken(@RequestBody AuthRequest authRequest) {
-        // We use .getUsername() here because your AuthRequest DTO has a 'username' field
-        return service.generateToken(authRequest.getUsername(), authRequest.getPassword());
+    @GetMapping("/login-types")
+    public List<LoginTypeResponse> getLoginTypes() {
+        return Arrays.asList(
+                new LoginTypeResponse("ADMIN", "Admin"),
+                new LoginTypeResponse("SHOP", "Shops")
+        );
+    }
+
+    @PostMapping("/login")
+    public AuthResponse login(@RequestBody LoginRequest loginRequest) {
+        return service.generateToken(loginRequest);
     }
 
     @GetMapping("/validate")

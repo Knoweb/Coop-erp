@@ -1,10 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { loginUser } from '../../services/authService';
+import { loginUser, fetchLoginTypes } from '../../services/authService';
 import heroImage from '../../assets/hero.png';
 
 const Login: React.FC = () => {
-    const [section, setSection] = useState<string>('');
+    const [loginType, setLoginType] = useState<string>('');
+    const [loginTypes, setLoginTypes] = useState<{code: string, label: string}[]>([]);
     const [username, setUsername] = useState<string>('');
     const [password, setPassword] = useState<string>('');
     const [errorMsg, setErrorMsg] = useState<string>('');
@@ -13,52 +14,45 @@ const Login: React.FC = () => {
     
     const navigate = useNavigate();
 
+    useEffect(() => {
+        const loadLoginTypes = async () => {
+            try {
+                const types = await fetchLoginTypes();
+                setLoginTypes(types);
+            } catch (err) {
+                console.error("Failed to load login types", err);
+            }
+        };
+        loadLoginTypes();
+    }, []);
+
     const handleLogin = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
         setErrorMsg('');
 
-        if (!section) {
-            setErrorMsg('Critical: Department selection is required for routing.');
+        if (!loginType) {
+            setErrorMsg('Critical: Login type selection is required.');
             return;
         }
 
         setIsLoading(true);
 
         try {
-            // 1. Get the actual user data from your backend
-            const userData = await loginUser(username, password) as any;
-            const actualRole = userData.role; 
+            const userData = await loginUser(loginType, username, password) as any;
+            const actualRole = userData.role ? userData.role.replace(/^ROLE_/, '') : null; 
             
-            // 2. Save the REAL role
-            localStorage.setItem('user_role', actualRole);
-            
-            // 3. Routing Logic: Master Key unlocks ALL doors, specific keys unlock ONE door
-            switch (section) {
-                case 'milk-shop':
-                    if (actualRole !== 'ROLE_ADMIN' && actualRole !== 'ROLE_MILK_SHOP') throw new Error("Unauthorized");
-                    navigate('/milk-shop/dashboard');
-                    break;
-                case 'beer-garden':
-                    if (actualRole !== 'ROLE_ADMIN' && actualRole !== 'ROLE_BEER_GARDEN') throw new Error("Unauthorized");
-                    navigate('/beer-garden/dashboard');
-                    break;
-                case 'room-section':
-                    if (actualRole !== 'ROLE_ADMIN' && actualRole !== 'ROLE_ROOM_BOOKING') throw new Error("Unauthorized");
-                    navigate('/rooms/dashboard');
-                    break;
-                case 'dashboard':
-                    if (actualRole !== 'ROLE_ADMIN') throw new Error("Unauthorized");
-                    navigate('/admin/dashboard');
-                    break;
-                default:
-                    throw new Error("Invalid routing selection.");
+            if (loginType === 'ADMIN' || actualRole === 'ADMIN') {
+                navigate('/admin/dashboard');
+            } else if (loginType === 'SHOP' || actualRole === 'SHOP_ADMIN' || actualRole === 'SHOP_USER') {
+                navigate('/shop/dashboard');
+            } else {
+                throw new Error("Invalid routing selection.");
             }
-            
         } catch (err: any) {
             const status = err?.response?.status;
             setErrorMsg(
                 status === 403 || err.message === "Unauthorized"
-                    ? 'Authentication failed: Unauthorized access to this department.' 
+                    ? 'Authentication failed: Unauthorized access.' 
                     : 'System connection error. Please try again.'
             );
         } finally {
@@ -232,14 +226,15 @@ const Login: React.FC = () => {
                             <label style={styles.label}>Gateway Portal</label>
                             <select 
                                 style={{...styles.input, ...styles.selectInput}} 
-                                value={section}
-                                onChange={(e) => setSection(e.target.value)}
+                                value={loginType}
+                                onChange={(e) => setLoginType(e.target.value)}
                             >
-                                <option value="" disabled>-- Select Your Department --</option>
-                                <option value="dashboard">Global Admin Dashboard</option>
-                                <option value="milk-shop">Milk Shop Operations</option>
-                                <option value="beer-garden">Beer Garden Logistics</option>
-                                <option value="room-section">Room & Booking Logistics</option>
+                                <option value="" disabled>-- Select Your Portal --</option>
+                                {loginTypes.map((type) => (
+                                    <option key={type.code} value={type.code}>
+                                        {type.label}
+                                    </option>
+                                ))}
                             </select>
                         </div>
 
