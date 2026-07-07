@@ -1,0 +1,33 @@
+# IDEs
+.idea/
+.vscode/
+*.iml
+
+# Maven (Spring Boot)
+target/
+pom.xml.tag
+pom.xml.releaseBackup
+pom.xml.versionsBackup
+pom.xml.next
+
+# Node.js / React (Frontend)
+node_modules/
+build/
+dist/
+.env*
+
+# OS Files
+.DS_Store
+Thumbs.db
+
+# Files
+Requirements/
+
+.env
+.env.*
+application-local.yml
+application-dev.yml
+
+logs/
+*.log
+
