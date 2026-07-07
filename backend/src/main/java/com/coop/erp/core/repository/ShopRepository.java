@@ -12,4 +12,5 @@ import java.util.UUID;
 public interface ShopRepository extends JpaRepository<Shop, UUID> {
     Optional<Shop> findByCode(String code);
     List<Shop> findByActiveTrue();
+    long countByActiveTrue();
 }
