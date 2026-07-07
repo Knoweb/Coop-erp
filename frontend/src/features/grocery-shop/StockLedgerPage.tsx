@@ -17,7 +17,7 @@ import {
   Typography,
 } from "@mui/material";
 import SearchIcon from "@mui/icons-material/Search";
-import { API_BASE_URLS } from "../../api/apiConfig";
+import api from "../../api/axiosConfig";
 
 type ChipColor =
   | "default"
@@ -74,13 +74,8 @@ function StockLedgerPage() {
     try {
       setLoading(true);
 
-      const response = await fetch(`${API_BASE_URLS.milkShop}/stock`);
-
-      if (!response.ok) {
-        throw new Error("Failed to load stock ledger");
-      }
-
-      const data: StockLedger[] = await response.json();
+      const response = await api.get(`/shop/stock`);
+      const data: StockLedger[] = response.data;
 
       const sortedData = data.sort((a, b) =>
         a.item.name.localeCompare(b.item.name)
@@ -89,7 +84,7 @@ function StockLedgerPage() {
       setStockLedgers(sortedData);
     } catch (err) {
       console.error(err);
-      setError("Failed to load stock ledger. Check milk-shop-service.");
+      setError("Failed to load stock ledger. Check grocery shop service.");
     } finally {
       setLoading(false);
     }

@@ -25,7 +25,7 @@ import {
 } from "@mui/material";
 import DeleteIcon from "@mui/icons-material/Delete";
 import AddIcon from "@mui/icons-material/Add";
-import { API_BASE_URLS } from "../../api/apiConfig";
+import api from "../../api/axiosConfig";
 
 type Supplier = {
   id: string;
@@ -119,31 +119,22 @@ function GrnPage() {
   const [error, setError] = useState("");
 
   const loadSuppliers = async () => {
-    const response = await fetch(`${API_BASE_URLS.milkShop}/suppliers`);
-    if (!response.ok) {
-      throw new Error("Failed to load suppliers");
-    }
-    const data: Supplier[] = await response.json();
+    const response = await api.get(`/shop/suppliers`);
+    const data: Supplier[] = response.data;
     const sortedData = data.sort((a, b) => a.name.localeCompare(b.name));
     setSuppliers(sortedData);
   };
 
   const loadItems = async () => {
-    const response = await fetch(`${API_BASE_URLS.milkShop}/items`);
-    if (!response.ok) {
-      throw new Error("Failed to load items");
-    }
-    const data: ItemProduct[] = await response.json();
+    const response = await api.get(`/shop/items`);
+    const data: ItemProduct[] = response.data;
     const sortedData = data.sort((a, b) => a.name.localeCompare(b.name));
     setItems(sortedData);
   };
 
   const loadGrns = async () => {
-    const response = await fetch(`${API_BASE_URLS.milkShop}/grn`);
-    if (!response.ok) {
-      throw new Error("Failed to load GRNs");
-    }
-    const data: GrnResponse[] = await response.json();
+    const response = await api.get(`/shop/grn`);
+    const data: GrnResponse[] = response.data;
     
     // Sort GRNs so newest is at the top
     const sortedData = data.sort((a, b) => {
@@ -159,7 +150,7 @@ function GrnPage() {
       await Promise.all([loadSuppliers(), loadItems(), loadGrns()]);
     } catch (err) {
       console.error(err);
-      setError("Failed to load GRN data. Check milk-shop-service.");
+      setError("Failed to load GRN data. Check grocery shop service.");
     } finally {
       setLoading(false);
     }
@@ -273,27 +264,17 @@ function GrnPage() {
     if (!validateForm()) return;
 
     try {
-      const response = await fetch(`${API_BASE_URLS.milkShop}/grn`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          supplierId,
-          invoiceNumber,
-          invoiceDate,
-          remarks,
-          items: lineItems.map((item) => ({
-            itemId: item.itemId,
-            quantity: Number(item.quantity),
-            unitPrice: Number(item.unitPrice),
-          })),
-        }),
+      await api.post(`/shop/grn`, {
+        supplierId,
+        invoiceNumber,
+        invoiceDate,
+        remarks,
+        items: lineItems.map((item) => ({
+          itemId: item.itemId,
+          quantity: Number(item.quantity),
+          unitPrice: Number(item.unitPrice),
+        })),
       });
-
-      if (!response.ok) {
-        throw new Error("GRN create failed");
-      }
 
       resetForm();
       await loadPageData();

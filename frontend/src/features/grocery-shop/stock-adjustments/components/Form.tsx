@@ -16,7 +16,7 @@ import {
   TextField,
   Typography,
 } from "@mui/material";
-import { API_BASE_URLS } from "../../../../api/apiConfig";
+import api from "../../../../api/axiosConfig";
 
 type MoneyValue = number | string | undefined;
 
@@ -213,25 +213,17 @@ function Form({ stockLedgers, onSuccess, onError, reloadData }: Props) {
         filledRows.map((ledger) => {
           const row = rows[ledger.item.id];
 
-          return fetch(`${API_BASE_URLS.milkShop}/stock-adjustments`, {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-              itemId: ledger.item.id,
-              adjustmentType: row.adjustmentType,
-              quantity: Number(row.quantity),
-              reason,
-              remarks,
-              adjustmentDate,
-            }),
+          return api.post(`/shop/stock-adjustments`, {
+            itemId: ledger.item.id,
+            adjustmentType: row.adjustmentType,
+            quantity: Number(row.quantity),
+            reason,
+            remarks,
+            adjustmentDate,
           }).then((response) => {
-            if (!response.ok) {
-              throw new Error(`Failed to save ${ledger.item.name}`);
-            }
-
-            return response.json();
+            return response.data;
+          }).catch(() => {
+            throw new Error(`Failed to save ${ledger.item.name}`);
           });
         })
       );

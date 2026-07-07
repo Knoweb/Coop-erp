@@ -10,12 +10,22 @@ function AdminLayout() {
 
   const userRole = localStorage.getItem("user_role");
 
-  // ONLY ADMIN MENUS
-  const menuItems = [
-    { label: "Global Dashboard", path: "/admin/dashboard" },
-    { label: "Utility Allocations", path: "/admin/utilities" },
-    { label: "User Management", path: "/admin/users" },
-    // { label: "System Audit Logs", path: "/admin/logs" },
+  const mainShopItems = [
+    { label: "Dashboard", path: "/admin/dashboard" },
+    { label: "Products", path: "/admin/products" },
+    { label: "Inventory / Stock", path: "/admin/inventory" },
+    { label: "Purchases / GRN", path: "/admin/purchases" },
+    { label: "Sales", path: "/admin/sales" },
+    { label: "Suppliers", path: "/admin/suppliers" },
+    { label: "Customers", path: "/admin/customers" },
+    { label: "Reports", path: "/admin/reports" },
+  ];
+
+  const adminManagementItems = [
+    { label: "Manage Shops", path: "/admin/shops" },
+    { label: "Shop Users", path: "/admin/shop-users" },
+    { label: "System Users", path: "/admin/system-users" },
+    { label: "Settings", path: "/admin/settings" },
   ];
 
   const isActive = (path: string) => location.pathname.startsWith(path);
@@ -42,12 +52,38 @@ function AdminLayout() {
         }}
       >
         <Box sx={{ px: 2, py: 3 }}>
-          <Typography variant="h6" sx={{ fontWeight: "bold" }}>Coop System</Typography>
-          <Typography variant="body2" sx={{ color: "#fed7aa", mt: 0.5 }}>System Administration</Typography>
+          <Typography variant="h6" sx={{ fontWeight: "bold" }}>Coop Grocery</Typography>
+          <Typography variant="body2" sx={{ color: "#fed7aa", mt: 0.5 }}>Main Shop & Admin Control</Typography>
         </Box>
         <Divider sx={{ borderColor: "#b91c1c" }} />
         <List sx={{ px: 1, mt: 1 }}>
-          {menuItems.map((item) => (
+          <Typography variant="overline" sx={{ px: 2, color: "#fed7aa", fontWeight: "bold" }}>
+            Main Shop Operations
+          </Typography>
+          {mainShopItems.map((item) => (
+            <ListItemButton
+              key={item.path}
+              selected={isActive(item.path)}
+              onClick={() => navigate(item.path)}
+              sx={{
+                borderRadius: 2, mb: 0.5, color: "white",
+                "&.Mui-selected": { backgroundColor: "#f97316", color: "white" },
+                "&.Mui-selected:hover": { backgroundColor: "#ea580c" },
+                "&:hover": { backgroundColor: "#991b1b" },
+              }}
+            >
+              <Typography sx={{ fontSize: 15, fontWeight: isActive(item.path) ? "bold" : "normal" }}>
+                {item.label}
+              </Typography>
+            </ListItemButton>
+          ))}
+          
+          <Divider sx={{ borderColor: "#b91c1c", my: 2 }} />
+          
+          <Typography variant="overline" sx={{ px: 2, color: "#fed7aa", fontWeight: "bold" }}>
+            Admin Management
+          </Typography>
+          {adminManagementItems.map((item) => (
             <ListItemButton
               key={item.path}
               selected={isActive(item.path)}
@@ -70,7 +106,7 @@ function AdminLayout() {
           <Divider sx={{ borderColor: "#b91c1c", mb: 2 }} />
           
           <Typography variant="caption" sx={{ color: "#fed7aa", display: "block", mb: 1 }}>
-            {userRole === 'ROLE_ADMIN' ? 'Global Admin Panel' : 'System Administration'}
+            {userRole === 'ROLE_ADMIN' || userRole === 'ADMIN' ? 'Main Shop Admin Panel' : 'Main Shop & Admin Control'}
           </Typography>
 
           <Button 

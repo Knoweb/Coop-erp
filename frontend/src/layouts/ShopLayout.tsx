@@ -12,39 +12,24 @@ import { logoutUser } from "../services/authService";
 
 const drawerWidth = 240;
 
-function MainLayout() {
+function ShopLayout() {
   const navigate = useNavigate();
   const location = useLocation();
 
   const menuItems = [
-    {
-      label: "Dashboard",
-      path: "/rooms/dashboard",
-    },
-    {
-      label: "Room Management",
-      path: "/rooms/management",
-    },
-    {
-      label: "Room Bookings",
-      path: "/rooms/bookings",
-    },
-    {
-      label: "Occupancy Calendar",
-      path: "/rooms/occupancy",
-    },
-    {
-      label: "Daily Remittance",
-      path: "/rooms/remittance",
-    },
+    { label: "Dashboard", path: "/shop/dashboard" },
+    { label: "Products", path: "/shop/products" },
+    { label: "Stock / Inventory", path: "/shop/inventory" },
+    { label: "Purchases / GRN", path: "/shop/purchases" },
+    { label: "Sales", path: "/shop/sales" },
+    { label: "Suppliers", path: "/shop/suppliers" },
+    { label: "Customers", path: "/shop/customers" },
+    { label: "Shop Users", path: "/shop/users" },
+    { label: "Reports", path: "/shop/reports" },
   ];
 
   const isActive = (path: string) => {
-    if (path === "/rooms") {
-      return location.pathname === "/rooms";
-    }
-
-    return location.pathname.startsWith(path);
+    return location.pathname === path || location.pathname.startsWith(`${path}/`);
   };
 
   const handleLogout = () => {
@@ -53,7 +38,13 @@ function MainLayout() {
     }
 
   return (
-    <Box sx={{ display: "flex", minHeight: "100vh", backgroundColor: "#fff7ed" }}>
+    <Box
+      sx={{
+        display: "flex",
+        minHeight: "100vh",
+        backgroundColor: "#fff7ed",
+      }}
+    >
       <Drawer
         variant="permanent"
         sx={{
@@ -70,58 +61,62 @@ function MainLayout() {
       >
         <Box sx={{ px: 2, py: 3 }}>
           <Typography variant="h6" sx={{ fontWeight: "bold" }}>
-            Coop System
+            Coop Grocery
           </Typography>
 
           <Typography variant="body2" sx={{ color: "#fed7aa", mt: 0.5 }}>
-            Room Section
+            Shop Section
           </Typography>
         </Box>
 
         <Divider sx={{ borderColor: "#b91c1c" }} />
 
         <List sx={{ px: 1, mt: 1 }}>
-          {menuItems.map((item) => (
-            <ListItemButton
-              key={item.path}
-              selected={isActive(item.path)}
-              onClick={() => navigate(item.path)}
-              sx={{
-                borderRadius: 2,
-                mb: 0.5,
-                color: "white",
-                "&.Mui-selected": {
-                  backgroundColor: "#f97316",
-                  color: "white",
-                },
-                "&.Mui-selected:hover": {
-                  backgroundColor: "#ea580c",
-                },
-                "&:hover": {
-                  backgroundColor: "#991b1b",
-                },
-              }}
-            >
-              <Typography
+          {menuItems.map((item) => {
+            const active = isActive(item.path);
+
+            return (
+              <ListItemButton
+                key={item.path}
+                selected={active}
+                onClick={() => navigate(item.path)}
                 sx={{
-                  fontSize: 15,
-                  fontWeight: isActive(item.path) ? "bold" : "normal",
+                  borderRadius: 2,
+                  mb: 0.5,
+                  color: "white",
+                  "&.Mui-selected": {
+                    backgroundColor: "#f97316",
+                    color: "white",
+                  },
+                  "&.Mui-selected:hover": {
+                    backgroundColor: "#ea580c",
+                  },
+                  "&:hover": {
+                    backgroundColor: "#991b1b",
+                  },
                 }}
               >
-                {item.label}
-              </Typography>
-            </ListItemButton>
-          ))}
+                <Typography
+                  sx={{
+                    fontSize: 15,
+                    fontWeight: active ? "bold" : "normal",
+                  }}
+                >
+                  {item.label}
+                </Typography>
+              </ListItemButton>
+            );
+          })}
         </List>
 
         <Box sx={{ mt: "auto", p: 2 }}>
           <Divider sx={{ borderColor: "#b91c1c", mb: 2 }} />
 
           <Typography variant="caption" sx={{ color: "#fed7aa" }}>
-            Room Section Panel
+            Shop Panel
           </Typography>
 
-          <Button 
+            <Button 
               variant="outlined" 
               size="small" 
               color="inherit" 
@@ -147,4 +142,4 @@ function MainLayout() {
   );
 }
 
-export default MainLayout;
+export default ShopLayout;

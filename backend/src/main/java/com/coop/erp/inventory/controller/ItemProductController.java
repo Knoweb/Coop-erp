@@ -11,7 +11,7 @@ import java.util.List;
 import java.util.UUID;
 
 @RestController
-@RequestMapping("/api/v1/milk-shop/items")
+@RequestMapping("/api/v1/shop/items")
 @RequiredArgsConstructor
 public class ItemProductController {
 

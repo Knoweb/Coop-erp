@@ -2,40 +2,24 @@ import { BrowserRouter, Route, Routes, Navigate, Outlet } from "react-router-dom
 
 // --- Layouts ---
 import AdminLayout from "./layouts/AdminLayout";
-import RoomLayout from "./layouts/RoomLayout";
-import MilkShopLayout from "./layouts/MilkShopLayout";
-import BeerGardenLayout from "./layouts/BeerGardenLayout";
+import ShopLayout from "./layouts/ShopLayout";
 
 // --- Pages ---
 import Login from "./features/auth/Login";
 import AdminDashboard from "./features/admin/AdminDashboard";
-import UtilityBillDashboard from "./features/admin/UtilityBillDashboard";
-import UserManagementDashboard from "./features/admin/UserManagementDashboard";
-import SystemAuditLogs from "./features/admin/SystemAuditLogs";
 
-import RoomDashboardPage from "./features/room-section/RoomDashboardPage";
-import RoomPage from "./features/room-section/RoomPage";
-import BookingPage from "./features/room-section/BookingPage";
-import OccupancyMatrixPage from "./features/room-section/OccupancyMatrixPage";
-import RemittancePage from "./features/room-section/RemittancePage";
+import ManageShopsPage from "./features/admin/ManageShopsPage";
+import ShopUsersPage from "./features/admin/ShopUsersPage";
 
-import MilkShopDashboard from "./features/milk-shop/MilkShopDashboard";
-import SupplierPage from "./features/milk-shop/SupplierPage";
-import ItemPage from "./features/milk-shop/ItemPage";
-import GrnPage from "./features/milk-shop/GrnPage";
-import StockLedgerPage from "./features/milk-shop/StockLedgerPage";
-import DailySalesPage from "./features/milk-shop/DailySalesPage";
-import StockAdjustmentPage from "./features/milk-shop/stock-adjustments/StockAdjustmentPage";
+import SystemUsersPage from "./features/admin/SystemUsersPage";
+import SettingsPage from "./features/admin/SettingsPage";
 
-import BeerGardenDashboard from "./features/beer-garden/BeerGardenDashboard";
-import PriceMatrix from "./features/beer-garden/PriceMatrix";
-import LiquorIssuance from "./features/beer-garden/LiquorIssuance";
-import Commissions from "./features/beer-garden/Commissions";
-import GoodsReceivedNote from "./features/beer-garden/GoodsReceivedNote";
-import SupplierManagement from "./features/beer-garden/SupplierManagement";
-import Receivables from "./features/beer-garden/ReceivablesDashboard";
-import ReportsDashboard from "./features/beer-garden/ReportsDashboard";
-import PurchaseHistory from "./features/beer-garden/PurchaseHistory";
+import GroceryShopDashboard from "./features/grocery-shop/GroceryShopDashboard";
+import SupplierPage from "./features/grocery-shop/SupplierPage";
+import ItemPage from "./features/grocery-shop/ItemPage";
+import GrnPage from "./features/grocery-shop/GrnPage";
+import StockLedgerPage from "./features/grocery-shop/StockLedgerPage";
+import DailySalesPage from "./features/grocery-shop/DailySalesPage";
 
 // --- UPGRADED: Role-Based Protected Route ---
 const ProtectedRoute = ({ allowedRoles }: { allowedRoles: string[] }) => {
@@ -69,10 +53,6 @@ const RootBoundary = () => {
     case 'SHOP_ADMIN':
     case 'SHOP_USER':
         return <Navigate to="/shop/dashboard" replace />;
-    case 'ROOM_BOOKING': 
-        return <Navigate to="/rooms/dashboard" replace />;
-    case 'BEER_GARDEN':
-        return <Navigate to="/beer-garden/dashboard" replace />;
     default: 
         localStorage.clear();
         return <Navigate to="/login" replace />;
@@ -89,48 +69,32 @@ function App() {
           <Route path="/admin" element={<AdminLayout />}>
             <Route index element={<Navigate to="dashboard" replace />} />
             <Route path="dashboard" element={<AdminDashboard />} />
-            <Route path="utilities" element={<UtilityBillDashboard />} />
-            <Route path="users" element={<UserManagementDashboard />} /> 
-            <Route path="logs" element={<SystemAuditLogs />} />
-          </Route>
-        </Route>
-
-        <Route element={<ProtectedRoute allowedRoles={['ROLE_ADMIN', 'ROLE_ROOM_BOOKING']} />}>
-          <Route path="/rooms" element={<RoomLayout />}>
-            <Route index element={<Navigate to="dashboard" replace />} />
-            <Route path="dashboard" element={<RoomDashboardPage />} />
-            <Route path="management" element={<RoomPage />} />
-            <Route path="bookings" element={<BookingPage />} />
-            <Route path="occupancy" element={<OccupancyMatrixPage />} />
-            <Route path="remittance" element={<RemittancePage />} />
+            <Route path="shops" element={<ManageShopsPage />} />
+            <Route path="shop-users" element={<ShopUsersPage />} />
+            <Route path="system-users" element={<SystemUsersPage />} />
+            <Route path="products" element={<ItemPage />} />
+            <Route path="inventory" element={<StockLedgerPage />} />
+            <Route path="purchases" element={<GrnPage />} />
+            <Route path="sales" element={<DailySalesPage />} />
+            <Route path="suppliers" element={<SupplierPage />} />
+            <Route path="customers" element={<div style={{padding: '20px'}}>Customers Module Coming Soon</div>} />
+            <Route path="reports" element={<div style={{padding: '20px'}}>Reports Module Coming Soon</div>} />
+            <Route path="settings" element={<SettingsPage />} />
           </Route>
         </Route>
 
         <Route element={<ProtectedRoute allowedRoles={['ROLE_ADMIN', 'ROLE_SHOP_ADMIN', 'ROLE_SHOP_USER']} />}>
-          <Route path="/shop" element={<MilkShopLayout />}>
+          <Route path="/shop" element={<ShopLayout />}>
             <Route index element={<Navigate to="dashboard" replace />} />
-            <Route path="dashboard" element={<MilkShopDashboard />} />
+            <Route path="dashboard" element={<GroceryShopDashboard />} />
+            <Route path="products" element={<ItemPage />} />
+            <Route path="inventory" element={<StockLedgerPage />} />
+            <Route path="purchases" element={<GrnPage />} />
+            <Route path="sales" element={<DailySalesPage />} />
             <Route path="suppliers" element={<SupplierPage />} />
-            <Route path="items" element={<ItemPage />} />
-            <Route path="stock" element={<StockLedgerPage />} />
-            <Route path="grn" element={<GrnPage />} />
-            <Route path="daily-sales" element={<DailySalesPage />} />
-            <Route path="stock-adjustments" element={<StockAdjustmentPage />} />
-          </Route>
-        </Route>
-
-        <Route element={<ProtectedRoute allowedRoles={['ROLE_ADMIN', 'ROLE_BEER_GARDEN']} />}>
-          <Route path="/beer-garden" element={<BeerGardenLayout />}>
-            <Route index element={<Navigate to="dashboard" replace />} />
-            <Route path="dashboard" element={<BeerGardenDashboard />} />
-            <Route path="suppliers" element={<SupplierManagement />} />
-            <Route path="grn" element={<GoodsReceivedNote />} />
-            <Route path="issuance" element={<LiquorIssuance />} />
-            <Route path="prices" element={<PriceMatrix />} />
-            <Route path="commissions" element={<Commissions />} />
-            <Route path="receivables" element={<Receivables />} />
-            <Route path="reports" element={<ReportsDashboard />} />
-            <Route path="purchase-history" element={<PurchaseHistory />} />
+            <Route path="customers" element={<div style={{padding: '20px'}}>Customers Module Coming Soon</div>} />
+            <Route path="users" element={<ShopUsersPage />} />
+            <Route path="reports" element={<div style={{padding: '20px'}}>Reports Module Coming Soon</div>} />
           </Route>
         </Route>
 

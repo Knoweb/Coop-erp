@@ -54,10 +54,12 @@ public class UserService {
         return mapToResponse(savedUser);
     }
 
-    public List<UserDto.Response> getAllUsers() {
-        return repository.findAll().stream()
-                .map(this::mapToResponse)
-                .collect(Collectors.toList());
+    public List<UserDto.Response> getAllUsers(UUID shopId) {
+        java.util.stream.Stream<User> stream = repository.findAll().stream();
+        if (shopId != null) {
+            stream = stream.filter(u -> u.getShop() != null && u.getShop().getId().equals(shopId));
+        }
+        return stream.map(this::mapToResponse).collect(Collectors.toList());
     }
 
     @Transactional
@@ -75,7 +77,9 @@ public class UserService {
                 user.getUsername(),
                 user.getRole(),
                 user.getIsActive(),
-                user.getCreatedAt()
+                user.getCreatedAt(),
+                user.getShop() != null ? user.getShop().getId() : null,
+                user.getShop() != null ? user.getShop().getName() : null
         );
     }
 

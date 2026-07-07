@@ -14,7 +14,7 @@ import {
   TableRow,
   Typography,
 } from "@mui/material";
-import { API_BASE_URLS } from "../../api/apiConfig";
+import api from "../../api/axiosConfig";
 
 type ChipColor =
   | "default"
@@ -102,7 +102,7 @@ const formatMoney = (value: MoneyValue) => {
   });
 };
 
-function MilkShopDashboard() {
+function GroceryShopDashboard() {
   const [suppliers, setSuppliers] = useState<Supplier[]>([]);
   const [items, setItems] = useState<ItemProduct[]>([]);
   const [stockLedgers, setStockLedgers] = useState<StockLedger[]>([]);
@@ -129,29 +129,20 @@ function MilkShopDashboard() {
         salesResponse,
         adjustmentResponse,
       ] = await Promise.all([
-        fetch(`${API_BASE_URLS.milkShop}/suppliers`),
-        fetch(`${API_BASE_URLS.milkShop}/items`),
-        fetch(`${API_BASE_URLS.milkShop}/stock`),
-        fetch(`${API_BASE_URLS.milkShop}/grn`),
-        fetch(`${API_BASE_URLS.milkShop}/sales`),
-        fetch(`${API_BASE_URLS.milkShop}/stock-adjustments`),
+        api.get(`/shop/suppliers`),
+        api.get(`/shop/items`),
+        api.get(`/shop/stock`),
+        api.get(`/shop/grn`),
+        api.get(`/shop/sales`),
+        api.get(`/shop/stock-adjustments`),
       ]);
 
-      if (!suppliersResponse.ok) throw new Error("Failed to load suppliers");
-      if (!itemsResponse.ok) throw new Error("Failed to load items");
-      if (!stockResponse.ok) throw new Error("Failed to load stock");
-      if (!grnResponse.ok) throw new Error("Failed to load GRN records");
-      if (!salesResponse.ok) throw new Error("Failed to load daily sales");
-      if (!adjustmentResponse.ok)
-        throw new Error("Failed to load stock adjustments");
-
-      const suppliersData: Supplier[] = await suppliersResponse.json();
-      const itemsData: ItemProduct[] = await itemsResponse.json();
-      const stockData: StockLedger[] = await stockResponse.json();
-      const grnData: GrnResponse[] = await grnResponse.json();
-      const salesData: DailySales[] = await salesResponse.json();
-      const adjustmentData: StockAdjustment[] =
-        await adjustmentResponse.json();
+      const suppliersData: Supplier[] = suppliersResponse.data;
+      const itemsData: ItemProduct[] = itemsResponse.data;
+      const stockData: StockLedger[] = stockResponse.data;
+      const grnData: GrnResponse[] = grnResponse.data;
+      const salesData: DailySales[] = salesResponse.data;
+      const adjustmentData: StockAdjustment[] = adjustmentResponse.data;
 
       setSuppliers(suppliersData);
       setItems(itemsData);
@@ -160,8 +151,7 @@ function MilkShopDashboard() {
       setDailySalesList(salesData);
       setStockAdjustments(adjustmentData);
     } catch (err) {
-      console.error(err);
-      setError("Failed to load dashboard data. Check milk-shop-service.");
+      setError("Failed to load dashboard data. Check the grocery shop service.");
     } finally {
       setLoading(false);
     }
@@ -245,7 +235,7 @@ function MilkShopDashboard() {
     {
       title: "Items / Products",
       value: items.length,
-      helper: "Milk shop products",
+      helper: "Grocery shop products",
     },
     {
       title: "Low Stock Items",
@@ -272,11 +262,11 @@ function MilkShopDashboard() {
   return (
     <Box>
       <Typography variant="h4" sx={{ fontWeight: "bold" }} gutterBottom>
-        Milk Shop Dashboard
+        Grocery Shop Dashboard
       </Typography>
 
       <Typography color="text.secondary">
-        Quick overview of stock, daily sales, stock reductions, and recent GRNs.
+        Manage products, stock, purchases, and sales for your grocery shop.
       </Typography>
 
       {loading && (
@@ -575,4 +565,4 @@ function MilkShopDashboard() {
   );
 }
 
-export default MilkShopDashboard;
+export default GroceryShopDashboard;

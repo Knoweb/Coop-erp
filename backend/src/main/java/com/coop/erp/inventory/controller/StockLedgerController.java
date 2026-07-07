@@ -13,7 +13,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/v1/milk-shop/stock")
+@RequestMapping("/api/v1/shop/stock")
 @RequiredArgsConstructor
 public class StockLedgerController {
 

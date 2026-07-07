@@ -23,4 +23,22 @@ public class AdminShopController {
     public List<Shop> getAllShops() {
         return shopRepository.findAll();
     }
+
+    @PutMapping("/{id}")
+    public Shop updateShop(@PathVariable java.util.UUID id, @RequestBody Shop shopDetails) {
+        Shop shop = shopRepository.findById(id).orElseThrow(() -> new RuntimeException("Shop not found"));
+        shop.setName(shopDetails.getName());
+        shop.setCode(shopDetails.getCode());
+        shop.setAddress(shopDetails.getAddress());
+        shop.setContactNumber(shopDetails.getContactNumber());
+        shop.setActive(shopDetails.getActive());
+        return shopRepository.save(shop);
+    }
+
+    @PatchMapping("/{id}/status")
+    public Shop toggleShopStatus(@PathVariable java.util.UUID id) {
+        Shop shop = shopRepository.findById(id).orElseThrow(() -> new RuntimeException("Shop not found"));
+        shop.setActive(!shop.getActive());
+        return shopRepository.save(shop);
+    }
 }

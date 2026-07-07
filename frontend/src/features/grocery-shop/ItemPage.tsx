@@ -22,7 +22,7 @@ import {
   TextField,
   Typography,
 } from "@mui/material";
-import { API_BASE_URLS } from "../../api/apiConfig";
+import api from "../../api/axiosConfig";
 
 type ItemProduct = {
   id: string;
@@ -78,20 +78,15 @@ function ItemPage() {
     try {
       setLoading(true);
 
-      const response = await fetch(`${API_BASE_URLS.milkShop}/items`);
-
-      if (!response.ok) {
-        throw new Error("Failed to load items");
-      }
-
-      const data: ItemProduct[] = await response.json();
+      const response = await api.get(`/shop/items`);
+      const data: ItemProduct[] = response.data;
 
       const sortedData = data.sort((a, b) => a.name.localeCompare(b.name));
 
       setItems(sortedData);
     } catch (err) {
       console.error(err);
-      setError("Failed to load items. Check milk-shop-service on port 8080.");
+      setError("Failed to load items. Check grocery shop service on port 8080.");
     } finally {
       setLoading(false);
     }
@@ -114,22 +109,12 @@ function ItemPage() {
     }
 
     try {
-      const response = await fetch(`${API_BASE_URLS.milkShop}/items`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          name,
-          category: finalCategory, // Sending the final category
-          reorderLevel: Number(reorderLevel),
-          unitPrice: Number(unitPrice),
-        }),
+      await api.post(`/shop/items`, {
+        name,
+        category: finalCategory, // Sending the final category
+        reorderLevel: Number(reorderLevel),
+        unitPrice: Number(unitPrice),
       });
-
-      if (!response.ok) {
-        throw new Error("Item create failed");
-      }
 
       // Reset form
       setName("");
@@ -187,25 +172,12 @@ function ItemPage() {
     }
 
     try {
-      const response = await fetch(
-        `${API_BASE_URLS.milkShop}/items/${editingItemId}`,
-        {
-          method: "PUT",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            name: editName,
-            category: finalEditCategory, // Sending the updated category
-            reorderLevel: Number(editReorderLevel),
-            unitPrice: Number(editUnitPrice),
-          }),
-        }
-      );
-
-      if (!response.ok) {
-        throw new Error("Item update failed");
-      }
+      await api.put(`/shop/items/${editingItemId}`, {
+        name: editName,
+        category: finalEditCategory, // Sending the updated category
+        reorderLevel: Number(editReorderLevel),
+        unitPrice: Number(editUnitPrice),
+      });
 
       closeEditDialog();
       await loadItems();
@@ -224,7 +196,7 @@ function ItemPage() {
       </Typography>
 
       <Typography color="text.secondary">
-        Add, view, and update Milk Shop items. Stock quantity will be updated later through GRN and sales.
+        Add, view, and update Grocery Shop items. Stock quantity will be updated later through GRN and sales.
       </Typography>
 
       {/* --- ADD NEW ITEM CARD --- */}

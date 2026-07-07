@@ -21,8 +21,8 @@ public class UserController {
 
 
     @GetMapping
-    public ResponseEntity<List<UserDto.Response>> getAllUsers() {
-        return ResponseEntity.ok(service.getAllUsers());
+    public ResponseEntity<List<UserDto.Response>> getAllUsers(@RequestParam(required = false) UUID shopId) {
+        return ResponseEntity.ok(service.getAllUsers(shopId));
     }
 
     @PatchMapping("/{id}/toggle-status")

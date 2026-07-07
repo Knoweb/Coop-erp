@@ -206,9 +206,9 @@ const Login: React.FC = () => {
     return (
         <div style={styles.wrapper}>
             <div style={styles.heroSection}>
-                <h1 style={styles.heroTitle}>Hikkaduwa Coop<br/>Integrated System</h1>
+                <h1 style={styles.heroTitle}>Coop Grocery<br/>Management<br/>System</h1>
                 <p style={styles.heroSubtitle}>
-                    Enterprise management for the Milk Shop, Beer Garden, and Room Booking divisions. Secure, scalable, and synchronized.
+                    Centralized management for cooperative grocery shops, inventory, purchases, sales, and users.
                 </p>
             </div>
 
@@ -216,20 +216,20 @@ const Login: React.FC = () => {
                 <div style={styles.formContainer}>
                     <div style={styles.formHeader}>
                         <h2 style={styles.mainTitle}>Welcome Back</h2>
-                        <p style={styles.subTitle}>Please authenticate to access your department.</p>
+                        <p style={styles.subTitle}>Login to access your admin or shop dashboard.</p>
                     </div>
                     
                     {errorMsg && <div style={styles.errorMsg}>{errorMsg}</div>}
                     
                     <form onSubmit={handleLogin}>
                         <div style={styles.inputGroup}>
-                            <label style={styles.label}>Gateway Portal</label>
+                            <label style={styles.label}>Login Type</label>
                             <select 
                                 style={{...styles.input, ...styles.selectInput}} 
                                 value={loginType}
                                 onChange={(e) => setLoginType(e.target.value)}
                             >
-                                <option value="" disabled>-- Select Your Portal --</option>
+                                <option value="" disabled>-- Select Login Type --</option>
                                 {loginTypes.map((type) => (
                                     <option key={type.code} value={type.code}>
                                         {type.label}
@@ -239,19 +239,19 @@ const Login: React.FC = () => {
                         </div>
 
                         <div style={styles.inputGroup}>
-                            <label style={styles.label}>Employee ID / Username</label>
+                            <label style={styles.label}>Username</label>
                             <input 
                                 type="text" 
                                 value={username} 
                                 onChange={(e) => setUsername(e.target.value)} 
-                                placeholder="e.g., kamal_login"
+                                placeholder="e.g., admin or shop1admin"
                                 required 
                                 style={styles.input}
                             />
                         </div>
                         
                         <div style={styles.inputGroup}>
-                            <label style={styles.label}>Security Credential</label>
+                            <label style={styles.label}>Password</label>
                             <div style={styles.inputWrapper}>
                                 <input 
                                     type={showPassword ? 'text' : 'password'} 
@@ -284,7 +284,7 @@ const Login: React.FC = () => {
                             onMouseDown={(e) => e.currentTarget.style.transform = 'scale(0.98)'}
                             onMouseUp={(e) => e.currentTarget.style.transform = 'scale(1)'}
                         >
-                            {isLoading ? 'Verifying Identity...' : 'Initialize Session'}
+                            {isLoading ? 'Verifying Identity...' : 'Login'}
                         </button>
                     </form>
                 </div>

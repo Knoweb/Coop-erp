@@ -17,7 +17,7 @@ import {
   TextField,
   Typography,
 } from "@mui/material";
-import { API_BASE_URLS } from "../../api/apiConfig";
+import api from "../../api/axiosConfig";
 
 type ChipColor =
   | "default"
@@ -94,13 +94,8 @@ function DailySalesPage() {
     try {
       setLoading(true);
 
-      const response = await fetch(`${API_BASE_URLS.milkShop}/sales`);
-
-      if (!response.ok) {
-        throw new Error("Failed to load daily sales");
-      }
-
-      const data: DailySales[] = await response.json();
+      const response = await api.get(`/shop/sales`);
+      const data: DailySales[] = response.data;
 
       const sortedData = data.sort((a, b) => {
         return new Date(b.salesDate).getTime() - new Date(a.salesDate).getTime();
@@ -109,7 +104,7 @@ function DailySalesPage() {
       setDailySalesList(sortedData);
     } catch (err) {
       console.error(err);
-      setError("Failed to load daily sales. Check milk-shop-service.");
+      setError("Failed to load daily sales. Check grocery shop service.");
     } finally {
       setLoading(false);
     }
@@ -160,29 +155,16 @@ function DailySalesPage() {
     }
 
     try {
-      const response = await fetch(
-        `${API_BASE_URLS.milkShop}/sales/daily-summary`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            salesDate,
-            totalSalesValue: Number(totalSalesValue),
-            cashHandedOver: Number(cashHandedOver),
-            operatorId: TEMP_OPERATOR_ID,
-            receivedBy,
-            remarks,
-          }),
-        }
-      );
+      const response = await api.post(`/shop/sales/daily-summary`, {
+        salesDate,
+        totalSalesValue: Number(totalSalesValue),
+        cashHandedOver: Number(cashHandedOver),
+        operatorId: TEMP_OPERATOR_ID,
+        receivedBy,
+        remarks,
+      });
 
-      if (!response.ok) {
-        throw new Error("Daily sales create failed");
-      }
-
-      const savedData: DailySales = await response.json();
+      const savedData: DailySales = response.data;
 
       resetForm();
       await loadDailySales();
@@ -235,7 +217,7 @@ function DailySalesPage() {
       </Typography>
 
       <Typography color="text.secondary">
-        Record daily Milk Shop sales, cash handed over, and discrepancy.
+        Record daily Grocery Shop sales, cash handed over, and discrepancy.
       </Typography>
 
       <Box

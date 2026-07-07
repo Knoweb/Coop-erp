@@ -20,7 +20,7 @@ import {
   TextField,
   Typography,
 } from "@mui/material";
-import { API_BASE_URLS } from "../../api/apiConfig";
+import api from "../../api/axiosConfig";
 
 type Supplier = {
   id: string;
@@ -50,13 +50,8 @@ function SupplierPage() {
     try {
       setLoading(true);
 
-      const response = await fetch(`${API_BASE_URLS.milkShop}/suppliers`);
-
-      if (!response.ok) {
-        throw new Error("Failed to load suppliers");
-      }
-
-      const data: Supplier[] = await response.json();
+      const response = await api.get(`/shop/suppliers`);
+      const data: Supplier[] = response.data;
 
       const sortedData = data.sort((a, b) =>
         a.name.localeCompare(b.name)
@@ -65,7 +60,7 @@ function SupplierPage() {
       setSuppliers(sortedData);
     } catch (err) {
       console.error(err);
-      setError("Failed to load suppliers. Check milk-shop-service on port 8080.");
+      setError("Failed to load suppliers. Check grocery shop service on port 8080.");
     } finally {
       setLoading(false);
     }
@@ -86,21 +81,11 @@ function SupplierPage() {
     }
 
     try {
-      const response = await fetch(`${API_BASE_URLS.milkShop}/suppliers`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          name: supplierName,
-          contactNumber,
-          address,
-        }),
+      await api.post(`/shop/suppliers`, {
+        name: supplierName,
+        contactNumber,
+        address,
       });
-
-      if (!response.ok) {
-        throw new Error("Supplier create failed");
-      }
 
       setSupplierName("");
       setContactNumber("");
@@ -138,24 +123,11 @@ function SupplierPage() {
     }
 
     try {
-      const response = await fetch(
-        `${API_BASE_URLS.milkShop}/suppliers/${editingSupplierId}`,
-        {
-          method: "PUT",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            name: editSupplierName,
-            contactNumber: editContactNumber,
-            address: editAddress,
-          }),
-        }
-      );
-
-      if (!response.ok) {
-        throw new Error("Supplier update failed");
-      }
+      await api.put(`/shop/suppliers/${editingSupplierId}`, {
+        name: editSupplierName,
+        contactNumber: editContactNumber,
+        address: editAddress,
+      });
 
       closeEditDialog();
       await loadSuppliers();
@@ -174,7 +146,7 @@ function SupplierPage() {
       </Typography>
 
       <Typography color="text.secondary">
-        Add, view, and update Milk Shop suppliers.
+        Add, view, and update Grocery Shop suppliers.
       </Typography>
 
       <Card

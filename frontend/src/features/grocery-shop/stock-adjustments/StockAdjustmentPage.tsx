@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Alert, Box, Snackbar, Typography } from "@mui/material";
-import { API_BASE_URLS } from "../../../api/apiConfig";
+import api from "../../../api/axiosConfig";
 
 import SummaryCards from "./components/SummaryCards";
 import Form from "./components/Form";
@@ -62,28 +62,15 @@ function StockAdjustmentPage() {
     try {
       setLoading(true);
 
-      const stockResponse = await fetch(`${API_BASE_URLS.milkShop}/stock`);
-
-      if (!stockResponse.ok) {
-        throw new Error("Failed to load stock");
-      }
-
-      const stockData: StockLedger[] = await stockResponse.json();
+      const stockResponse = await api.get(`/shop/stock`);
+      const stockData: StockLedger[] = stockResponse.data;
 
       const sortedStock = stockData.sort((a, b) =>
         a.item.name.localeCompare(b.item.name)
       );
 
-      const adjustmentResponse = await fetch(
-        `${API_BASE_URLS.milkShop}/stock-adjustments`
-      );
-
-      if (!adjustmentResponse.ok) {
-        throw new Error("Failed to load stock adjustments");
-      }
-
-      const adjustmentData: StockAdjustment[] =
-        await adjustmentResponse.json();
+      const adjustmentResponse = await api.get(`/shop/stock-adjustments`);
+      const adjustmentData: StockAdjustment[] = adjustmentResponse.data;
 
       setStockLedgers(sortedStock);
       setAdjustments(adjustmentData);

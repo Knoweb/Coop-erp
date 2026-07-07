@@ -32,7 +32,7 @@ public class SecurityConfig {
                         .requestMatchers("/api/v1/auth/**").permitAll()
                         .requestMatchers("/actuator/health").permitAll()
                         .requestMatchers("/api/v1/admin/**").hasRole("ADMIN")
-                        .requestMatchers("/api/v1/shop/**").hasAnyRole("SHOP_ADMIN", "SHOP_USER")
+                        .requestMatchers("/api/v1/shop/**").hasAnyRole("ADMIN", "SHOP_ADMIN", "SHOP_USER")
                         .anyRequest().authenticated()
                 )
                 .httpBasic(httpBasic -> httpBasic.disable())

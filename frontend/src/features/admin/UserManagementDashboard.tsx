@@ -43,7 +43,7 @@ const UserManagementDashboard: React.FC = () => {
 
     const fetchUsers = async () => {
         try {
-            const response = await api.get('/api/v1/admin/users');
+            const response = await api.get('/admin/users');
             setUsers(response.data);
         } catch (error) {
             console.error("Failed to fetch users", error);
@@ -62,7 +62,7 @@ const UserManagementDashboard: React.FC = () => {
         setIsLoading(true);
 
         try {
-            await api.post('/api/v1/admin/users', { name, username, rawPassword, role });
+            await api.post('/admin/users', { name, username, rawPassword, role });
             setMessage({ type: 'success', text: `User '${username}' created successfully.` });
             
             // Clear the form
@@ -81,7 +81,7 @@ const UserManagementDashboard: React.FC = () => {
     const handleToggleStatus = async (id: string, currentStatus: boolean) => {
         if (!window.confirm(`Are you sure you want to ${currentStatus ? 'DEACTIVATE' : 'ACTIVATE'} this user?`)) return;
         try {
-            await api.patch(`/api/v1/admin/users/${id}/toggle-status`);
+            await api.patch(`/admin/users/${id}/toggle-status`);
             fetchUsers();
         } catch (error) {
             alert("Failed to update user status.");
@@ -99,7 +99,7 @@ const UserManagementDashboard: React.FC = () => {
         if (!selectedUserId || newPassword.length < 6) return;
         setIsLoading(true);
         try {
-            await api.patch(`/api/v1/admin/users/${selectedUserId}/reset-password`, { 
+            await api.patch(`/admin/users/${selectedUserId}/reset-password`, { 
                 newPassword: newPassword 
             });
             alert(`Password for '${selectedUserName}' has been successfully changed!`);
@@ -113,10 +113,9 @@ const UserManagementDashboard: React.FC = () => {
 
     const formatRole = (backendRole: string) => {
         switch (backendRole) {
-            case 'ROLE_ADMIN': return 'Global Admin';
-            case 'ROLE_MILK_SHOP': return 'Milk Shop Operator';
-            case 'ROLE_BEER_GARDEN': return 'Beer Garden Manager';
-            case 'ROLE_ROOM_BOOKING': return 'Room Section Manager';
+            case 'ADMIN': return 'Main Shop Admin';
+            case 'SHOP_ADMIN': return 'Grocery Shop Admin';
+            case 'SHOP_USER': return 'Grocery Shop User';
             default: return backendRole;
         }
     };
@@ -165,10 +164,9 @@ const UserManagementDashboard: React.FC = () => {
 
                             <TextField select fullWidth label="System Role" size="small" sx={{ mb: 3 }}
                                 value={role} onChange={(e) => setRole(e.target.value)} required>
-                                <MenuItem value="ROLE_ADMIN">Global Administrator</MenuItem>
-                                <MenuItem value="ROLE_MILK_SHOP">Milk Shop Operator</MenuItem>
-                                <MenuItem value="ROLE_BEER_GARDEN">Beer Garden Manager</MenuItem>
-                                <MenuItem value="ROLE_ROOM_BOOKING">Room Section Manager</MenuItem>
+                                <MenuItem value="ADMIN">Main Shop Admin</MenuItem>
+                                <MenuItem value="SHOP_ADMIN">Grocery Shop Admin</MenuItem>
+                                <MenuItem value="SHOP_USER">Grocery Shop User</MenuItem>
                             </TextField>
 
                             <Button type="submit" variant="contained" fullWidth size="large" disabled={isLoading || !isFormValid}

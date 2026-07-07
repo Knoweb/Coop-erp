@@ -17,7 +17,7 @@ public class UserDto {
             @NotBlank(message = "Password is required")
             String rawPassword,
 
-            @Pattern(regexp = "^(ROLE_ADMIN|ROLE_MILK_SHOP|ROLE_BEER_GARDEN|ROLE_ROOM_BOOKING)$",
+            @Pattern(regexp = "^(ADMIN|SHOP_ADMIN|SHOP_USER)$",
                     message = "Invalid role assigned")
             String role
     ) {}
@@ -28,7 +28,9 @@ public class UserDto {
             String username,
             String role,
             Boolean isActive,
-            LocalDateTime createdAt
+            LocalDateTime createdAt,
+            UUID shopId,
+            String shopName
     ) {}
 
     // Admin resets the user's password directly
