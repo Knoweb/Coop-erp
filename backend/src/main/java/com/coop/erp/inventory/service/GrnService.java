@@ -101,12 +101,12 @@ public class GrnService {
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
     }
 
-    private void increaseStock(ItemProduct item, Integer quantity) {
-        StockLedger stockLedger = stockLedgerRepository.findByItemIdAndShopIsNull(item.getId())
+    private void increaseStock(ItemProduct item, Integer quantity, Shop shop) {
+        StockLedger stockLedger = stockLedgerRepository.findByItemIdAndShopId(item.getId(), shop.getId())
                 .orElseGet(() -> {
                     StockLedger newStock = new StockLedger();
                     newStock.setItem(item);
-                    newStock.setShop(null); // Admin stock
+                    newStock.setShop(shop);
                     newStock.setCurrentQty(0);
                     newStock.setLastUpdated(LocalDateTime.now());
                     return newStock;

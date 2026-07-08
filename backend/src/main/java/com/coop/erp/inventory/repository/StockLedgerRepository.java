@@ -19,11 +19,14 @@ public interface StockLedgerRepository extends JpaRepository<StockLedger, UUID> 
     List<StockLedger> findByShopIsNull();
 
     @Query("""
-           SELECT s FROM StockLedger s
-           WHERE s.currentQty <= s.item.reorderLevel
-           AND (s.shop.id = :shopId OR (:shopId IS NULL AND s.shop IS NULL))
-           """)
-    List<StockLedger> findLowStockItems(UUID shopId);
+        SELECT s
+        FROM StockLedger s
+        JOIN ShopItem si ON si.item = s.item AND si.shop = s.shop
+        WHERE si.isActive = true
+        AND s.currentQty <= si.reorderLevel
+        AND (:shopId IS NULL OR s.shop.id = :shopId)
+    """)
+    List<StockLedger> findLowStockItems(@org.springframework.data.repository.query.Param("shopId") UUID shopId);
 
     @Query("""
            SELECT s FROM StockLedger s
