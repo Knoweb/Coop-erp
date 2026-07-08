@@ -8,6 +8,7 @@ import com.coop.erp.inventory.dto.StockAdjustRequest;
 import com.coop.erp.inventory.dto.StockAdjustResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -50,6 +51,7 @@ public class StockLedgerController {
     }
 
     @PatchMapping("/reduce")
+    @PreAuthorize("hasAnyAuthority('ADMIN', 'ROLE_ADMIN', 'ROLE_SUPER_ADMIN', 'SHOP_ADMIN', 'ROLE_SHOP_ADMIN', 'SHOP_USER', 'ROLE_SHOP_USER')")
     public StockReduceResponse reduceStock(
             @Valid @RequestBody StockReduceRequest req, HttpServletRequest request
     ) {
@@ -57,6 +59,7 @@ public class StockLedgerController {
     }
 
     @PatchMapping("/adjust")
+    @PreAuthorize("hasAnyAuthority('ADMIN', 'ROLE_ADMIN', 'ROLE_SUPER_ADMIN', 'SHOP_ADMIN', 'ROLE_SHOP_ADMIN', 'SHOP_USER', 'ROLE_SHOP_USER')")
     public StockAdjustResponse adjustStock(
             @Valid @RequestBody StockAdjustRequest req, HttpServletRequest request
     ) {

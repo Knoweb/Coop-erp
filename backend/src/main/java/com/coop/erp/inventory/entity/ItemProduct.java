@@ -25,12 +25,14 @@ public class ItemProduct {
     @Column(nullable = false, length = 50)
     private String category;
 
-    @Column(name = "reorder_level", nullable = false)
-    private Integer reorderLevel = 10;
+    @Column(name = "default_reorder_level", nullable = false)
+    @Builder.Default
+    private Integer defaultReorderLevel = 10;
 
     @Column(name = "unit_price", nullable = false, precision = 10, scale = 2)
     private BigDecimal unitPrice;
 
     @Column(name = "is_active")
+    @Builder.Default
     private Boolean isActive = true;
 }

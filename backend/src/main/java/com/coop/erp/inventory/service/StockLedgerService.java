@@ -6,7 +6,11 @@ import com.coop.erp.inventory.entity.StockLedger;
 import com.coop.erp.inventory.repository.StockLedgerRepository;
 import com.coop.erp.inventory.dto.StockAdjustRequest;
 import com.coop.erp.inventory.dto.StockAdjustResponse;
+import com.coop.erp.core.entity.Shop;
+import com.coop.erp.core.entity.User;
+import com.coop.erp.core.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -17,6 +21,22 @@ import java.util.List;
 public class StockLedgerService {
 
     private final StockLedgerRepository stockLedgerRepository;
+    private final UserRepository userRepository;
+
+    private Shop getCurrentUserShopOrNull() {
+        String username = SecurityContextHolder.getContext().getAuthentication().getName();
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+        return user.getShop();
+    }
+
+    private Shop getCurrentUserShop() {
+        Shop shop = getCurrentUserShopOrNull();
+        if (shop == null) {
+            throw new RuntimeException("User is not assigned to any shop");
+        }
+        return shop;
+    }
 
     public List<StockLedger> getAllStock(java.util.UUID shopId) {
         if (shopId != null) {

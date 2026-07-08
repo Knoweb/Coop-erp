@@ -5,6 +5,7 @@ import com.coop.erp.inventory.entity.ItemProduct;
 import com.coop.erp.inventory.service.ItemProductService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -23,11 +24,13 @@ public class ItemProductController {
     }
 
     @PostMapping
+    @PreAuthorize("hasAnyAuthority('ADMIN', 'ROLE_ADMIN', 'ROLE_SUPER_ADMIN')")
     public ItemProduct createItem(@Valid @RequestBody ItemProductRequest request) {
         return itemProductService.createItem(request);
     }
 
     @PutMapping("/{id}")
+    @PreAuthorize("hasAnyAuthority('ADMIN', 'ROLE_ADMIN', 'ROLE_SUPER_ADMIN')")
     public ItemProduct updateItem(
             @PathVariable UUID id,
             @Valid @RequestBody ItemProductRequest request

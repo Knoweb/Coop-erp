@@ -25,12 +25,17 @@ import {
 import api from "../../api/axiosConfig";
 
 type ItemProduct = {
-  id: string;
+  id?: string;
+  itemId?: string;
   name: string;
   category: string;
-  reorderLevel: number;
+  defaultReorderLevel?: number;
+  shopReorderLevel?: number;
   unitPrice: number;
   isActive?: boolean;
+  isGlobalActive?: boolean;
+  isSelected?: boolean;
+  shopItemId?: string;
 };
 
 // 1. Updated categories with "Other"
@@ -53,6 +58,8 @@ const formatMoney = (value: number | string | undefined) => {
 
 function ItemPage() {
   const [items, setItems] = useState<ItemProduct[]>([]);
+  const userRole = localStorage.getItem("user_role");
+  const isAdmin = userRole === "ADMIN" || userRole === "ROLE_SUPER_ADMIN" || userRole === "ROLE_ADMIN";
 
   // States for Create Form
   const [name, setName] = useState("");
@@ -78,7 +85,8 @@ function ItemPage() {
     try {
       setLoading(true);
 
-      const response = await api.get(`/shop/items`);
+      const url = isAdmin ? `/shop/items` : `/shop/shop-items`;
+      const response = await api.get(url);
       const data: ItemProduct[] = response.data;
 
       const sortedData = data.sort((a, b) => a.name.localeCompare(b.name));
@@ -86,7 +94,7 @@ function ItemPage() {
       setItems(sortedData);
     } catch (err) {
       console.error(err);
-      setError("Failed to load items. Check grocery shop service on port 8080.");
+      setError("Failed to load items.");
     } finally {
       setLoading(false);
     }
@@ -111,8 +119,8 @@ function ItemPage() {
     try {
       await api.post(`/shop/items`, {
         name,
-        category: finalCategory, // Sending the final category
-        reorderLevel: Number(reorderLevel),
+        category: finalCategory,
+        defaultReorderLevel: Number(reorderLevel),
         unitPrice: Number(unitPrice),
       });
 
@@ -148,9 +156,26 @@ function ItemPage() {
       setEditCustomCategory(item.category);
     }
 
-    setEditReorderLevel(String(item.reorderLevel));
+    const reorderVal = isAdmin ? item.defaultReorderLevel : item.shopReorderLevel;
+    setEditReorderLevel(String(reorderVal || 0));
     setEditUnitPrice(String(item.unitPrice));
     setEditDialogOpen(true);
+  };
+
+  const handleToggleShopItem = async (item: ItemProduct) => {
+    try {
+      if (item.isSelected && item.shopItemId) {
+        await api.delete(`/shop/shop-items/${item.shopItemId}`);
+        setMessage("Item removed from your shop.");
+      } else {
+        await api.post(`/shop/shop-items`, { itemId: item.itemId });
+        setMessage("Item added to your shop.");
+      }
+      await loadItems();
+    } catch (err) {
+      console.error(err);
+      setError("Failed to update shop item selection.");
+    }
   };
 
   const closeEditDialog = () => {
@@ -172,12 +197,22 @@ function ItemPage() {
     }
 
     try {
-      await api.put(`/shop/items/${editingItemId}`, {
-        name: editName,
-        category: finalEditCategory, // Sending the updated category
-        reorderLevel: Number(editReorderLevel),
-        unitPrice: Number(editUnitPrice),
-      });
+      if (isAdmin) {
+        await api.put(`/shop/items/${editingItemId}`, {
+          name: editName,
+          category: finalEditCategory,
+          defaultReorderLevel: Number(editReorderLevel),
+          unitPrice: Number(editUnitPrice),
+        });
+      } else {
+        // Shop user only updates reorder level
+        const item = items.find(i => i.shopItemId === editingItemId);
+        if (item) {
+          await api.put(`/shop/shop-items/${item.shopItemId}/reorder-level`, {
+            reorderLevel: Number(editReorderLevel),
+          });
+        }
+      }
 
       closeEditDialog();
       await loadItems();
@@ -196,10 +231,13 @@ function ItemPage() {
       </Typography>
 
       <Typography color="text.secondary">
-        Add, view, and update Grocery Shop items. Stock quantity will be updated later through GRN and sales.
+        {isAdmin 
+          ? "Add, view, and update global grocery shop items." 
+          : "View global items and select which ones are available in your shop."}
       </Typography>
 
-      {/* --- ADD NEW ITEM CARD --- */}
+      {/* --- ADD NEW ITEM CARD (ADMIN ONLY) --- */}
+      {isAdmin && (
       <Card
         sx={{
           mt: 3,
@@ -305,6 +343,7 @@ function ItemPage() {
           </Box>
         </CardContent>
       </Card>
+      )}
 
       {/* --- ITEM LIST PAPER --- */}
       <Paper sx={{ mt: 3, p: 2 }}>
@@ -324,7 +363,7 @@ function ItemPage() {
                   <TableCell sx={{ fontWeight: "bold", color: "#374151" }}>Unit Price</TableCell>
                   <TableCell sx={{ fontWeight: "bold", color: "#374151" }}>Reorder Level</TableCell>
                   <TableCell sx={{ fontWeight: "bold", color: "#374151" }}>Status</TableCell>
-                  <TableCell sx={{ fontWeight: "bold", color: "#374151" }}>Edit</TableCell>
+                  <TableCell sx={{ fontWeight: "bold", color: "#374151" }}>Action</TableCell>
                 </TableRow>
               </TableHead>
 
@@ -341,23 +380,58 @@ function ItemPage() {
                       Rs. {formatMoney(item.unitPrice)}
                     </TableCell>
                     
-                    <TableCell>{item.reorderLevel}</TableCell>
+                    <TableCell>{isAdmin ? item.defaultReorderLevel : item.shopReorderLevel}</TableCell>
                     <TableCell>
-                      <Chip
-                        label={item.isActive === false ? "INACTIVE" : "ACTIVE"}
-                        color={item.isActive === false ? "default" : "success"}
-                        size="small"
-                        sx={{ fontWeight: "bold" }}
-                      />
+                      {isAdmin ? (
+                        <Chip
+                          label={item.isActive === false ? "INACTIVE" : "ACTIVE"}
+                          color={item.isActive === false ? "default" : "success"}
+                          size="small"
+                          sx={{ fontWeight: "bold" }}
+                        />
+                      ) : (
+                        <Chip
+                          label={item.isSelected ? "SELECTED" : "NOT SELECTED"}
+                          color={item.isSelected ? "success" : "default"}
+                          size="small"
+                          sx={{ fontWeight: "bold" }}
+                        />
+                      )}
                     </TableCell>
-                    <TableCell>
-                      <Button
-                        variant="contained"
-                        size="small"
-                        onClick={() => openEditDialog(item)}
-                      >
-                        Edit
-                      </Button>
+                    <TableCell sx={{ display: 'flex', gap: 1 }}>
+                      {isAdmin ? (
+                        <Button
+                          variant="contained"
+                          size="small"
+                          onClick={() => openEditDialog(item)}
+                        >
+                          Edit
+                        </Button>
+                      ) : (
+                        <>
+                          <Button
+                            variant={item.isSelected ? "outlined" : "contained"}
+                            color={item.isSelected ? "error" : "primary"}
+                            size="small"
+                            onClick={() => handleToggleShopItem(item)}
+                          >
+                            {item.isSelected ? "Remove" : "Select"}
+                          </Button>
+                          {item.isSelected && (
+                            <Button
+                              variant="contained"
+                              size="small"
+                              onClick={() => {
+                                setEditingItemId(item.shopItemId || "");
+                                setEditReorderLevel(String(item.shopReorderLevel));
+                                setEditDialogOpen(true);
+                              }}
+                            >
+                              Edit Reorder Lvl
+                            </Button>
+                          )}
+                        </>
+                      )}
                     </TableCell>
                   </TableRow>
                 ))}
@@ -386,50 +460,58 @@ function ItemPage() {
 
         <DialogContent>
           <Box sx={{ display: "grid", gap: 2, mt: 1 }}>
-            <TextField
-              label="Item Name"
-              fullWidth
-              value={editName}
-              onChange={(e) => setEditName(e.target.value)}
-            />
-
-            <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
-              <TextField
-                select
-                label="Category"
-                fullWidth
-                value={editSelectedCategory}
-                onChange={(e) => {
-                  setEditSelectedCategory(e.target.value);
-                  if (e.target.value !== "Other") {
-                    setEditCustomCategory("");
-                  }
-                }}
-              >
-                {CATEGORY_OPTIONS.map((itemCategory) => (
-                  <MenuItem key={itemCategory} value={itemCategory}>
-                    {itemCategory}
-                  </MenuItem>
-                ))}
-              </TextField>
-
-              {editSelectedCategory === "Other" && (
+            {isAdmin ? (
+              <>
                 <TextField
-                  label="Enter Custom Category"
+                  label="Item Name"
                   fullWidth
-                  value={editCustomCategory}
-                  onChange={(e) => setEditCustomCategory(e.target.value)}
+                  value={editName}
+                  onChange={(e) => setEditName(e.target.value)}
                 />
-              )}
-            </Box>
 
-            <TextField
-              label="Unit Price"
-              type="number"
-              fullWidth
-              value={editUnitPrice}
-              onChange={(e) => setEditUnitPrice(e.target.value)}
-            />
+                <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+                  <TextField
+                    select
+                    label="Category"
+                    fullWidth
+                    value={editSelectedCategory}
+                    onChange={(e) => {
+                      setEditSelectedCategory(e.target.value);
+                      if (e.target.value !== "Other") {
+                        setEditCustomCategory("");
+                      }
+                    }}
+                  >
+                    {CATEGORY_OPTIONS.map((itemCategory) => (
+                      <MenuItem key={itemCategory} value={itemCategory}>
+                        {itemCategory}
+                      </MenuItem>
+                    ))}
+                  </TextField>
+
+                  {editSelectedCategory === "Other" && (
+                    <TextField
+                      label="Enter Custom Category"
+                      fullWidth
+                      value={editCustomCategory}
+                      onChange={(e) => setEditCustomCategory(e.target.value)}
+                    />
+                  )}
+                </Box>
+
+                <TextField
+                  label="Unit Price"
+                  type="number"
+                  fullWidth
+                  value={editUnitPrice}
+                  onChange={(e) => setEditUnitPrice(e.target.value)}
+                />
+              </>
+            ) : (
+              <Typography color="text.secondary" sx={{ mb: 1 }}>
+                Update the reorder level for your shop.
+              </Typography>
+            )}
 
             <TextField
               label="Reorder Level"

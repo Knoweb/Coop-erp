@@ -8,7 +8,11 @@ import com.coop.erp.inventory.entity.StockLedger;
 import com.coop.erp.inventory.repository.ItemProductRepository;
 import com.coop.erp.inventory.repository.StockAdjustmentLogRepository;
 import com.coop.erp.inventory.repository.StockLedgerRepository;
+import com.coop.erp.core.entity.Shop;
+import com.coop.erp.core.entity.User;
+import com.coop.erp.core.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
@@ -23,6 +27,17 @@ public class StockAdjustmentService {
     private final StockAdjustmentLogRepository stockAdjustmentLogRepository;
     private final StockLedgerRepository stockLedgerRepository;
     private final ItemProductRepository itemProductRepository;
+    private final UserRepository userRepository;
+
+    private Shop getCurrentUserShop() {
+        String username = SecurityContextHolder.getContext().getAuthentication().getName();
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+        if (user.getShop() == null) {
+            throw new RuntimeException("User is not assigned to any shop");
+        }
+        return user.getShop();
+    }
 
     public StockAdjustmentResponse createStockAdjustment(StockAdjustmentRequest request) {
         ItemProduct item = itemProductRepository.findById(request.getItemId())

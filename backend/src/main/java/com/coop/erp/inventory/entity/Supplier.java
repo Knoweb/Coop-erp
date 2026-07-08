@@ -28,5 +28,6 @@ public class Supplier {
     private String address;
 
     @Column(name = "is_active")
+    @Builder.Default
     private Boolean isActive = true;
 }

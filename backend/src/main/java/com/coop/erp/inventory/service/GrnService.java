@@ -13,7 +13,11 @@ import com.coop.erp.inventory.repository.PurchaseInvoiceItemRepository;
 import com.coop.erp.inventory.repository.PurchaseInvoiceRepository;
 import com.coop.erp.inventory.repository.StockLedgerRepository;
 import com.coop.erp.inventory.repository.SupplierRepository;
+import com.coop.erp.core.entity.Shop;
+import com.coop.erp.core.entity.User;
+import com.coop.erp.core.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
@@ -29,8 +33,21 @@ public class GrnService {
     private final SupplierRepository supplierRepository;
     private final ItemProductRepository itemProductRepository;
     private final StockLedgerRepository stockLedgerRepository;
+    private final UserRepository userRepository;
+
+    private Shop getCurrentUserShop() {
+        String username = SecurityContextHolder.getContext().getAuthentication().getName();
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+        if (user.getShop() == null) {
+            throw new RuntimeException("User is not assigned to any shop");
+        }
+        return user.getShop();
+    }
 
     public GrnResponse createGrn(GrnRequest request) {
+        Shop currentShop = getCurrentUserShop();
+
         Supplier supplier = supplierRepository.findById(request.getSupplierId())
                 .orElseThrow(() -> new RuntimeException("Supplier not found"));
 
@@ -64,7 +81,7 @@ public class GrnService {
 
             purchaseInvoiceItemRepository.save(invoiceItem);
 
-            increaseStock(item, itemRequest.getQuantity());
+            increaseStock(item, itemRequest.getQuantity(), currentShop);
         }
 
         return buildResponse(savedInvoice);

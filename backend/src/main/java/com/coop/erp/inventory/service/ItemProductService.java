@@ -2,9 +2,7 @@ package com.coop.erp.inventory.service;
 
 import com.coop.erp.inventory.dto.ItemProductRequest;
 import com.coop.erp.inventory.entity.ItemProduct;
-import com.coop.erp.inventory.entity.StockLedger;
 import com.coop.erp.inventory.repository.ItemProductRepository;
-import com.coop.erp.inventory.repository.StockLedgerRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -17,7 +15,6 @@ import java.util.UUID;
 public class ItemProductService {
 
     private final ItemProductRepository itemProductRepository;
-    private final StockLedgerRepository stockLedgerRepository;
 
     public List<ItemProduct> getAllItems() {
         return itemProductRepository.findByIsActiveTrue();
@@ -27,22 +24,12 @@ public class ItemProductService {
         ItemProduct item = ItemProduct.builder()
                 .name(request.getName())
                 .category(request.getCategory())
-                .reorderLevel(request.getReorderLevel())
+                .defaultReorderLevel(request.getDefaultReorderLevel())
                 .unitPrice(request.getUnitPrice())
                 .isActive(true)
                 .build();
 
-        ItemProduct savedItem = itemProductRepository.save(item);
-
-        StockLedger stockLedger = StockLedger.builder()
-                .item(savedItem)
-                .currentQty(0)
-                .lastUpdated(LocalDateTime.now())
-                .build();
-
-        stockLedgerRepository.save(stockLedger);
-
-        return savedItem;
+        return itemProductRepository.save(item);
     }
 
     public ItemProduct updateItem(UUID id, ItemProductRequest request) {
@@ -51,13 +38,13 @@ public class ItemProductService {
 
         item.setName(request.getName());
         item.setCategory(request.getCategory());
-        item.setReorderLevel(request.getReorderLevel());
+        item.setDefaultReorderLevel(request.getDefaultReorderLevel());
         item.setUnitPrice(request.getUnitPrice());
 
         return itemProductRepository.save(item);
     }
 
     public List<ItemProduct> getLowStockItems() {
-        return itemProductRepository.findLowStockItems();
+        return itemProductRepository.findAllLowStockItems();
     }
 }
