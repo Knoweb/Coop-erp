@@ -316,42 +316,27 @@ function StockLedgerPage() {
                 }}
               >
                 <TableRow>
-                  <TableCell sx={{ fontWeight: "bold", color: "#374151" }}>
-                    Item Name
-                  </TableCell>
-                  <TableCell sx={{ fontWeight: "bold", color: "#374151" }}>
-                    Category
-                  </TableCell>
-                  <TableCell sx={{ fontWeight: "bold", color: "#374151" }}>
-                    Current Qty
-                  </TableCell>
-                  <TableCell sx={{ fontWeight: "bold", color: "#374151" }}>
-                    Reorder Level
-                  </TableCell>
-                  <TableCell sx={{ fontWeight: "bold", color: "#374151" }}>
-                    Status
-                  </TableCell>
-                  <TableCell sx={{ fontWeight: "bold", color: "#374151" }}>
-                    Last Updated
-                  </TableCell>
+                  <TableCell sx={{ fontWeight: "bold", color: "#374151" }}>Product Code</TableCell>
+                  <TableCell sx={{ fontWeight: "bold", color: "#374151" }}>Product Name</TableCell>
+                  <TableCell sx={{ fontWeight: "bold", color: "#374151" }}>Current Quantity</TableCell>
+                  <TableCell sx={{ fontWeight: "bold", color: "#374151" }}>Reorder Level</TableCell>
+                  <TableCell sx={{ fontWeight: "bold", color: "#374151" }}>Unit Cost</TableCell>
+                  <TableCell sx={{ fontWeight: "bold", color: "#374151" }}>Selling Price</TableCell>
+                  <TableCell sx={{ fontWeight: "bold", color: "#374151" }}>Last Purchase Date</TableCell>
+                  <TableCell sx={{ fontWeight: "bold", color: "#374151" }}>Status</TableCell>
                 </TableRow>
               </TableHead>
 
               <TableBody>
                 {filteredStockLedgers.map((ledger) => (
                   <TableRow key={ledger.id}>
-                    <TableCell sx={{ fontWeight: "bold", color: "#111827" }}>
-                      {ledger.item.name}
-                    </TableCell>
-
                     <TableCell>{ledger.item.category}</TableCell>
-
-                    <TableCell sx={{ fontWeight: "bold", fontSize: "1.05rem" }}>
-                      {ledger.currentQty}
-                    </TableCell>
-
+                    <TableCell sx={{ fontWeight: "bold", color: "#111827" }}>{ledger.item.name}</TableCell>
+                    <TableCell sx={{ fontWeight: "bold", fontSize: "1.05rem" }}>{ledger.currentQty}</TableCell>
                     <TableCell>{ledger.item.reorderLevel}</TableCell>
-
+                    <TableCell>Rs. {ledger.item.unitPrice}</TableCell>
+                    <TableCell>Rs. {ledger.item.unitPrice}</TableCell>
+                    <TableCell>{formatDateTime(ledger.lastUpdated)}</TableCell>
                     <TableCell>
                       <Chip
                         label={getStockStatus(ledger)}
@@ -360,8 +345,6 @@ function StockLedgerPage() {
                         sx={{ fontWeight: "bold" }}
                       />
                     </TableCell>
-
-                    <TableCell>{formatDateTime(ledger.lastUpdated)}</TableCell>
                   </TableRow>
                 ))}
 

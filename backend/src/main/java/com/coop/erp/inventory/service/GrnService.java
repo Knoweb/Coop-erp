@@ -85,12 +85,15 @@ public class GrnService {
     }
 
     private void increaseStock(ItemProduct item, Integer quantity) {
-        StockLedger stockLedger = stockLedgerRepository.findByItemId(item.getId())
-                .orElseGet(() -> StockLedger.builder()
-                        .item(item)
-                        .currentQty(0)
-                        .lastUpdated(LocalDateTime.now())
-                        .build());
+        StockLedger stockLedger = stockLedgerRepository.findByItemIdAndShopIsNull(item.getId())
+                .orElseGet(() -> {
+                    StockLedger newStock = new StockLedger();
+                    newStock.setItem(item);
+                    newStock.setShop(null); // Admin stock
+                    newStock.setCurrentQty(0);
+                    newStock.setLastUpdated(LocalDateTime.now());
+                    return newStock;
+                });
 
         stockLedger.setCurrentQty(stockLedger.getCurrentQty() + quantity);
         stockLedger.setLastUpdated(LocalDateTime.now());

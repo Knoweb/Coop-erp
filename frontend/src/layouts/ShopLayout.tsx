@@ -16,17 +16,19 @@ function ShopLayout() {
   const navigate = useNavigate();
   const location = useLocation();
 
+  const role = localStorage.getItem("user_role");
+  
   const menuItems = [
     { label: "Dashboard", path: "/shop/dashboard" },
     { label: "Products", path: "/shop/products" },
     { label: "Stock / Inventory", path: "/shop/inventory" },
-    { label: "Purchases / GRN", path: "/shop/purchases" },
     { label: "Sales", path: "/shop/sales" },
-    { label: "Suppliers", path: "/shop/suppliers" },
-    { label: "Customers", path: "/shop/customers" },
-    { label: "Shop Users", path: "/shop/users" },
     { label: "Reports", path: "/shop/reports" },
   ];
+
+  if (role === 'ROLE_SHOP_ADMIN' || role === 'SHOP_ADMIN') {
+    menuItems.push({ label: "Shop Users", path: "/shop/users" });
+  }
 
   const isActive = (path: string) => {
     return location.pathname === path || location.pathname.startsWith(`${path}/`);

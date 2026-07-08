@@ -12,6 +12,8 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+import jakarta.servlet.http.HttpServletRequest;
+
 @RestController
 @RequestMapping("/api/v1/shop/stock")
 @RequiredArgsConstructor
@@ -19,32 +21,45 @@ public class StockLedgerController {
 
     private final StockLedgerService stockLedgerService;
 
+    private java.util.UUID getShopIdFromRequest(HttpServletRequest request) {
+        // If ADMIN, return null. If SHOP, return the shop ID.
+        String role = (String) request.getAttribute("role");
+        if (role != null && role.contains("ADMIN") && !role.contains("SHOP_ADMIN")) {
+            return null;
+        }
+        String shopIdStr = (String) request.getAttribute("shopId");
+        if (shopIdStr != null && !shopIdStr.isEmpty()) {
+            return java.util.UUID.fromString(shopIdStr);
+        }
+        return null;
+    }
+
     @GetMapping
-    public List<StockLedger> getAllStock() {
-        return stockLedgerService.getAllStock();
+    public List<StockLedger> getAllStock(HttpServletRequest request) {
+        return stockLedgerService.getAllStock(getShopIdFromRequest(request));
     }
 
     @GetMapping("/alerts")
-    public List<StockLedger> getLowStockAlerts() {
-        return stockLedgerService.getLowStockItems();
+    public List<StockLedger> getLowStockAlerts(HttpServletRequest request) {
+        return stockLedgerService.getLowStockItems(getShopIdFromRequest(request));
     }
 
     @GetMapping("/out-of-stock")
-    public List<StockLedger> getOutOfStockItems() {
-        return stockLedgerService.getOutOfStockItems();
+    public List<StockLedger> getOutOfStockItems(HttpServletRequest request) {
+        return stockLedgerService.getOutOfStockItems(getShopIdFromRequest(request));
     }
 
     @PatchMapping("/reduce")
     public StockReduceResponse reduceStock(
-            @Valid @RequestBody StockReduceRequest request
+            @Valid @RequestBody StockReduceRequest req, HttpServletRequest request
     ) {
-        return stockLedgerService.reduceStock(request);
+        return stockLedgerService.reduceStock(req, getShopIdFromRequest(request));
     }
 
     @PatchMapping("/adjust")
     public StockAdjustResponse adjustStock(
-            @Valid @RequestBody StockAdjustRequest request
+            @Valid @RequestBody StockAdjustRequest req, HttpServletRequest request
     ) {
-        return stockLedgerService.adjustStockToActualQuantity(request);
+        return stockLedgerService.adjustStockToActualQuantity(req, getShopIdFromRequest(request));
     }
 }

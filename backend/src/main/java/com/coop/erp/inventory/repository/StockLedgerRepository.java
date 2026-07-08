@@ -10,17 +10,25 @@ import java.util.UUID;
 
 public interface StockLedgerRepository extends JpaRepository<StockLedger, UUID> {
 
-    Optional<StockLedger> findByItemId(UUID itemId);
+    Optional<StockLedger> findByItemIdAndShopId(UUID itemId, UUID shopId);
+
+    Optional<StockLedger> findByItemIdAndShopIsNull(UUID itemId);
+
+    List<StockLedger> findByShopId(UUID shopId);
+
+    List<StockLedger> findByShopIsNull();
 
     @Query("""
            SELECT s FROM StockLedger s
            WHERE s.currentQty <= s.item.reorderLevel
+           AND (s.shop.id = :shopId OR (:shopId IS NULL AND s.shop IS NULL))
            """)
-    List<StockLedger> findLowStockItems();
+    List<StockLedger> findLowStockItems(UUID shopId);
 
     @Query("""
            SELECT s FROM StockLedger s
            WHERE s.currentQty = 0
+           AND (s.shop.id = :shopId OR (:shopId IS NULL AND s.shop IS NULL))
            """)
-    List<StockLedger> findOutOfStockItems();
+    List<StockLedger> findOutOfStockItems(UUID shopId);
 }

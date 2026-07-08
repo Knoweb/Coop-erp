@@ -23,6 +23,10 @@ public class StockLedger {
     @JoinColumn(name = "item_id", nullable = false)
     private ItemProduct item;
 
+    @ManyToOne
+    @JoinColumn(name = "shop_id")
+    private com.coop.erp.core.entity.Shop shop;
+
     @Column(name = "current_qty", nullable = false)
     private Integer currentQty = 0;
 

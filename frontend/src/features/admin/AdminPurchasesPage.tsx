@@ -91,7 +91,7 @@ const getMonthName = (date: Date) => {
   });
 };
 
-function GrnPage() {
+function AdminPurchasesPage() {
   const [suppliers, setSuppliers] = useState<Supplier[]>([]);
   const [items, setItems] = useState<ItemProduct[]>([]);
   const [grns, setGrns] = useState<GrnResponse[]>([]);
@@ -133,7 +133,7 @@ function GrnPage() {
   };
 
   const loadGrns = async () => {
-    const response = await api.get(`/shop/grn`);
+    const response = await api.get(`/admin/purchases`);
     const data: GrnResponse[] = response.data;
     
     // Sort GRNs so newest is at the top
@@ -150,7 +150,7 @@ function GrnPage() {
       await Promise.all([loadSuppliers(), loadItems(), loadGrns()]);
     } catch (err) {
       console.error(err);
-      setError("Failed to load GRN data. Check grocery shop service.");
+      setError("Failed to load GRN data. Check API.");
     } finally {
       setLoading(false);
     }
@@ -264,7 +264,7 @@ function GrnPage() {
     if (!validateForm()) return;
 
     try {
-      await api.post(`/shop/grn`, {
+      await api.post(`/admin/purchases`, {
         supplierId,
         invoiceNumber,
         invoiceDate,
@@ -278,10 +278,10 @@ function GrnPage() {
 
       resetForm();
       await loadPageData();
-      setMessage("GRN saved successfully. Stock updated.");
+      setMessage("Purchase saved successfully. Main shop stock updated.");
     } catch (err) {
       console.error(err);
-      setError("GRN save failed. Check backend API and selected data.");
+      setError("Purchase save failed. Check backend API and selected data.");
     }
   };
 
@@ -310,11 +310,11 @@ function GrnPage() {
   return (
     <Box>
       <Typography variant="h4" sx={{ fontWeight: "bold" }} gutterBottom>
-        GRN / Purchase Invoice
+        Purchases / GRN
       </Typography>
 
       <Typography color="text.secondary">
-        Record supplier purchase invoices and automatically increase item stock.
+        Record and review goods received into the main shop inventory.
       </Typography>
 
       <Card
@@ -327,11 +327,11 @@ function GrnPage() {
       >
         <CardContent sx={{ p: 3 }}>
           <Typography variant="h5" sx={{ fontWeight: "bold" }} gutterBottom>
-            Create New GRN
+            Create Purchase / GRN
           </Typography>
 
           <Typography color="text.secondary" sx={{ mb: 2 }}>
-            Select supplier, enter invoice details, and add received items.
+            Select supplier, enter purchase details, and add received items.
           </Typography>
 
           <Box component="form" onSubmit={handleCreateGrn}>
@@ -360,15 +360,15 @@ function GrnPage() {
               </TextField>
 
               <TextField
-                label="Invoice / Delivery Note No"
+                label="GRN/Purchase Number"
                 fullWidth
                 value={invoiceNumber}
                 onChange={(e) => setInvoiceNumber(e.target.value)}
-                placeholder="Example: INV-1001"
+                placeholder="Example: GRN-1001"
               />
 
               <TextField
-                label="Invoice Date"
+                label="Purchase Date"
                 type="date"
                 fullWidth
                 value={invoiceDate}
@@ -381,7 +381,7 @@ function GrnPage() {
               />
 
               <TextField
-                label="Remarks"
+                label="Notes"
                 fullWidth
                 value={remarks}
                 onChange={(e) => setRemarks(e.target.value)}
@@ -409,7 +409,7 @@ function GrnPage() {
                 startIcon={<AddIcon />}
                 onClick={handleAddLineItem}
               >
-                Add Item Row
+                Add Item
               </Button>
             </Box>
 
@@ -417,9 +417,9 @@ function GrnPage() {
               <Table>
                 <TableHead>
                   <TableRow>
-                    <TableCell>Item</TableCell>
+                    <TableCell>Product</TableCell>
                     <TableCell>Quantity</TableCell>
-                    <TableCell>Unit Price</TableCell>
+                    <TableCell>Unit Cost</TableCell>
                     <TableCell>Line Total</TableCell>
                     <TableCell>Remove</TableCell>
                   </TableRow>
@@ -496,7 +496,7 @@ function GrnPage() {
               }}
             >
               <Typography variant="h5" sx={{ fontWeight: "bold" }}>
-                Total: Rs. {formatMoney(calculateGrandTotal())}
+                Total Amount: Rs. {formatMoney(calculateGrandTotal())}
               </Typography>
             </Box>
 
@@ -508,7 +508,7 @@ function GrnPage() {
               }}
             >
               <Button type="submit" variant="contained" size="large">
-                Save GRN
+                Record Purchase
               </Button>
             </Box>
           </Box>
@@ -527,7 +527,7 @@ function GrnPage() {
           }}
         >
           <Typography variant="h5" sx={{ fontWeight: "bold" }}>
-            GRN History - {selectedMonthName}
+            Purchase History - {selectedMonthName}
           </Typography>
 
           <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap" }}>
@@ -542,54 +542,60 @@ function GrnPage() {
         </Box>
 
         {loading ? (
-          <Typography>Loading GRN records...</Typography>
+          <Typography>Loading Purchase records...</Typography>
         ) : (
           <Box sx={{ overflowX: "auto" }}>
             <Table>
               <TableHead sx={{ backgroundColor: "#f3f4f6", borderBottom: "2px solid #e5e7eb" }}>
                 <TableRow>
+                  <TableCell sx={{ fontWeight: "bold", color: "#374151" }}>GRN Number</TableCell>
                   <TableCell sx={{ fontWeight: "bold", color: "#374151" }}>Date</TableCell>
                   <TableCell sx={{ fontWeight: "bold", color: "#374151" }}>Supplier</TableCell>
-                  <TableCell sx={{ fontWeight: "bold", color: "#374151" }}>Invoice No</TableCell>
+                  <TableCell sx={{ fontWeight: "bold", color: "#374151" }}>Items Count</TableCell>
+                  <TableCell sx={{ fontWeight: "bold", color: "#374151" }}>Total Quantity</TableCell>
                   <TableCell sx={{ fontWeight: "bold", color: "#374151" }}>Total Amount</TableCell>
-                  <TableCell sx={{ fontWeight: "bold", color: "#374151" }}>Remarks</TableCell>
-                  <TableCell sx={{ fontWeight: "bold", color: "#374151" }}>View</TableCell>
+                  <TableCell sx={{ fontWeight: "bold", color: "#374151" }}>View Details</TableCell>
                 </TableRow>
               </TableHead>
 
               <TableBody>
-                {selectedMonthGrns.map((grn) => (
-                  <TableRow key={grn.id}>
-                    <TableCell>{grn.invoiceDate}</TableCell>
+                {selectedMonthGrns.map((grn) => {
+                  const itemsCount = grn.items.length;
+                  const totalQty = grn.items.reduce((sum, item) => sum + item.quantity, 0);
 
-                    <TableCell sx={{ fontWeight: "bold", color: "#111827" }}>
-                      {grn.supplierName}
-                    </TableCell>
+                  return (
+                    <TableRow key={grn.id}>
+                      <TableCell>{grn.invoiceNumber || "-"}</TableCell>
+                      <TableCell>{grn.invoiceDate}</TableCell>
 
-                    <TableCell>{grn.invoiceNumber || "-"}</TableCell>
+                      <TableCell sx={{ fontWeight: "bold", color: "#111827" }}>
+                        {grn.supplierName}
+                      </TableCell>
 
-                    <TableCell sx={{ fontWeight: "bold", fontSize: "1rem" }}>
-                      Rs. {formatMoney(grn.totalAmount)}
-                    </TableCell>
+                      <TableCell>{itemsCount}</TableCell>
+                      <TableCell>{totalQty}</TableCell>
 
-                    <TableCell>{grn.remarks || "-"}</TableCell>
-                    
-                    <TableCell>
-                      <Button
-                        variant="contained"
-                        size="small"
-                        onClick={() => setSelectedGrn(grn)}
-                      >
-                        View
-                      </Button>
-                    </TableCell>
-                  </TableRow>
-                ))}
+                      <TableCell sx={{ fontWeight: "bold", fontSize: "1rem" }}>
+                        Rs. {formatMoney(grn.totalAmount)}
+                      </TableCell>
+                      
+                      <TableCell>
+                        <Button
+                          variant="contained"
+                          size="small"
+                          onClick={() => setSelectedGrn(grn)}
+                        >
+                          View Details
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
 
                 {selectedMonthGrns.length === 0 && (
                   <TableRow>
-                    <TableCell colSpan={6} align="center" sx={{ py: 3, color: "text.secondary" }}>
-                      No GRN records found for {selectedMonthName}
+                    <TableCell colSpan={7} align="center" sx={{ py: 3, color: "text.secondary" }}>
+                      No Purchase records found for {selectedMonthName}
                     </TableCell>
                   </TableRow>
                 )}
@@ -605,25 +611,24 @@ function GrnPage() {
         fullWidth
         maxWidth="md"
       >
-        <DialogTitle sx={{ fontWeight: "bold" }}>GRN Details</DialogTitle>
+        <DialogTitle sx={{ fontWeight: "bold" }}>Purchase Details</DialogTitle>
 
         <DialogContent>
           {selectedGrn && (
             <Box sx={{ mt: 1 }}>
               <Typography>
+                <strong>GRN Number:</strong> {selectedGrn.invoiceNumber || "-"}
+              </Typography>
+              <Typography>
                 <strong>Supplier:</strong> {selectedGrn.supplierName}
               </Typography>
 
               <Typography>
-                <strong>Invoice No:</strong> {selectedGrn.invoiceNumber || "-"}
+                <strong>Date:</strong> {selectedGrn.invoiceDate}
               </Typography>
 
               <Typography>
-                <strong>Invoice Date:</strong> {selectedGrn.invoiceDate}
-              </Typography>
-
-              <Typography>
-                <strong>Remarks:</strong> {selectedGrn.remarks || "-"}
+                <strong>Notes:</strong> {selectedGrn.remarks || "-"}
               </Typography>
 
               <Divider sx={{ my: 2 }} />
@@ -631,9 +636,9 @@ function GrnPage() {
               <Table>
                 <TableHead>
                   <TableRow>
-                    <TableCell>Item</TableCell>
+                    <TableCell>Product</TableCell>
                     <TableCell>Quantity</TableCell>
-                    <TableCell>Unit Price</TableCell>
+                    <TableCell>Unit Cost</TableCell>
                     <TableCell>Line Total</TableCell>
                   </TableRow>
                 </TableHead>
@@ -652,7 +657,7 @@ function GrnPage() {
 
               <Box sx={{ display: "flex", justifyContent: "flex-end", mt: 2 }}>
                 <Typography variant="h6" sx={{ fontWeight: "bold" }}>
-                  Total: Rs. {formatMoney(selectedGrn.totalAmount)}
+                  Total Amount: Rs. {formatMoney(selectedGrn.totalAmount)}
                 </Typography>
               </Box>
             </Box>
@@ -687,4 +692,4 @@ function GrnPage() {
   );
 }
 
-export default GrnPage;
+export default AdminPurchasesPage;

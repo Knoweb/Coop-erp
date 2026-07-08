@@ -18,21 +18,30 @@ public class StockLedgerService {
 
     private final StockLedgerRepository stockLedgerRepository;
 
-    public List<StockLedger> getAllStock() {
-        return stockLedgerRepository.findAll();
+    public List<StockLedger> getAllStock(java.util.UUID shopId) {
+        if (shopId != null) {
+            return stockLedgerRepository.findByShopId(shopId);
+        }
+        return stockLedgerRepository.findByShopIsNull();
     }
 
-    public List<StockLedger> getLowStockItems() {
-        return stockLedgerRepository.findLowStockItems();
+    public List<StockLedger> getLowStockItems(java.util.UUID shopId) {
+        return stockLedgerRepository.findLowStockItems(shopId);
     }
 
-    public List<StockLedger> getOutOfStockItems() {
-        return stockLedgerRepository.findOutOfStockItems();
+    public List<StockLedger> getOutOfStockItems(java.util.UUID shopId) {
+        return stockLedgerRepository.findOutOfStockItems(shopId);
     }
 
-    public StockReduceResponse reduceStock(StockReduceRequest request) {
-        StockLedger stockLedger = stockLedgerRepository.findByItemId(request.getItemId())
-                .orElseThrow(() -> new RuntimeException("Stock record not found for selected item"));
+    public StockReduceResponse reduceStock(StockReduceRequest request, java.util.UUID shopId) {
+        StockLedger stockLedger = stockLedgerRepository.findByItemIdAndShopId(request.getItemId(), shopId)
+                .orElseGet(() -> {
+                    if (shopId == null) {
+                        return stockLedgerRepository.findByItemIdAndShopIsNull(request.getItemId())
+                                .orElseThrow(() -> new RuntimeException("Stock record not found for selected item"));
+                    }
+                    throw new RuntimeException("Stock record not found for selected item");
+                });
 
         Integer previousQuantity = stockLedger.getCurrentQty();
 
@@ -59,9 +68,15 @@ public class StockLedgerService {
                 .build();
     }
 
-    public StockAdjustResponse adjustStockToActualQuantity(StockAdjustRequest request) {
-        StockLedger stockLedger = stockLedgerRepository.findByItemId(request.getItemId())
-                .orElseThrow(() -> new RuntimeException("Stock record not found for selected item"));
+    public StockAdjustResponse adjustStockToActualQuantity(StockAdjustRequest request, java.util.UUID shopId) {
+        StockLedger stockLedger = stockLedgerRepository.findByItemIdAndShopId(request.getItemId(), shopId)
+                .orElseGet(() -> {
+                    if (shopId == null) {
+                        return stockLedgerRepository.findByItemIdAndShopIsNull(request.getItemId())
+                                .orElseThrow(() -> new RuntimeException("Stock record not found for selected item"));
+                    }
+                    throw new RuntimeException("Stock record not found for selected item");
+                });
 
         Integer previousQuantity = stockLedger.getCurrentQty();
         Integer actualQuantity = request.getActualQuantity();

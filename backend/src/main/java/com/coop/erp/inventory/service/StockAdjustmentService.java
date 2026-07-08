@@ -28,7 +28,7 @@ public class StockAdjustmentService {
         ItemProduct item = itemProductRepository.findById(request.getItemId())
                 .orElseThrow(() -> new RuntimeException("Item not found"));
 
-        StockLedger stockLedger = stockLedgerRepository.findByItemId(request.getItemId())
+        StockLedger stockLedger = stockLedgerRepository.findByItemIdAndShopIsNull(request.getItemId())
                 .orElseThrow(() -> new RuntimeException("Stock record not found for selected item"));
 
         Integer previousQty = stockLedger.getCurrentQty();

@@ -1,0 +1,634 @@
+import { useEffect, useState } from "react";
+import {
+  Alert,
+  Autocomplete,
+  Box,
+  Button,
+  Card,
+  CardContent,
+  Chip,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
+  Divider,
+  IconButton,
+  Paper,
+  Snackbar,
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableRow,
+  TextField,
+  Typography,
+  ToggleButton,
+  ToggleButtonGroup
+} from "@mui/material";
+import DeleteIcon from "@mui/icons-material/Delete";
+import AddIcon from "@mui/icons-material/Add";
+import api from "../../api/axiosConfig";
+
+type SaleItemRequest = {
+  productId: string;
+  quantity: number;
+  unitPrice: number;
+  discountPercentage: number;
+};
+
+type SaleRequest = {
+  saleType: "CUSTOMER" | "SHOP";
+  targetShopId?: string;
+  items: SaleItemRequest[];
+};
+
+type SaleResponse = {
+  id: string;
+  saleNumber: string;
+  saleType: string;
+  targetShopName?: string;
+  subtotal: number;
+  totalDiscount: number;
+  totalAmount: number;
+  notes?: string;
+  saleDate: string;
+  createdBy: string;
+  items: any[];
+};
+
+type Shop = {
+  id: string;
+  name: string;
+};
+
+type Product = {
+  id: string;
+  name: string;
+  unitPrice: number;
+  currentQty: number; // For Admin stock or Shop stock depending on who is logged in
+};
+
+const formatMoney = (value: number | string | undefined) => {
+  return Number(value || 0).toLocaleString("en-LK", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
+};
+
+function SalesPage() {
+  const role = localStorage.getItem("user_role");
+  const isAdmin = role === "ROLE_ADMIN" || role === "ADMIN";
+
+  const [salesList, setSalesList] = useState<SaleResponse[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [message, setMessage] = useState("");
+  const [error, setError] = useState("");
+
+  const [saleType, setSaleType] = useState<"CUSTOMER" | "SHOP">("CUSTOMER");
+  const [targetShopId, setTargetShopId] = useState("");
+
+  const [lineItems, setLineItems] = useState<any[]>([
+    { productId: "", quantity: "", unitPrice: "", discountPercentage: "" }
+  ]);
+
+  const [shops, setShops] = useState<Shop[]>([]);
+  const [products, setProducts] = useState<Product[]>([]);
+  const [selectedSale, setSelectedSale] = useState<SaleResponse | null>(null);
+
+  const loadData = async () => {
+    try {
+      setLoading(true);
+      const url = isAdmin ? "/admin/sales" : "/shop/sales";
+      const res = await api.get(url);
+
+      const sortedSales = res.data.sort((a: any, b: any) =>
+        new Date(b.saleDate).getTime() - new Date(a.saleDate).getTime()
+      );
+      setSalesList(sortedSales);
+
+      if (isAdmin) {
+        const shopsRes = await api.get("/admin/shops");
+        setShops(shopsRes.data);
+      }
+
+      // To get available products with stock:
+      const stockRes = await api.get("/shop/stock");
+
+      const availableProducts = stockRes.data.map((ledger: any) => ({
+        id: ledger.item.id,
+        name: ledger.item.name,
+        unitPrice: ledger.item.unitPrice,
+        currentQty: ledger.currentQty
+      }));
+
+      setProducts(availableProducts);
+
+    } catch (err) {
+      console.error(err);
+      setError("Failed to load sales data.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadData();
+  }, []);
+
+  const handleSaleTypeChange = (
+    _event: React.MouseEvent<HTMLElement>,
+    newSaleType: "CUSTOMER" | "SHOP",
+  ) => {
+    if (newSaleType !== null) {
+      setSaleType(newSaleType);
+      if (newSaleType === "CUSTOMER") {
+        setTargetShopId("");
+      }
+    }
+  };
+
+  const handleAddLineItem = () => {
+    setLineItems((prev) => [
+      ...prev,
+      { productId: "", quantity: "", unitPrice: "", discountPercentage: "" }
+    ]);
+  };
+
+  const handleRemoveLineItem = (index: number) => {
+    if (lineItems.length === 1) {
+      setError("At least one item is required.");
+      return;
+    }
+    setLineItems((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  const handleLineItemChange = (index: number, field: string, value: string) => {
+    setLineItems((prev) => {
+      const updated = [...prev];
+      updated[index] = { ...updated[index], [field]: value };
+
+      if (field === "productId") {
+        const prod = products.find(p => p.id === value);
+        if (prod) {
+          updated[index].unitPrice = String(prod.unitPrice);
+        }
+      }
+      return updated;
+    });
+  };
+
+  const calculateLineSubtotal = (item: any) => {
+    return Number(item.quantity || 0) * Number(item.unitPrice || 0);
+  };
+
+  const calculateLineDiscount = (item: any) => {
+    const sub = calculateLineSubtotal(item);
+    return sub * (Number(item.discountPercentage || 0) / 100);
+  };
+
+  const calculateLineTotal = (item: any) => {
+    return calculateLineSubtotal(item) - calculateLineDiscount(item);
+  };
+
+  const calculateSubtotal = () => {
+    return lineItems.reduce((acc, item) => acc + calculateLineSubtotal(item), 0);
+  };
+
+  const calculateTotalDiscount = () => {
+    return lineItems.reduce((acc, item) => acc + calculateLineDiscount(item), 0);
+  };
+
+  const calculateGrandTotal = () => {
+    return calculateSubtotal() - calculateTotalDiscount();
+  };
+
+  const resetForm = () => {
+    setSaleType("CUSTOMER");
+    setTargetShopId("");
+    setLineItems([{ productId: "", quantity: "", unitPrice: "", discountPercentage: "" }]);
+  };
+
+  const isFormValid = () => {
+    if (isAdmin && saleType === "SHOP" && !targetShopId) {
+      return false;
+    }
+    for (const item of lineItems) {
+      if (!item.productId || Number(item.quantity) <= 0 || Number(item.unitPrice) < 0) {
+        return false;
+      }
+      const prod = products.find(p => p.id === item.productId);
+      if (prod && Number(item.quantity) > prod.currentQty) {
+        return false;
+      }
+    }
+    return true;
+  };
+
+  const handleRecordSale = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (!isFormValid()) {
+      setError("Please check your inputs (missing shop, missing product, or quantity exceeds stock).");
+      return;
+    }
+
+    setSubmitting(true);
+    const payload: SaleRequest = {
+      saleType: isAdmin ? saleType : "CUSTOMER",
+      targetShopId: isAdmin && saleType === "SHOP" ? targetShopId : undefined,
+      items: lineItems.map(item => ({
+        productId: item.productId,
+        quantity: Number(item.quantity),
+        unitPrice: Number(item.unitPrice),
+        discountPercentage: Number(item.discountPercentage || 0)
+      }))
+    };
+
+    try {
+      const url = isAdmin ? "/admin/sales" : "/shop/sales";
+      await api.post(url, payload);
+      setMessage("Sale recorded successfully.");
+      resetForm();
+      loadData();
+    } catch (err: any) {
+      console.error(err);
+      setError(err.response?.data?.message || "Failed to record sale. Check stock levels.");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  return (
+    <Box>
+      <Box sx={{ mb: 4 }}>
+        <Typography variant="h4" sx={{ fontWeight: "bold" }} gutterBottom>
+          Create Sale Order
+        </Typography>
+        <Typography color="text.secondary">
+          Create and issue a new sale from {isAdmin ? "main shop" : "shop"} inventory.
+        </Typography>
+      </Box>
+
+      {isAdmin && (
+        <Paper
+          elevation={0}
+          sx={{
+            p: 1.5,
+            mb: 3,
+            display: "inline-flex",
+            borderRadius: 2,
+            border: '1px solid #e5e7eb',
+            backgroundColor: '#fff'
+          }}
+        >
+          <ToggleButtonGroup
+            color="primary"
+            value={saleType}
+            exclusive
+            onChange={handleSaleTypeChange}
+            aria-label="Sale Type"
+            size="small"
+          >
+            <ToggleButton value="CUSTOMER" sx={{ px: 3, fontWeight: "bold", border: 'none', borderRadius: 1 }}>
+              Customer Sale
+            </ToggleButton>
+            <ToggleButton value="SHOP" sx={{ px: 3, fontWeight: "bold", border: 'none', borderRadius: 1 }}>
+              Shop Sale
+            </ToggleButton>
+          </ToggleButtonGroup>
+        </Paper>
+      )}
+
+      <Box component="form" onSubmit={handleRecordSale}>
+        <Box sx={{ 
+          display: 'flex', 
+          flexDirection: 'column', 
+          gap: 3,
+          width: '100%'
+        }}>
+            <Card sx={{ borderRadius: 3 }}>
+              <CardContent sx={{ p: 3 }}>
+                <Typography variant="h6" sx={{ fontWeight: "bold", mb: 3 }}>
+                  {saleType === "CUSTOMER" ? "Customer Sale Information" : "Shop Sale Information"}
+                </Typography>
+
+                <Box sx={{ display: "grid", gap: 3, gridTemplateColumns: { xs: "1fr", sm: "1fr 1fr" } }}>
+                  {isAdmin && saleType === "SHOP" && (
+                    <Box>
+                      <Autocomplete
+                        options={shops}
+                        getOptionLabel={(option) => option.name}
+                        value={shops.find(s => s.id === targetShopId) || null}
+                        onChange={(_, newValue) => setTargetShopId(newValue ? newValue.id : "")}
+                        renderInput={(params) => (
+                          <TextField
+                            {...params}
+                            label="Search and select target shop"
+                            fullWidth
+                            required
+                          />
+                        )}
+                        noOptionsText="No shops found"
+                      />
+                      {targetShopId && (
+                        <Typography variant="caption" color="primary" sx={{ mt: 1, display: 'block' }}>
+                          Goods will be transferred from Main Shop inventory to {shops.find(s => s.id === targetShopId)?.name}.
+                        </Typography>
+                      )}
+                    </Box>
+                  )}
+                  <TextField
+                    label="Sale Date"
+                    type="date"
+                    fullWidth
+                    value={new Date().toISOString().split("T")[0]}
+                    disabled
+                  />
+                </Box>
+
+                <Divider sx={{ my: 4 }} />
+
+                <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 2 }}>
+                  <Typography variant="h6" sx={{ fontWeight: "bold" }}>Items</Typography>
+                  <Button variant="outlined" startIcon={<AddIcon />} onClick={handleAddLineItem}>
+                    Add Item
+                  </Button>
+                </Box>
+
+                <Box sx={{ overflowX: "auto", maxWidth: "100%" }}>
+                  <Table size="small" sx={{ minWidth: 1050 }}>
+                    <TableHead>
+                      <TableRow>
+                        <TableCell sx={{ minWidth: 300, fontWeight: "bold" }}>Product / Item</TableCell>
+                        <TableCell sx={{ minWidth: 120, fontWeight: "bold" }}>Available Stock</TableCell>
+                        <TableCell sx={{ minWidth: 140, fontWeight: "bold" }}>Quantity</TableCell>
+                        <TableCell sx={{ minWidth: 150, fontWeight: "bold" }}>Unit Price</TableCell>
+                        <TableCell sx={{ minWidth: 110, fontWeight: "bold" }}>Discount %</TableCell>
+                        <TableCell sx={{ minWidth: 180, fontWeight: "bold" }}>Amount</TableCell>
+                        <TableCell align="center" sx={{ minWidth: 70, fontWeight: "bold" }}>Action</TableCell>
+                      </TableRow>
+                    </TableHead>
+                    <TableBody>
+                      {lineItems.map((item, index) => {
+                        const prod = products.find(p => p.id === item.productId);
+                        return (
+                          <TableRow key={index}>
+                            <TableCell>
+                              <Autocomplete
+                                options={products}
+                                getOptionLabel={(option) => `${option.name} | Stock: ${option.currentQty} | Rs. ${option.unitPrice}`}
+                                value={prod || null}
+                                onChange={(_, newValue) => {
+                                  handleLineItemChange(index, "productId", newValue ? newValue.id : "");
+                                }}
+                                renderInput={(params) => (
+                                  <TextField
+                                    {...params}
+                                    placeholder="Search product by name or code"
+                                    size="small"
+                                    required
+                                  />
+                                )}
+                                noOptionsText="No products found"
+                              />
+                            </TableCell>
+                            <TableCell>
+                              {prod ? (
+                                <Chip
+                                  label={prod.currentQty}
+                                  color={prod.currentQty > 10 ? "success" : "error"}
+                                  size="small"
+                                  sx={{ fontWeight: "bold" }}
+                                />
+                              ) : "-"}
+                            </TableCell>
+                            <TableCell>
+                              <TextField
+                                type="number"
+                                fullWidth
+                                size="small"
+                                value={item.quantity}
+                                onChange={(e) => handleLineItemChange(index, "quantity", e.target.value)}
+                                slotProps={{ htmlInput: { min: 1 } }}
+                                required
+                              />
+                            </TableCell>
+                            <TableCell>
+                              <TextField
+                                type="number"
+                                fullWidth
+                                size="small"
+                                value={item.unitPrice}
+                                onChange={(e) => handleLineItemChange(index, "unitPrice", e.target.value)}
+                                slotProps={{ htmlInput: { min: 0, step: "0.01" } }}
+                                required
+                              />
+                            </TableCell>
+                            <TableCell>
+                              <TextField
+                                type="number"
+                                fullWidth
+                                size="small"
+                                value={item.discountPercentage}
+                                onChange={(e) => handleLineItemChange(index, "discountPercentage", e.target.value)}
+                                slotProps={{ htmlInput: { min: 0, max: 100 } }}
+                              />
+                            </TableCell>
+                            <TableCell sx={{ 
+                              minWidth: 180,
+                              maxWidth: 180,
+                              fontWeight: "bold", 
+                              wordBreak: "break-word", 
+                              overflowWrap: "anywhere",
+                              lineHeight: 1.3
+                            }}>
+                              Rs. {formatMoney(calculateLineTotal(item))}
+                            </TableCell>
+                            <TableCell align="center">
+                              <IconButton color="error" onClick={() => handleRemoveLineItem(index)} size="small">
+                                <DeleteIcon />
+                              </IconButton>
+                            </TableCell>
+                          </TableRow>
+                        );
+                      })}
+                    </TableBody>
+                  </Table>
+                </Box>
+
+                <Divider sx={{ my: 4 }} />
+
+                <Box sx={{ mt: 4, ml: "auto", width: { xs: "100%", md: 360 }, textAlign: "right" }}>
+                  <Box sx={{ display: "flex", justifyContent: "space-between", mb: 1.5, gap: 2 }}>
+                    <Typography color="text.secondary">Subtotal:</Typography>
+                    <Typography sx={{ fontWeight: "bold", wordBreak: "break-word" }}>Rs. {formatMoney(calculateSubtotal())}</Typography>
+                  </Box>
+                  <Box sx={{ display: "flex", justifyContent: "space-between", mb: 1.5, gap: 2 }}>
+                    <Typography color="text.secondary">Discount:</Typography>
+                    <Typography color="error" sx={{ fontWeight: "bold", wordBreak: "break-word" }}>- Rs. {formatMoney(calculateTotalDiscount())}</Typography>
+                  </Box>
+                  <Divider sx={{ my: 2 }} />
+                  <Box sx={{ display: "flex", justifyContent: "space-between", mb: 2, gap: 2, alignItems: "center" }}>
+                    <Typography sx={{ fontWeight: "bold" }}>Total Amount:</Typography>
+                    <Typography sx={{ fontSize: "1.5rem", fontWeight: 800, color: "#e11d1d", wordBreak: "break-word", overflowWrap: "anywhere", textAlign: "right" }}>
+                      Rs. {formatMoney(calculateGrandTotal())}
+                    </Typography>
+                  </Box>
+                  <Button
+                    type="submit"
+                    variant="contained"
+                    size="large"
+                    fullWidth
+                    disabled={!isFormValid() || submitting}
+                    sx={{ 
+                      py: 1.5, 
+                      fontWeight: "bold", 
+                      fontSize: "1.1rem", 
+                      mt: 2,
+                      backgroundColor: "#e11d1d",
+                      "&:hover": { backgroundColor: "#b91c1c" }
+                    }}
+                  >
+                    {submitting ? "RECORDING..." : (saleType === "CUSTOMER" ? "RECORD CUSTOMER SALE" : "RECORD SHOP SALE")}
+                  </Button>
+                </Box>
+              </CardContent>
+            </Card>
+        </Box>
+      </Box>
+
+      <Box sx={{ mt: 5 }}>
+        <Typography variant="h5" sx={{ fontWeight: "bold", mb: 3 }}>Sales History</Typography>
+
+        <Paper sx={{ p: 2, borderRadius: 3 }}>
+          {loading ? (
+            <Typography>Loading...</Typography>
+          ) : (
+            <Box sx={{ overflowX: "auto" }}>
+              <Table>
+                <TableHead sx={{ backgroundColor: "#f3f4f6" }}>
+                  <TableRow>
+                    <TableCell sx={{ fontWeight: "bold" }}>Sale Number</TableCell>
+                    <TableCell sx={{ fontWeight: "bold" }}>Date</TableCell>
+                    <TableCell sx={{ fontWeight: "bold" }}>Type</TableCell>
+                    <TableCell sx={{ fontWeight: "bold" }}>Target Shop</TableCell>
+                    <TableCell sx={{ fontWeight: "bold" }}>Total Amount</TableCell>
+                    <TableCell sx={{ fontWeight: "bold" }}>Created By</TableCell>
+                    <TableCell sx={{ fontWeight: "bold" }}>Actions</TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {salesList.map((sale) => (
+                    <TableRow key={sale.id}>
+                      <TableCell>{sale.saleNumber}</TableCell>
+                      <TableCell>{new Date(sale.saleDate).toLocaleDateString()}</TableCell>
+                      <TableCell>
+                        <Chip
+                          label={sale.saleType === "CUSTOMER" ? "Customer Sale" : "Shop Sale"}
+                          color={sale.saleType === "SHOP" ? "secondary" : "primary"}
+                          size="small"
+                        />
+                      </TableCell>
+                      <TableCell>{sale.targetShopName || "-"}</TableCell>
+                      <TableCell sx={{ fontWeight: "bold" }}>Rs. {formatMoney(sale.totalAmount)}</TableCell>
+                      <TableCell>{sale.createdBy}</TableCell>
+                      <TableCell>
+                        <Button size="small" variant="outlined" onClick={() => setSelectedSale(sale)}>
+                          View Details
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                  {salesList.length === 0 && (
+                    <TableRow>
+                      <TableCell colSpan={7} align="center" sx={{ py: 3 }}>No sales found.</TableCell>
+                    </TableRow>
+                  )}
+                </TableBody>
+              </Table>
+            </Box>
+          )}
+        </Paper>
+      </Box>
+
+      <Dialog open={!!selectedSale} onClose={() => setSelectedSale(null)} maxWidth="md" fullWidth>
+        <DialogTitle sx={{ fontWeight: "bold" }}>Sale Details - {selectedSale?.saleNumber}</DialogTitle>
+        <DialogContent dividers>
+          {selectedSale && (
+            <Box>
+              <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' }, gap: 2, mb: 3 }}>
+                <Box>
+                  <Typography variant="body2" color="text.secondary">Sale Type</Typography>
+                  <Typography variant="body1" sx={{ fontWeight: "bold" }}>
+                    {selectedSale.saleType === "CUSTOMER" ? "Customer Sale" : "Shop Sale"}
+                  </Typography>
+                </Box>
+                <Box>
+                  <Typography variant="body2" color="text.secondary">Date</Typography>
+                  <Typography variant="body1" sx={{ fontWeight: "bold" }}>
+                    {new Date(selectedSale.saleDate).toLocaleString()}
+                  </Typography>
+                </Box>
+                {selectedSale.saleType === "SHOP" && (
+                  <Box>
+                    <Typography variant="body2" color="text.secondary">Target Shop</Typography>
+                    <Typography variant="body1" sx={{ fontWeight: "bold" }}>{selectedSale.targetShopName}</Typography>
+                  </Box>
+                )}
+              </Box>
+
+              <Table size="small">
+                <TableHead sx={{ backgroundColor: "#f3f4f6" }}>
+                  <TableRow>
+                    <TableCell>Product</TableCell>
+                    <TableCell>Quantity</TableCell>
+                    <TableCell>Unit Price</TableCell>
+                    <TableCell>Discount</TableCell>
+                    <TableCell>Amount</TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {selectedSale.items.map((item, idx) => (
+                    <TableRow key={idx}>
+                      <TableCell>{item.productName}</TableCell>
+                      <TableCell>{item.quantity}</TableCell>
+                      <TableCell>Rs. {formatMoney(item.unitPrice)}</TableCell>
+                      <TableCell>
+                        {item.discountPercentage > 0 ? (
+                          <>
+                            {item.discountPercentage}% <br />
+                            <Typography variant="caption" color="error">(-Rs. {formatMoney(item.discountAmount)})</Typography>
+                          </>
+                        ) : "-"}
+                      </TableCell>
+                      <TableCell>Rs. {formatMoney(item.lineTotal)}</TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+
+              <Box sx={{ mt: 3, display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 1 }}>
+                <Typography>Subtotal: Rs. {formatMoney(selectedSale.subtotal)}</Typography>
+                <Typography color="error">Total Discount: -Rs. {formatMoney(selectedSale.totalDiscount)}</Typography>
+                <Typography variant="h6" sx={{ fontWeight: "bold" }}>Total: Rs. {formatMoney(selectedSale.totalAmount)}</Typography>
+              </Box>
+            </Box>
+          )}
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setSelectedSale(null)}>Close</Button>
+        </DialogActions>
+      </Dialog>
+
+      <Snackbar open={!!message} autoHideDuration={3000} onClose={() => setMessage("")}>
+        <Alert severity="success" onClose={() => setMessage("")}>{message}</Alert>
+      </Snackbar>
+      <Snackbar open={!!error} autoHideDuration={5000} onClose={() => setError("")}>
+        <Alert severity="error" onClose={() => setError("")}>{error}</Alert>
+      </Snackbar>
+    </Box>
+  );
+}
+
+export default SalesPage;

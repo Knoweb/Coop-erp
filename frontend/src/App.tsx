@@ -17,9 +17,9 @@ import SettingsPage from "./features/admin/SettingsPage";
 import GroceryShopDashboard from "./features/grocery-shop/GroceryShopDashboard";
 import SupplierPage from "./features/grocery-shop/SupplierPage";
 import ItemPage from "./features/grocery-shop/ItemPage";
-import GrnPage from "./features/grocery-shop/GrnPage";
+import AdminPurchasesPage from "./features/admin/AdminPurchasesPage";
 import StockLedgerPage from "./features/grocery-shop/StockLedgerPage";
-import DailySalesPage from "./features/grocery-shop/DailySalesPage";
+import SalesPage from "./features/grocery-shop/SalesPage";
 
 // --- UPGRADED: Role-Based Protected Route ---
 const ProtectedRoute = ({ allowedRoles }: { allowedRoles: string[] }) => {
@@ -74,8 +74,8 @@ function App() {
             <Route path="system-users" element={<SystemUsersPage />} />
             <Route path="products" element={<ItemPage />} />
             <Route path="inventory" element={<StockLedgerPage />} />
-            <Route path="purchases" element={<GrnPage />} />
-            <Route path="sales" element={<DailySalesPage />} />
+            <Route path="purchases" element={<AdminPurchasesPage />} />
+            <Route path="sales" element={<SalesPage />} />
             <Route path="suppliers" element={<SupplierPage />} />
             <Route path="customers" element={<div style={{padding: '20px'}}>Customers Module Coming Soon</div>} />
             <Route path="reports" element={<div style={{padding: '20px'}}>Reports Module Coming Soon</div>} />
@@ -89,9 +89,7 @@ function App() {
             <Route path="dashboard" element={<GroceryShopDashboard />} />
             <Route path="products" element={<ItemPage />} />
             <Route path="inventory" element={<StockLedgerPage />} />
-            <Route path="purchases" element={<GrnPage />} />
-            <Route path="sales" element={<DailySalesPage />} />
-            <Route path="suppliers" element={<SupplierPage />} />
+            <Route path="sales" element={<SalesPage />} />
             <Route path="customers" element={<div style={{padding: '20px'}}>Customers Module Coming Soon</div>} />
             <Route path="users" element={<ShopUsersPage />} />
             <Route path="reports" element={<div style={{padding: '20px'}}>Reports Module Coming Soon</div>} />

@@ -5,13 +5,15 @@ import com.coop.erp.inventory.dto.GrnResponse;
 import com.coop.erp.inventory.service.GrnService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/v1/shop/grn")
+@RequestMapping("/api/v1/admin/purchases")
 @RequiredArgsConstructor
+@PreAuthorize("hasAuthority('ADMIN')")
 public class GrnController {
 
     private final GrnService grnService;
