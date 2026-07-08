@@ -260,7 +260,7 @@ function SalesPage() {
   };
 
   return (
-    <Box>
+    <Box sx={{ width: "100%", maxWidth: 1400, mx: "auto", boxSizing: "border-box", overflowX: "hidden" }}>
       <Box sx={{ mb: 4 }}>
         <Typography variant="h4" sx={{ fontWeight: "bold" }} gutterBottom>
           Create Sale Order
@@ -349,112 +349,145 @@ function SalesPage() {
 
                 <Divider sx={{ my: 4 }} />
 
-                <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 2 }}>
+                <Box sx={{ display: "flex", flexWrap: "wrap", justifyContent: "space-between", alignItems: "center", mb: 3, gap: 2 }}>
                   <Typography variant="h6" sx={{ fontWeight: "bold" }}>Items</Typography>
-                  <Button variant="outlined" startIcon={<AddIcon />} onClick={handleAddLineItem}>
+                  <Button variant="outlined" startIcon={<AddIcon />} onClick={handleAddLineItem} sx={{ width: { xs: '100%', sm: 'auto' } }}>
                     Add Item
                   </Button>
                 </Box>
 
-                <Box sx={{ overflowX: "auto", maxWidth: "100%" }}>
-                  <Table size="small" sx={{ minWidth: 1050 }}>
-                    <TableHead>
-                      <TableRow>
-                        <TableCell sx={{ minWidth: 300, fontWeight: "bold" }}>Product / Item</TableCell>
-                        <TableCell sx={{ minWidth: 120, fontWeight: "bold" }}>Available Stock</TableCell>
-                        <TableCell sx={{ minWidth: 140, fontWeight: "bold" }}>Quantity</TableCell>
-                        <TableCell sx={{ minWidth: 150, fontWeight: "bold" }}>Unit Price</TableCell>
-                        <TableCell sx={{ minWidth: 110, fontWeight: "bold" }}>Discount %</TableCell>
-                        <TableCell sx={{ minWidth: 180, fontWeight: "bold" }}>Amount</TableCell>
-                        <TableCell align="center" sx={{ minWidth: 70, fontWeight: "bold" }}>Action</TableCell>
-                      </TableRow>
-                    </TableHead>
-                    <TableBody>
-                      {lineItems.map((item, index) => {
-                        const prod = products.find(p => p.id === item.productId);
-                        return (
-                          <TableRow key={index}>
-                            <TableCell>
-                              <Autocomplete
-                                options={products}
-                                getOptionLabel={(option) => `${option.name} | Stock: ${option.currentQty} | Rs. ${option.unitPrice}`}
-                                value={prod || null}
-                                onChange={(_, newValue) => {
-                                  handleLineItemChange(index, "productId", newValue ? newValue.id : "");
-                                }}
-                                renderInput={(params) => (
-                                  <TextField
-                                    {...params}
-                                    placeholder="Search product by name or code"
-                                    size="small"
-                                    required
-                                  />
-                                )}
-                                noOptionsText="No products found"
-                              />
-                            </TableCell>
-                            <TableCell>
-                              {prod ? (
-                                <Chip
-                                  label={prod.currentQty}
-                                  color={prod.currentQty > 10 ? "success" : "error"}
-                                  size="small"
-                                  sx={{ fontWeight: "bold" }}
-                                />
-                              ) : "-"}
-                            </TableCell>
-                            <TableCell>
+                <Box sx={{
+                  display: { xs: 'none', lg: 'grid' },
+                  gridTemplateColumns: 'minmax(250px, 2.5fr) 1fr 1fr 1fr 1fr 1.5fr auto',
+                  gap: 2,
+                  mb: 2,
+                  px: 1,
+                  alignItems: 'center'
+                }}>
+                  <Typography sx={{ fontWeight: 'bold' }}>Product / Item</Typography>
+                  <Typography sx={{ fontWeight: 'bold' }}>Available Stock</Typography>
+                  <Typography sx={{ fontWeight: 'bold' }}>Quantity</Typography>
+                  <Typography sx={{ fontWeight: 'bold' }}>Unit Price</Typography>
+                  <Typography sx={{ fontWeight: 'bold' }}>Discount %</Typography>
+                  <Typography sx={{ fontWeight: 'bold' }}>Amount</Typography>
+                  <Typography sx={{ fontWeight: 'bold', textAlign: 'center' }}>Action</Typography>
+                </Box>
+
+                <Box sx={{ display: 'flex', flexDirection: 'column', gap: { xs: 3, lg: 1 } }}>
+                  {lineItems.map((item, index) => {
+                    const prod = products.find(p => p.id === item.productId);
+                    return (
+                      <Box key={index} sx={{
+                        display: 'grid',
+                        gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr', lg: 'minmax(250px, 2.5fr) 1fr 1fr 1fr 1fr 1.5fr auto' },
+                        gap: 2,
+                        alignItems: { xs: 'flex-start', lg: 'center' },
+                        p: { xs: 2, lg: 1 },
+                        border: { xs: '1px solid #e5e7eb', lg: 'none' },
+                        borderRadius: 2,
+                        bgcolor: { xs: '#f9fafb', lg: 'transparent' },
+                        width: '100%',
+                        boxSizing: 'border-box'
+                      }}>
+                        
+                        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5, gridColumn: { xs: '1 / -1', sm: '1 / -1', lg: 'auto' } }}>
+                          <Typography sx={{ display: { xs: 'block', lg: 'none' }, fontWeight: 'bold', fontSize: '0.875rem' }}>Product / Item</Typography>
+                          <Autocomplete
+                            options={products}
+                            getOptionLabel={(option) => `${option.name} | Stock: ${option.currentQty} | Rs. ${option.unitPrice}`}
+                            value={prod || null}
+                            onChange={(_, newValue) => {
+                              handleLineItemChange(index, "productId", newValue ? newValue.id : "");
+                            }}
+                            renderInput={(params) => (
                               <TextField
-                                type="number"
-                                fullWidth
+                                {...params}
+                                placeholder="Search product by name or code"
                                 size="small"
-                                value={item.quantity}
-                                onChange={(e) => handleLineItemChange(index, "quantity", e.target.value)}
-                                slotProps={{ htmlInput: { min: 1 } }}
                                 required
-                              />
-                            </TableCell>
-                            <TableCell>
-                              <TextField
-                                type="number"
                                 fullWidth
-                                size="small"
-                                value={item.unitPrice}
-                                onChange={(e) => handleLineItemChange(index, "unitPrice", e.target.value)}
-                                slotProps={{ htmlInput: { min: 0, step: "0.01" } }}
-                                required
                               />
-                            </TableCell>
-                            <TableCell>
-                              <TextField
-                                type="number"
-                                fullWidth
-                                size="small"
-                                value={item.discountPercentage}
-                                onChange={(e) => handleLineItemChange(index, "discountPercentage", e.target.value)}
-                                slotProps={{ htmlInput: { min: 0, max: 100 } }}
-                              />
-                            </TableCell>
-                            <TableCell sx={{ 
-                              minWidth: 180,
-                              maxWidth: 180,
-                              fontWeight: "bold", 
-                              wordBreak: "break-word", 
-                              overflowWrap: "anywhere",
-                              lineHeight: 1.3
-                            }}>
-                              Rs. {formatMoney(calculateLineTotal(item))}
-                            </TableCell>
-                            <TableCell align="center">
-                              <IconButton color="error" onClick={() => handleRemoveLineItem(index)} size="small">
-                                <DeleteIcon />
-                              </IconButton>
-                            </TableCell>
-                          </TableRow>
-                        );
-                      })}
-                    </TableBody>
-                  </Table>
+                            )}
+                            noOptionsText="No products found"
+                            sx={{ width: '100%' }}
+                          />
+                        </Box>
+
+                        <Box sx={{ display: 'flex', flexDirection: { xs: 'row', lg: 'column' }, justifyContent: { xs: 'space-between', lg: 'center' }, alignItems: { xs: 'center', lg: 'flex-start' } }}>
+                          <Typography sx={{ display: { xs: 'block', lg: 'none' }, fontWeight: 'bold', fontSize: '0.875rem' }}>Available Stock</Typography>
+                          {prod ? (
+                            <Chip
+                              label={prod.currentQty}
+                              color={prod.currentQty > 10 ? "success" : "error"}
+                              size="small"
+                              sx={{ fontWeight: "bold" }}
+                            />
+                          ) : <Typography color="text.secondary">-</Typography>}
+                        </Box>
+
+                        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
+                          <Typography sx={{ display: { xs: 'block', lg: 'none' }, fontWeight: 'bold', fontSize: '0.875rem' }}>Quantity</Typography>
+                          <TextField
+                            type="number"
+                            fullWidth
+                            size="small"
+                            value={item.quantity}
+                            onChange={(e) => handleLineItemChange(index, "quantity", e.target.value)}
+                            slotProps={{ htmlInput: { min: 1 } }}
+                            required
+                          />
+                        </Box>
+
+                        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
+                          <Typography sx={{ display: { xs: 'block', lg: 'none' }, fontWeight: 'bold', fontSize: '0.875rem' }}>Unit Price</Typography>
+                          <TextField
+                            type="number"
+                            fullWidth
+                            size="small"
+                            value={item.unitPrice}
+                            onChange={(e) => handleLineItemChange(index, "unitPrice", e.target.value)}
+                            slotProps={{ htmlInput: { min: 0, step: "0.01" } }}
+                            required
+                          />
+                        </Box>
+
+                        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
+                          <Typography sx={{ display: { xs: 'block', lg: 'none' }, fontWeight: 'bold', fontSize: '0.875rem' }}>Discount %</Typography>
+                          <TextField
+                            type="number"
+                            fullWidth
+                            size="small"
+                            value={item.discountPercentage}
+                            onChange={(e) => handleLineItemChange(index, "discountPercentage", e.target.value)}
+                            slotProps={{ htmlInput: { min: 0, max: 100 } }}
+                          />
+                        </Box>
+
+                        <Box sx={{ display: 'flex', flexDirection: { xs: 'row', lg: 'column' }, justifyContent: { xs: 'space-between', lg: 'center' }, alignItems: { xs: 'center', lg: 'flex-start' }, wordBreak: "break-word" }}>
+                          <Typography sx={{ display: { xs: 'block', lg: 'none' }, fontWeight: 'bold', fontSize: '0.875rem' }}>Amount</Typography>
+                          <Typography sx={{ fontWeight: 'bold', lineHeight: 1.3, color: '#111827' }}>
+                            Rs. {formatMoney(calculateLineTotal(item))}
+                          </Typography>
+                        </Box>
+
+                        <Box sx={{ display: 'flex', justifyContent: { xs: 'center', lg: 'center' }, mt: { xs: 2, lg: 0 }, gridColumn: { xs: '1 / -1', sm: '1 / -1', lg: 'auto' } }}>
+                          <Button 
+                            color="error" 
+                            onClick={() => handleRemoveLineItem(index)}
+                            variant="outlined"
+                            sx={{ display: { xs: 'flex', lg: 'none' }, width: '100%' }}
+                            startIcon={<DeleteIcon />}
+                          >
+                            Remove Item
+                          </Button>
+                          <IconButton color="error" onClick={() => handleRemoveLineItem(index)} size="small" sx={{ display: { xs: 'none', lg: 'flex' } }}>
+                            <DeleteIcon />
+                          </IconButton>
+                        </Box>
+
+                      </Box>
+                    );
+                  })}
                 </Box>
 
                 <Divider sx={{ my: 4 }} />

@@ -11,4 +11,16 @@ import java.util.UUID;
 public interface SaleRepository extends JpaRepository<Sale, UUID> {
     List<Sale> findBySourceShopId(UUID shopId);
     List<Sale> findBySourceShopIsNull();
+    List<Sale> findByTargetShopId(UUID targetShopId);
+    java.util.Optional<Sale> findByIdAndTargetShopId(UUID id, UUID targetShopId);
+
+    @org.springframework.data.jpa.repository.Query("SELECT DISTINCT s FROM Sale s LEFT JOIN s.items si LEFT JOIN si.item i WHERE s.targetShop.id = :shopId AND " +
+            "(cast(:fromDate as java.time.LocalDateTime) IS NULL OR s.saleDate >= :fromDate) AND " +
+            "(cast(:toDate as java.time.LocalDateTime) IS NULL OR s.saleDate <= :toDate) AND " +
+            "(LOWER(s.saleNumber) LIKE LOWER(CONCAT('%', :search, '%')) OR LOWER(i.name) LIKE LOWER(CONCAT('%', :search, '%')))")
+    List<Sale> findPurchaseHistoryWithFilters(
+            @org.springframework.data.repository.query.Param("shopId") UUID shopId,
+            @org.springframework.data.repository.query.Param("fromDate") java.time.LocalDateTime fromDate,
+            @org.springframework.data.repository.query.Param("toDate") java.time.LocalDateTime toDate,
+            @org.springframework.data.repository.query.Param("search") String search);
 }

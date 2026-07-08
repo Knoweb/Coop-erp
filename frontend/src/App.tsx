@@ -20,6 +20,7 @@ import ItemPage from "./features/grocery-shop/ItemPage";
 import AdminPurchasesPage from "./features/admin/AdminPurchasesPage";
 import StockLedgerPage from "./features/grocery-shop/StockLedgerPage";
 import SalesPage from "./features/grocery-shop/SalesPage";
+import ShopPurchaseHistoryPage from "./features/grocery-shop/ShopPurchaseHistoryPage";
 
 // --- UPGRADED: Role-Based Protected Route ---
 const ProtectedRoute = ({ allowedRoles }: { allowedRoles: string[] }) => {
@@ -77,7 +78,6 @@ function App() {
             <Route path="purchases" element={<AdminPurchasesPage />} />
             <Route path="sales" element={<SalesPage />} />
             <Route path="suppliers" element={<SupplierPage />} />
-            <Route path="customers" element={<div style={{padding: '20px'}}>Customers Module Coming Soon</div>} />
             <Route path="reports" element={<div style={{padding: '20px'}}>Reports Module Coming Soon</div>} />
             <Route path="settings" element={<SettingsPage />} />
           </Route>
@@ -90,6 +90,7 @@ function App() {
             <Route path="products" element={<ItemPage />} />
             <Route path="inventory" element={<StockLedgerPage />} />
             <Route path="sales" element={<SalesPage />} />
+            <Route path="purchase-history" element={<ShopPurchaseHistoryPage />} />
             <Route path="customers" element={<div style={{padding: '20px'}}>Customers Module Coming Soon</div>} />
             <Route path="users" element={<ShopUsersPage />} />
             <Route path="reports" element={<div style={{padding: '20px'}}>Reports Module Coming Soon</div>} />

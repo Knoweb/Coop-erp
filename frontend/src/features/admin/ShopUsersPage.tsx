@@ -12,6 +12,8 @@ import type { Shop, UserResponse } from './services/shopAdminService';
 const ShopUsersPage: React.FC = () => {
     const [shops, setShops] = useState<Shop[]>([]);
     const [selectedShopId, setSelectedShopId] = useState<string>('');
+    const userRole = localStorage.getItem('user_role')?.replace(/^ROLE_/, '') || '';
+    const isAdmin = userRole === 'ADMIN';
     const [users, setUsers] = useState<UserResponse[]>([]);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
@@ -30,8 +32,10 @@ const ShopUsersPage: React.FC = () => {
     const fetchInitialData = async () => {
         setLoading(true);
         try {
-            const shopsData = await shopAdminService.getAllShops();
-            setShops(shopsData);
+            if (isAdmin) {
+                const shopsData = await shopAdminService.getAllShops();
+                setShops(shopsData);
+            }
             
             // If there's a shop, maybe default select it, or just fetch all users
             const usersData = await shopAdminService.getAllUsers();
@@ -124,19 +128,21 @@ const ShopUsersPage: React.FC = () => {
                     </Typography>
                 </Box>
                 <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
-                    <FormControl size="small" sx={{ minWidth: 200 }}>
-                        <InputLabel>Filter by Shop</InputLabel>
-                        <Select
-                            value={selectedShopId}
-                            label="Filter by Shop"
-                            onChange={handleShopSelect}
-                        >
-                            <MenuItem value=""><em>All Shops</em></MenuItem>
-                            {shops.map(s => (
-                                <MenuItem key={s.id} value={s.id}>{s.name}</MenuItem>
-                            ))}
-                        </Select>
-                    </FormControl>
+                    {isAdmin && (
+                        <FormControl size="small" sx={{ minWidth: 200 }}>
+                            <InputLabel>Filter by Shop</InputLabel>
+                            <Select
+                                value={selectedShopId}
+                                label="Filter by Shop"
+                                onChange={handleShopSelect}
+                            >
+                                <MenuItem value=""><em>All Shops</em></MenuItem>
+                                {shops.map(s => (
+                                    <MenuItem key={s.id} value={s.id}>{s.name}</MenuItem>
+                                ))}
+                            </Select>
+                        </FormControl>
+                    )}
                     <Button 
                         variant="outlined" 
                         startIcon={<RefreshIcon />} 
@@ -221,20 +227,22 @@ const ShopUsersPage: React.FC = () => {
             <Dialog open={open} onClose={handleClose} maxWidth="sm" fullWidth>
                 <DialogTitle>Add New Shop User</DialogTitle>
                 <DialogContent dividers>
-                    <FormControl fullWidth sx={{ mb: 2 }} margin="dense">
-                        <InputLabel>Shop Assignment</InputLabel>
-                        <Select
-                            name="shopId"
-                            value={formData.shopId}
-                            label="Shop Assignment"
-                            onChange={handleChange}
-                            required
-                        >
-                            {shops.map(s => (
-                                <MenuItem key={s.id} value={s.id}>{s.name}</MenuItem>
-                            ))}
-                        </Select>
-                    </FormControl>
+                    {isAdmin && (
+                        <FormControl fullWidth sx={{ mb: 2 }} margin="dense">
+                            <InputLabel>Shop Assignment</InputLabel>
+                            <Select
+                                name="shopId"
+                                value={formData.shopId}
+                                label="Shop Assignment"
+                                onChange={handleChange}
+                                required
+                            >
+                                {shops.map(s => (
+                                    <MenuItem key={s.id} value={s.id}>{s.name}</MenuItem>
+                                ))}
+                            </Select>
+                        </FormControl>
+                    )}
 
                     <TextField
                         margin="dense"
@@ -303,7 +311,7 @@ const ShopUsersPage: React.FC = () => {
                     <Button 
                         onClick={handleSubmit} 
                         variant="contained" 
-                        disabled={!formData.shopId || !formData.username || !formData.password}
+                        disabled={(isAdmin && !formData.shopId) || !formData.username || !formData.password}
                         sx={{ backgroundColor: '#FF5A00', '&:hover': { backgroundColor: '#e04e00' } }}
                     >
                         Create User

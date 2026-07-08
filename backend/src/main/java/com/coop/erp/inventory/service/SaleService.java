@@ -193,10 +193,24 @@ public class SaleService {
                 .collect(Collectors.toList());
     }
 
+    public List<SaleResponse> getShopPurchaseHistory(UUID shopId, LocalDateTime fromDate, LocalDateTime toDate, String search) {
+        String safeSearch = (search == null) ? "" : search;
+        return saleRepository.findPurchaseHistoryWithFilters(shopId, fromDate, toDate, safeSearch).stream()
+                .map(this::mapToResponse)
+                .collect(Collectors.toList());
+    }
+
+    public SaleResponse getShopPurchaseHistoryById(UUID id, UUID shopId) {
+        return saleRepository.findByIdAndTargetShopId(id, shopId)
+                .map(this::mapToResponse)
+                .orElseThrow(() -> new IllegalArgumentException("Purchase history not found."));
+    }
+
     private SaleResponse mapToResponse(Sale sale) {
         List<SaleResponse.SaleItemResponse> itemResponses = sale.getItems().stream().map(i -> 
                 SaleResponse.SaleItemResponse.builder()
                         .productId(i.getItem().getId())
+                        .productCode(i.getItem().getId().toString().substring(0, 8).toUpperCase())
                         .productName(i.getItem().getName())
                         .quantity(i.getQuantity())
                         .unitPrice(i.getUnitPrice())
@@ -205,6 +219,8 @@ public class SaleService {
                         .lineTotal(i.getLineTotal())
                         .build()
         ).collect(Collectors.toList());
+
+        Integer totalQuantity = sale.getItems().stream().mapToInt(SaleItem::getQuantity).sum();
 
         return SaleResponse.builder()
                 .id(sale.getId())
@@ -217,6 +233,10 @@ public class SaleService {
                 .notes(sale.getNotes())
                 .saleDate(sale.getSaleDate())
                 .createdBy(sale.getCreatedBy())
+                .sourceName(sale.getSourceShop() == null ? "Main Shop" : sale.getSourceShop().getName())
+                .status(sale.getTargetShop() != null ? "RECEIVED" : "COMPLETED")
+                .itemsCount(sale.getItems().size())
+                .totalQuantity(totalQuantity)
                 .items(itemResponses)
                 .build();
     }

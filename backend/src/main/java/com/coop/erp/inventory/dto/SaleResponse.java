@@ -22,12 +22,17 @@ public class SaleResponse {
     private String notes;
     private LocalDateTime saleDate;
     private String createdBy;
+    private String sourceName;
+    private String status;
+    private Integer itemsCount;
+    private Integer totalQuantity;
     private List<SaleItemResponse> items;
 
     @Data
     @Builder
     public static class SaleItemResponse {
         private UUID productId;
+        private String productCode;
         private String productName;
         private Integer quantity;
         private BigDecimal unitPrice;

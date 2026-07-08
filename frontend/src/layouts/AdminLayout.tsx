@@ -17,7 +17,6 @@ function AdminLayout() {
     { label: "Purchases / GRN", path: "/admin/purchases" },
     { label: "Sales", path: "/admin/sales" },
     { label: "Suppliers", path: "/admin/suppliers" },
-    { label: "Customers", path: "/admin/customers" },
     { label: "Reports", path: "/admin/reports" },
   ];
 
