@@ -7,7 +7,7 @@ spring:
   datasource:
     url: jdbc:postgresql://localhost:5432/coop_erp
     username: postgres
-    password: password # Replace with actual local DB password if different
+    password: postgres # Replace with actual local DB password if different
     driver-class-name: org.postgresql.Driver
   jpa:
     hibernate:
