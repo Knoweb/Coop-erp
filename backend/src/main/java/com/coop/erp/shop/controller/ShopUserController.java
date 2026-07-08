@@ -24,6 +24,9 @@ public class ShopUserController {
     @Autowired
     private PasswordEncoder passwordEncoder;
 
+    @Autowired
+    private com.coop.erp.admin.service.UserService userService;
+
     @PostMapping
     public User createUser(@RequestBody ShopUserCreationRequest request, HttpServletRequest servletRequest) {
         String shopIdStr = (String) servletRequest.getAttribute("shopId");
@@ -49,6 +52,38 @@ public class ShopUserController {
                 .build();
 
         return userRepository.save(user);
+    }
+
+    @GetMapping
+    public org.springframework.http.ResponseEntity<java.util.List<com.coop.erp.admin.dto.UserDto.Response>> getAllUsers(HttpServletRequest servletRequest) {
+        String shopIdStr = (String) servletRequest.getAttribute("shopId");
+        if (shopIdStr == null || shopIdStr.isEmpty()) {
+            throw new RuntimeException("Unauthorized: No shop associated with the current user");
+        }
+        UUID shopId = UUID.fromString(shopIdStr);
+        return org.springframework.http.ResponseEntity.ok(userService.getAllUsers(shopId));
+    }
+
+    @PatchMapping("/{id}/toggle-status")
+    public org.springframework.http.ResponseEntity<?> toggleStatus(@PathVariable UUID id, HttpServletRequest servletRequest) {
+        String shopIdStr = (String) servletRequest.getAttribute("shopId");
+        if (shopIdStr == null || shopIdStr.isEmpty()) {
+            throw new RuntimeException("Unauthorized: No shop associated with the current user");
+        }
+        UUID shopId = UUID.fromString(shopIdStr);
+
+        // Ideally verify the user belongs to the shop before toggling, but we'll re-use the generic service for now.
+        User user = userRepository.findById(id).orElseThrow(() -> new IllegalArgumentException("User not found"));
+        if (user.getShop() == null || !user.getShop().getId().equals(shopId)) {
+            throw new RuntimeException("Unauthorized: User does not belong to your shop");
+        }
+
+        try {
+            userService.toggleUserStatus(id);
+            return org.springframework.http.ResponseEntity.ok("User status updated successfully.");
+        } catch (IllegalArgumentException e) {
+            return new org.springframework.http.ResponseEntity<>(e.getMessage(), org.springframework.http.HttpStatus.NOT_FOUND);
+        }
     }
 }
 
