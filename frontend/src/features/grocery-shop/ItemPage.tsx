@@ -191,9 +191,16 @@ function ItemPage() {
   const handleUpdateItem = async () => {
     const finalEditCategory = editSelectedCategory === "Other" ? editCustomCategory : editSelectedCategory;
 
-    if (!editingItemId || !editName || !finalEditCategory.trim() || !editReorderLevel || !editUnitPrice) {
-      setError("Please fill all item details.");
-      return;
+    if (isAdmin) {
+      if (!editingItemId || !editName || !finalEditCategory.trim() || !editReorderLevel || !editUnitPrice) {
+        setError("Please fill all item details.");
+        return;
+      }
+    } else {
+      if (!editingItemId || editReorderLevel === "" || Number(editReorderLevel) < 0) {
+        setError("Reorder level must be a positive number or zero.");
+        return;
+      }
     }
 
     try {
