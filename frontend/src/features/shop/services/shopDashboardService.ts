@@ -18,5 +18,9 @@ export const shopDashboardService = {
     getSummary: async (): Promise<ShopDashboardSummary> => {
         const response = await api.get('/shop/dashboard/summary');
         return response.data;
+    },
+    getSelectedProductCount: async (): Promise<number> => {
+        const response = await api.get('/shop/dashboard/selected-product-count');
+        return response.data.selectedProductCount;
     }
 };

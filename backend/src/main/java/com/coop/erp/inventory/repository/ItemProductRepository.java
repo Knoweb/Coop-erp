@@ -24,6 +24,10 @@ public interface ItemProductRepository extends JpaRepository<ItemProduct, UUID> 
            """)
     List<ItemProduct> findAllLowStockItems();
 
+    List<ItemProduct> findAllByOrderByNameAsc();
+
+    long countByIsActiveTrue();
+
     @Query("""
            SELECT i
            FROM ItemProduct i

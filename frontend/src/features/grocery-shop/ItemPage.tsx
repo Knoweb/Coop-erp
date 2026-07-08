@@ -58,6 +58,9 @@ const formatMoney = (value: number | string | undefined) => {
 
 function ItemPage() {
   const [items, setItems] = useState<ItemProduct[]>([]);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [searchBy, setSearchBy] = useState("all");
+  
   const userRole = localStorage.getItem("user_role");
   const isAdmin = userRole === "ADMIN" || userRole === "ROLE_SUPER_ADMIN" || userRole === "ROLE_ADMIN";
 
@@ -94,7 +97,7 @@ function ItemPage() {
       setItems(sortedData);
     } catch (err) {
       console.error(err);
-      setError("Failed to load items.");
+      setError("Failed to load items. Check grocery shop service on port 8080.");
     } finally {
       setLoading(false);
     }
@@ -119,8 +122,8 @@ function ItemPage() {
     try {
       await api.post(`/shop/items`, {
         name,
-        category: finalCategory,
-        defaultReorderLevel: Number(reorderLevel),
+        category: finalCategory, // Sending the final category
+        reorderLevel: Number(reorderLevel),
         unitPrice: Number(unitPrice),
       });
 
@@ -142,12 +145,12 @@ function ItemPage() {
 
   // --- Edit Item Logic ---
   const openEditDialog = (item: ItemProduct) => {
-    setEditingItemId(item.id);
+    setEditingItemId(item.id || "");
     setEditName(item.name);
-    
+
     // Check if the item's category is in our standard list
     const isStandardCategory = CATEGORY_OPTIONS.includes(item.category) && item.category !== "Other";
-    
+
     if (isStandardCategory) {
       setEditSelectedCategory(item.category);
       setEditCustomCategory("");
@@ -212,7 +215,6 @@ function ItemPage() {
           unitPrice: Number(editUnitPrice),
         });
       } else {
-        // Shop user only updates reorder level
         const item = items.find(i => i.shopItemId === editingItemId);
         if (item) {
           await api.put(`/shop/shop-items/${item.shopItemId}/reorder-level`, {
@@ -243,7 +245,7 @@ function ItemPage() {
           : "View global items and select which ones are available in your shop."}
       </Typography>
 
-      {/* --- ADD NEW ITEM CARD (ADMIN ONLY) --- */}
+      {/* --- ADD NEW ITEM CARD --- */}
       {isAdmin && (
       <Card
         sx={{
@@ -358,6 +360,28 @@ function ItemPage() {
           Item List
         </Typography>
 
+        <Box sx={{ display: "flex", gap: 2, mb: 2 }}>
+          <TextField
+            select
+            value={searchBy}
+            onChange={(e) => setSearchBy(e.target.value)}
+            sx={{ width: "150px" }}
+            size="small"
+          >
+            <MenuItem value="all">All</MenuItem>
+            <MenuItem value="name">Item Name</MenuItem>
+            <MenuItem value="category">Category</MenuItem>
+          </TextField>
+          
+          <TextField
+            placeholder="Search by item name or category..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            sx={{ flex: 1, maxWidth: "350px" }}
+            size="small"
+          />
+        </Box>
+
         {loading ? (
           <Typography>Loading items...</Typography>
         ) : (
@@ -375,19 +399,33 @@ function ItemPage() {
               </TableHead>
 
               <TableBody>
-                {items.map((item) => (
-                  <TableRow key={item.id}>
+                {items.filter((item) => {
+                  const term = searchTerm.trim().toLowerCase();
+                  if (!term) return true;
+
+                  const name = item.name?.toLowerCase() || "";
+                  const category = item.category?.toLowerCase() || "";
+
+                  if (searchBy === "name") {
+                    return name.includes(term);
+                  }
+                  if (searchBy === "category") {
+                    return category.includes(term);
+                  }
+                  return name.includes(term) || category.includes(term);
+                }).map((item) => (
+                  <TableRow key={item.id || item.itemId}>
                     <TableCell sx={{ fontWeight: "bold", color: "#111827" }}>
                       {item.name}
                     </TableCell>
-                    
+
                     <TableCell>{item.category}</TableCell>
-                    
+
                     <TableCell sx={{ fontWeight: "bold", fontSize: "1rem" }}>
                       Rs. {formatMoney(item.unitPrice)}
                     </TableCell>
-                    
-                    <TableCell>{isAdmin ? item.defaultReorderLevel : item.shopReorderLevel}</TableCell>
+
+                    <TableCell>{isAdmin ? item.defaultReorderLevel : (item.shopReorderLevel ?? item.defaultReorderLevel ?? "-")}</TableCell>
                     <TableCell>
                       {isAdmin ? (
                         <Chip
@@ -443,10 +481,24 @@ function ItemPage() {
                   </TableRow>
                 ))}
 
-                {items.length === 0 && (
+                {items.filter((item) => {
+                  const term = searchTerm.trim().toLowerCase();
+                  if (!term) return true;
+
+                  const name = item.name?.toLowerCase() || "";
+                  const category = item.category?.toLowerCase() || "";
+
+                  if (searchBy === "name") {
+                    return name.includes(term);
+                  }
+                  if (searchBy === "category") {
+                    return category.includes(term);
+                  }
+                  return name.includes(term) || category.includes(term);
+                }).length === 0 && (
                   <TableRow>
                     <TableCell colSpan={6} align="center" sx={{ py: 3, color: "text.secondary" }}>
-                      No items found
+                      {searchTerm ? "No matching products found." : "No items found"}
                     </TableCell>
                   </TableRow>
                 )}

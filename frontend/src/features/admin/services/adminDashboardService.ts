@@ -14,9 +14,23 @@ export interface DashboardSummary {
     totalCustomers: number;
 }
 
+export interface ShopProductCountDto {
+    shopId: string;
+    shopName: string;
+    selectedProductCount: number;
+}
+
 export const adminDashboardService = {
     getSummary: async (): Promise<DashboardSummary> => {
         const response = await api.get('/admin/dashboard/summary');
         return response.data;
+    },
+    getShopProductCounts: async (): Promise<ShopProductCountDto[]> => {
+        const response = await api.get('/admin/dashboard/shop-product-counts');
+        return response.data;
+    },
+    getTotalProducts: async (): Promise<number> => {
+        const response = await api.get('/admin/dashboard/total-products');
+        return response.data.totalProducts;
     }
 };

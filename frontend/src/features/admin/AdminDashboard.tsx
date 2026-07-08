@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { 
-    Box, Typography, Grid, Paper, Card, CardContent, Divider, Avatar, CircularProgress, Alert
+    Box, Typography, Grid, Paper, Card, CardContent, Divider, Avatar, CircularProgress, Alert, Table, TableBody, TableCell, TableHead, TableRow
 } from '@mui/material';
 import PeopleIcon from '@mui/icons-material/People';
 import StorefrontIcon from '@mui/icons-material/Storefront';
@@ -8,10 +8,12 @@ import InventoryIcon from '@mui/icons-material/Inventory';
 import WarningIcon from '@mui/icons-material/Warning';
 import AttachMoneyIcon from '@mui/icons-material/AttachMoney';
 import ShoppingCartIcon from '@mui/icons-material/ShoppingCart';
-import { adminDashboardService, type DashboardSummary } from './services/adminDashboardService';
+import { adminDashboardService, type DashboardSummary, type ShopProductCountDto } from './services/adminDashboardService';
 
 const AdminDashboard: React.FC = () => {
     const [stats, setStats] = useState<DashboardSummary | null>(null);
+    const [shopCounts, setShopCounts] = useState<ShopProductCountDto[]>([]);
+    const [totalProducts, setTotalProducts] = useState<number>(0);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
@@ -20,6 +22,21 @@ const AdminDashboard: React.FC = () => {
             try {
                 const summary = await adminDashboardService.getSummary();
                 setStats(summary);
+
+                try {
+                    const counts = await adminDashboardService.getShopProductCounts();
+                    setShopCounts(counts);
+                } catch (e) {
+                    console.error("Failed to fetch shop product counts", e);
+                }
+
+                try {
+                    const count = await adminDashboardService.getTotalProducts();
+                    setTotalProducts(count);
+                } catch (e) {
+                    console.error("Failed to fetch total products", e);
+                }
+
                 setError(null);
             } catch (err) {
                 console.error("Failed to fetch dashboard data", err);
@@ -89,8 +106,8 @@ const AdminDashboard: React.FC = () => {
                                 <InventoryIcon fontSize="large" />
                             </Avatar>
                             <Box>
-                                <Typography variant="body2" color="text.secondary" sx={{ fontWeight: 'bold' }}>PRODUCTS</Typography>
-                                <Typography variant="h4" sx={{ fontWeight: 'bold' }}>{stats?.totalProducts || 0}</Typography>
+                                <Typography variant="body2" color="text.secondary" sx={{ fontWeight: 'bold' }}>TOTAL PRODUCTS</Typography>
+                                <Typography variant="h4" sx={{ fontWeight: 'bold' }}>{totalProducts}</Typography>
                                 <Typography variant="caption" color="text.secondary">Main Shop Catalog</Typography>
                             </Box>
                         </CardContent>
@@ -156,6 +173,39 @@ const AdminDashboard: React.FC = () => {
                         <Typography variant="body2" sx={{ color: 'text.secondary' }}>
                             Reminder: Perform end-of-day stock validation by 10:00 PM.
                         </Typography>
+                    </Paper>
+                </Grid>
+
+                <Grid size={{ xs: 12, md:6 }}>
+                    <Paper sx={{ p: 3, borderRadius: 2, boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)', height: '100%' }}>
+                        <Typography variant="h6" sx={{ fontWeight: 'bold', mb: 2 }}>Shop Product Selection Summary</Typography>
+                        <Divider sx={{ mb: 2 }} />
+                        <Box sx={{ overflowX: 'auto' }}>
+                            <Table size="small">
+                                <TableHead>
+                                    <TableRow>
+                                        <TableCell sx={{ fontWeight: 'bold' }}>Shop Name</TableCell>
+                                        <TableCell sx={{ fontWeight: 'bold', textAlign: 'right' }}>Selected Products</TableCell>
+                                    </TableRow>
+                                </TableHead>
+                                <TableBody>
+                                    {shopCounts.length > 0 ? (
+                                        shopCounts.map((row) => (
+                                            <TableRow key={row.shopId}>
+                                                <TableCell>{row.shopName}</TableCell>
+                                                <TableCell sx={{ textAlign: 'right', fontWeight: 'bold' }}>{row.selectedProductCount}</TableCell>
+                                            </TableRow>
+                                        ))
+                                    ) : (
+                                        <TableRow>
+                                            <TableCell colSpan={2} align="center" sx={{ color: 'text.secondary', py: 2 }}>
+                                                No selection data available
+                                            </TableCell>
+                                        </TableRow>
+                                    )}
+                                </TableBody>
+                            </Table>
+                        </Box>
                     </Paper>
                 </Grid>
             </Grid>

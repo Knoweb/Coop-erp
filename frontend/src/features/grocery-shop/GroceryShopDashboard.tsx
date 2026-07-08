@@ -12,6 +12,7 @@ import { shopDashboardService, type ShopDashboardSummary } from '../shop/service
 
 const GroceryShopDashboard: React.FC = () => {
     const [stats, setStats] = useState<ShopDashboardSummary | null>(null);
+    const [selectedProductCount, setSelectedProductCount] = useState<number>(0);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
@@ -20,6 +21,14 @@ const GroceryShopDashboard: React.FC = () => {
             try {
                 const summary = await shopDashboardService.getSummary();
                 setStats(summary);
+                
+                try {
+                    const count = await shopDashboardService.getSelectedProductCount();
+                    setSelectedProductCount(count);
+                } catch (e) {
+                    console.error("Failed to fetch selected product count", e);
+                }
+                
                 setError(null);
             } catch (err) {
                 console.error("Failed to fetch shop dashboard data", err);
@@ -88,9 +97,9 @@ const GroceryShopDashboard: React.FC = () => {
                                 <InventoryIcon fontSize="large" />
                             </Avatar>
                             <Box>
-                                <Typography variant="body2" color="text.secondary" sx={{ fontWeight: 'bold' }}>PRODUCTS</Typography>
-                                <Typography variant="h4" sx={{ fontWeight: 'bold' }}>{stats?.totalProducts || 0}</Typography>
-                                <Typography variant="caption" color="text.secondary">Total products available</Typography>
+                                <Typography variant="body2" color="text.secondary" sx={{ fontWeight: 'bold' }}>MY SELECTED PRODUCTS</Typography>
+                                <Typography variant="h4" sx={{ fontWeight: 'bold' }}>{selectedProductCount}</Typography>
+                                <Typography variant="caption" color="text.secondary">Available in this shop</Typography>
                             </Box>
                         </CardContent>
                     </Card>

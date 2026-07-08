@@ -11,4 +11,20 @@ public interface ShopItemRepository extends JpaRepository<ShopItem, UUID> {
     List<ShopItem> findByShopIdAndIsActiveTrue(UUID shopId);
     Optional<ShopItem> findByShopIdAndItemId(UUID shopId, UUID itemId);
     boolean existsByShopIdAndItemId(UUID shopId, UUID itemId);
+
+    long countByShopIdAndIsActiveTrue(UUID shopId);
+
+    @org.springframework.data.jpa.repository.Query("""
+        SELECT new com.coop.erp.inventory.dto.ShopProductCountDto(
+            s.id,
+            s.name,
+            COUNT(si.id)
+        )
+        FROM Shop s
+        LEFT JOIN ShopItem si ON si.shop = s AND si.isActive = true
+        WHERE s.active = true
+        GROUP BY s.id, s.name
+        ORDER BY s.name
+    """)
+    List<com.coop.erp.inventory.dto.ShopProductCountDto> countAllShopSelectedProducts();
 }
