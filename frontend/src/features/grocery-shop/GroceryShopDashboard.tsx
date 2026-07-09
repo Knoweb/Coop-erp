@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { 
+import {
     Box, Typography, Grid, Card, CardContent, Avatar, CircularProgress, Alert
 } from '@mui/material';
 import PeopleIcon from '@mui/icons-material/People';
@@ -21,14 +21,14 @@ const GroceryShopDashboard: React.FC = () => {
             try {
                 const summary = await shopDashboardService.getSummary();
                 setStats(summary);
-                
+
                 try {
                     const count = await shopDashboardService.getSelectedProductCount();
                     setSelectedProductCount(count);
                 } catch (e) {
                     console.error("Failed to fetch selected product count", e);
                 }
-                
+
                 setError(null);
             } catch (err) {
                 console.error("Failed to fetch shop dashboard data", err);
@@ -51,17 +51,17 @@ const GroceryShopDashboard: React.FC = () => {
 
     return (
         <Box sx={{ p: 3, maxWidth: 1200, mx: 'auto' }}>
-            <Typography variant="h4" sx={{ fontWeight: 'bold', mb: 1, color: '#1e293b' }}>
+            <Typography variant="h4" className="page-title" sx={{ fontWeight: 'bold', mb: 1, color: "var(--text-primary)" }}>
                 Shop Dashboard {stats?.shopName ? `- ${stats.shopName}` : ''}
             </Typography>
-            <Typography variant="body1" sx={{ color: '#64748b', mb: 4 }}>
+            <Typography variant="body1" sx={{ color: "var(--text-secondary)", mb: 4 }}>
                 Real-time overview of this shop’s products, stock, purchases, and sales.
             </Typography>
 
             {error && <Alert severity="error" sx={{ mb: 4 }}>{error}</Alert>}
 
             <Grid container spacing={3} sx={{ mb: 4 }}>
-                <Grid size={{ xs: 12, sm:6, md:4 }}>
+                <Grid size={{ xs: 12, sm: 6, md: 4 }}>
                     <Card sx={{ borderRadius: 2, boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}>
                         <CardContent sx={{ display: 'flex', alignItems: 'center', p: 3 }}>
                             <Avatar sx={{ bgcolor: '#eff6ff', color: '#3b82f6', width: 56, height: 56, mr: 2 }}>
@@ -75,7 +75,7 @@ const GroceryShopDashboard: React.FC = () => {
                     </Card>
                 </Grid>
 
-                <Grid size={{ xs: 12, sm:6, md:4 }}>
+                <Grid size={{ xs: 12, sm: 6, md: 4 }}>
                     <Card sx={{ borderRadius: 2, boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}>
                         <CardContent sx={{ display: 'flex', alignItems: 'center', p: 3 }}>
                             <Avatar sx={{ bgcolor: '#f0fdf4', color: '#22c55e', width: 56, height: 56, mr: 2 }}>
@@ -83,14 +83,14 @@ const GroceryShopDashboard: React.FC = () => {
                             </Avatar>
                             <Box>
                                 <Typography variant="body2" color="text.secondary" sx={{ fontWeight: 'bold' }}>USERS</Typography>
-                                <Typography variant="h4" sx={{ fontWeight: 'bold' }}>{stats?.totalUsers || 0}</Typography>
+                                <Typography variant="h4" className="page-title" sx={{ fontWeight: 'bold' }}>{stats?.totalUsers || 0}</Typography>
                                 <Typography variant="caption" color="text.secondary">In this shop</Typography>
                             </Box>
                         </CardContent>
                     </Card>
                 </Grid>
 
-                <Grid size={{ xs: 12, sm:6, md:4 }}>
+                <Grid size={{ xs: 12, sm: 6, md: 4 }}>
                     <Card sx={{ borderRadius: 2, boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}>
                         <CardContent sx={{ display: 'flex', alignItems: 'center', p: 3 }}>
                             <Avatar sx={{ bgcolor: '#fff7ed', color: '#f97316', width: 56, height: 56, mr: 2 }}>
@@ -98,7 +98,7 @@ const GroceryShopDashboard: React.FC = () => {
                             </Avatar>
                             <Box>
                                 <Typography variant="body2" color="text.secondary" sx={{ fontWeight: 'bold' }}>MY SELECTED PRODUCTS</Typography>
-                                <Typography variant="h4" sx={{ fontWeight: 'bold' }}>{selectedProductCount}</Typography>
+                                <Typography variant="h4" className="page-title" sx={{ fontWeight: 'bold' }}>{selectedProductCount}</Typography>
                                 <Typography variant="caption" color="text.secondary">Available in this shop</Typography>
                             </Box>
                         </CardContent>
@@ -107,7 +107,7 @@ const GroceryShopDashboard: React.FC = () => {
             </Grid>
 
             <Grid container spacing={3} sx={{ mb: 4 }}>
-                <Grid size={{ xs: 12, sm:6, md:4 }}>
+                <Grid size={{ xs: 12, sm: 6, md: 4 }}>
                     <Card sx={{ borderRadius: 2, boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}>
                         <CardContent sx={{ display: 'flex', alignItems: 'center', p: 3 }}>
                             <Avatar sx={{ bgcolor: '#fef2f2', color: '#ef4444', width: 56, height: 56, mr: 2 }}>
@@ -115,14 +115,14 @@ const GroceryShopDashboard: React.FC = () => {
                             </Avatar>
                             <Box>
                                 <Typography variant="body2" color="text.secondary" sx={{ fontWeight: 'bold' }}>LOW STOCK ITEMS</Typography>
-                                <Typography variant="h4" sx={{ fontWeight: 'bold' }}>{stats?.lowStockItems || 0}</Typography>
+                                <Typography variant="h4" className="page-title" sx={{ fontWeight: 'bold' }}>{stats?.lowStockItems || 0}</Typography>
                                 <Typography variant="caption" color="error.main">Needs Restock</Typography>
                             </Box>
                         </CardContent>
                     </Card>
                 </Grid>
 
-                <Grid size={{ xs: 12, sm:6, md:4 }}>
+                <Grid size={{ xs: 12, sm: 6, md: 4 }}>
                     <Card sx={{ borderRadius: 2, boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}>
                         <CardContent sx={{ display: 'flex', alignItems: 'center', p: 3 }}>
                             <Avatar sx={{ bgcolor: '#f0fdf4', color: '#22c55e', width: 56, height: 56, mr: 2 }}>
@@ -137,15 +137,15 @@ const GroceryShopDashboard: React.FC = () => {
                     </Card>
                 </Grid>
 
-                <Grid size={{ xs: 12, sm:6, md:4 }}>
+                <Grid size={{ xs: 12, sm: 6, md: 4 }}>
                     <Card sx={{ borderRadius: 2, boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}>
                         <CardContent sx={{ display: 'flex', alignItems: 'center', p: 3 }}>
-                            <Avatar sx={{ bgcolor: '#f8fafc', color: '#475569', width: 56, height: 56, mr: 2 }}>
+                            <Avatar sx={{ bgcolor: '#f8fafc', color: "var(--text-secondary)", width: 56, height: 56, mr: 2 }}>
                                 <ShoppingCartIcon fontSize="large" />
                             </Avatar>
                             <Box>
                                 <Typography variant="body2" color="text.secondary" sx={{ fontWeight: 'bold' }}>PENDING PURCHASES</Typography>
-                                <Typography variant="h4" sx={{ fontWeight: 'bold' }}>{stats?.pendingPurchases || 0}</Typography>
+                                <Typography variant="h4" className="page-title" sx={{ fontWeight: 'bold' }}>{stats?.pendingPurchases || 0}</Typography>
                                 <Typography variant="caption" color="text.secondary">Purchase Orders</Typography>
                             </Box>
                         </CardContent>

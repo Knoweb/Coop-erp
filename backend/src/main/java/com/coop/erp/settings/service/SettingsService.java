@@ -1,14 +1,20 @@
 package com.coop.erp.settings.service;
 
+import com.coop.erp.settings.dto.AllSettingsDto;
 import com.coop.erp.settings.dto.BackupSettingsDto;
 import com.coop.erp.settings.dto.BusinessProfileDto;
 import com.coop.erp.settings.dto.SecuritySettingsDto;
 import com.coop.erp.settings.dto.UserPreferencesDto;
 import com.coop.erp.settings.entity.SystemSetting;
+import com.coop.erp.settings.entity.UiPreference;
 import com.coop.erp.settings.repository.SystemSettingRepository;
+import com.coop.erp.settings.repository.UiPreferenceRepository;
+import com.coop.erp.core.entity.User;
+import com.coop.erp.core.repository.UserRepository;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -16,6 +22,8 @@ import org.springframework.stereotype.Service;
 public class SettingsService {
 
     private final SystemSettingRepository repository;
+    private final UiPreferenceRepository uiPreferenceRepository;
+    private final UserRepository userRepository;
     private final ObjectMapper objectMapper;
 
     private static final String BUSINESS_PROFILE_KEY = "BUSINESS_PROFILE";
@@ -25,34 +33,34 @@ public class SettingsService {
 
     public void seedDefaultSettings() {
         seedSettingIfMissing(BUSINESS_PROFILE_KEY, BusinessProfileDto.builder()
-                .businessName("Coop Grocery")
-                .address("Main Shop")
-                .contactNumber("")
+                .businessName("Coop Grocery Management System")
+                .mainShopName("Main Shop")
+                .address("")
+                .phone("")
                 .email("")
-                .receiptFooterText("Thank you for shopping with us")
+                .taxNumber("")
+                .receiptFooter("Thank you for shopping with us!")
                 .build());
 
         seedSettingIfMissing(SECURITY_SETTINGS_KEY, SecuritySettingsDto.builder()
                 .minimumPasswordLength(8)
-                .requireStrongPassword(false)
-                .sessionTimeoutMinutes(60)
-                .enableAccountLocking(false)
-                .maxFailedLoginAttempts(5)
+                .requireUppercase(true)
+                .requireNumber(true)
+                .requireSpecialCharacter(false)
+                .sessionTimeoutMinutes(30)
+                .maxLoginAttempts(5)
+                .accountLockMinutes(15)
                 .build());
 
-        seedSettingIfMissing(USER_PREFS_KEY, UserPreferencesDto.builder()
-                .defaultTheme("LIGHT")
-                .dashboardRefreshIntervalSeconds(60)
-                .itemsPerPage(10)
-                .enableNotifications(true)
-                .build());
+        // User preferences seeded on-demand in getUserPreferencesForCurrentUser
 
         seedSettingIfMissing(BACKUP_SETTINGS_KEY, BackupSettingsDto.builder()
-                .enableAutomaticBackup(false)
-                .backupFrequency("DAILY")
+                .autoBackupEnabled(false)
+                .backupFrequency("Daily")
                 .backupTime("23:00")
-                .lastBackupTime(null)
-                .maintenanceMode(false)
+                .retentionDays(30)
+                .lastBackupAt(null)
+                .lastBackupStatus("Never Run")
                 .build());
     }
 
@@ -113,12 +121,69 @@ public class SettingsService {
         saveSetting(SECURITY_SETTINGS_KEY, dto);
     }
 
-    public UserPreferencesDto getUserPreferences() {
-        return getSetting(USER_PREFS_KEY, UserPreferencesDto.class);
+    public UserPreferencesDto getAdminUiPreferences() {
+        return getUiPreferences("ADMIN", "ADMIN");
     }
 
-    public void updateUserPreferences(UserPreferencesDto dto) {
-        saveSetting(USER_PREFS_KEY, dto);
+    public void updateAdminUiPreferences(UserPreferencesDto dto) {
+        saveUiPreferences("ADMIN", "ADMIN", dto);
+    }
+
+    public UserPreferencesDto getShopUiPreferences() {
+        String username = SecurityContextHolder.getContext().getAuthentication().getName();
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new RuntimeException("User not found: " + username));
+        
+        String shopId = user.getShop() != null ? user.getShop().getId().toString() : "UNKNOWN";
+        return getUiPreferences("SHOP", shopId);
+    }
+
+    public void updateShopUiPreferences(UserPreferencesDto dto) {
+        String username = SecurityContextHolder.getContext().getAuthentication().getName();
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new RuntimeException("User not found: " + username));
+        
+        String shopId = user.getShop() != null ? user.getShop().getId().toString() : "UNKNOWN";
+        saveUiPreferences("SHOP", shopId, dto);
+    }
+
+    private UserPreferencesDto getUiPreferences(String scopeType, String scopeId) {
+        UiPreference pref = uiPreferenceRepository.findByScopeTypeAndScopeId(scopeType, scopeId)
+                .orElseGet(() -> {
+                    String username = SecurityContextHolder.getContext().getAuthentication().getName();
+                    UiPreference defaultPref = UiPreference.builder()
+                            .scopeType(scopeType)
+                            .scopeId(scopeId)
+                            .defaultTheme("Light")
+                            .dashboardRefreshIntervalSeconds(60)
+                            .itemsPerPage(10)
+                            .enableSystemNotifications(true)
+                            .updatedBy(username)
+                            .build();
+                    return uiPreferenceRepository.save(defaultPref);
+                });
+
+        return UserPreferencesDto.builder()
+                .defaultTheme(pref.getDefaultTheme())
+                .dashboardRefreshIntervalSeconds(pref.getDashboardRefreshIntervalSeconds())
+                .itemsPerPage(pref.getItemsPerPage())
+                .enableSystemNotifications(pref.getEnableSystemNotifications() != null ? pref.getEnableSystemNotifications() : true)
+                .build();
+    }
+
+    private void saveUiPreferences(String scopeType, String scopeId, UserPreferencesDto dto) {
+        String username = SecurityContextHolder.getContext().getAuthentication().getName();
+        
+        UiPreference pref = uiPreferenceRepository.findByScopeTypeAndScopeId(scopeType, scopeId)
+                .orElseGet(() -> UiPreference.builder().scopeType(scopeType).scopeId(scopeId).build());
+
+        pref.setDefaultTheme(dto.getDefaultTheme());
+        pref.setDashboardRefreshIntervalSeconds(dto.getDashboardRefreshIntervalSeconds());
+        pref.setItemsPerPage(dto.getItemsPerPage());
+        pref.setEnableSystemNotifications(dto.isEnableSystemNotifications());
+        pref.setUpdatedBy(username);
+        
+        uiPreferenceRepository.save(pref);
     }
 
     public BackupSettingsDto getBackupSettings() {
@@ -127,5 +192,14 @@ public class SettingsService {
 
     public void updateBackupSettings(BackupSettingsDto dto) {
         saveSetting(BACKUP_SETTINGS_KEY, dto);
+    }
+
+    public AllSettingsDto getAllSettings() {
+        return AllSettingsDto.builder()
+                .businessProfile(getBusinessProfile())
+                .securitySettings(getSecuritySettings())
+                .userPreferences(getAdminUiPreferences())
+                .backupSettings(getBackupSettings())
+                .build();
     }
 }

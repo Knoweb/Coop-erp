@@ -18,7 +18,7 @@ const SystemUsersPage: React.FC = () => {
 
     const [isUserModalOpen, setIsUserModalOpen] = useState(false);
     const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
-    
+
     // Form state
     const [editingUser, setEditingUser] = useState<SystemUser | null>(null);
     const [formData, setFormData] = useState({
@@ -142,21 +142,21 @@ const SystemUsersPage: React.FC = () => {
     };
 
     const filteredUsers = users.filter(user => {
-        const matchesSearch = user.name.toLowerCase().includes(search.toLowerCase()) || 
-                              user.username.toLowerCase().includes(search.toLowerCase()) ||
-                              user.email.toLowerCase().includes(search.toLowerCase());
-        const matchesStatus = statusFilter === 'ALL' || 
-                              (statusFilter === 'ACTIVE' && user.active) || 
-                              (statusFilter === 'INACTIVE' && !user.active);
+        const matchesSearch = user.name.toLowerCase().includes(search.toLowerCase()) ||
+            user.username.toLowerCase().includes(search.toLowerCase()) ||
+            user.email.toLowerCase().includes(search.toLowerCase());
+        const matchesStatus = statusFilter === 'ALL' ||
+            (statusFilter === 'ACTIVE' && user.active) ||
+            (statusFilter === 'INACTIVE' && !user.active);
         return matchesSearch && matchesStatus;
     });
 
     return (
         <Box sx={{ p: 3 }}>
-            <Typography variant="h4" sx={{ fontWeight: 'bold', mb: 1, color: '#1e293b' }}>
+            <Typography variant="h4" className="page-title" sx={{ fontWeight: 'bold', mb: 1, color: "var(--text-primary)" }}>
                 System Users
             </Typography>
-            <Typography variant="body1" sx={{ color: '#64748b', mb: 4 }}>
+            <Typography variant="body1" sx={{ color: '#ffff', mb: 4 }}>
                 Manage main shop administrative users.
             </Typography>
 
@@ -221,10 +221,10 @@ const SystemUsersPage: React.FC = () => {
                                     <TableCell>{user.email}</TableCell>
                                     <TableCell>{user.role}</TableCell>
                                     <TableCell>
-                                        <Chip 
-                                            label={user.active ? 'Active' : 'Inactive'} 
-                                            color={user.active ? 'success' : 'default'} 
-                                            size="small" 
+                                        <Chip
+                                            label={user.active ? 'Active' : 'Inactive'}
+                                            color={user.active ? 'success' : 'default'}
+                                            size="small"
                                         />
                                     </TableCell>
                                     <TableCell>{new Date(user.createdAt).toLocaleDateString()}</TableCell>
@@ -235,8 +235,8 @@ const SystemUsersPage: React.FC = () => {
                                         <IconButton size="small" color="secondary" onClick={() => handleOpenPasswordModal(user)} title="Reset Password">
                                             <VpnKeyIcon fontSize="small" />
                                         </IconButton>
-                                        <Switch 
-                                            checked={user.active} 
+                                        <Switch
+                                            checked={user.active}
                                             onChange={() => handleToggleStatus(user)}
                                             color="success"
                                             title="Toggle Active Status"
@@ -254,26 +254,26 @@ const SystemUsersPage: React.FC = () => {
                 <DialogTitle>{editingUser ? 'Edit System User' : 'Add System User'}</DialogTitle>
                 <DialogContent dividers>
                     <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                        <TextField fullWidth label="Full Name" value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} required />
-                        
+                        <TextField fullWidth label="Full Name" value={formData.name} onChange={e => setFormData({ ...formData, name: e.target.value })} required />
+
                         <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' }, gap: 2 }}>
-                            <TextField fullWidth label="Username" value={formData.username} onChange={e => setFormData({...formData, username: e.target.value})} required />
-                            <TextField fullWidth label="Email" type="email" value={formData.email} onChange={e => setFormData({...formData, email: e.target.value})} required />
+                            <TextField fullWidth label="Username" value={formData.username} onChange={e => setFormData({ ...formData, username: e.target.value })} required />
+                            <TextField fullWidth label="Email" type="email" value={formData.email} onChange={e => setFormData({ ...formData, email: e.target.value })} required />
                         </Box>
-                        
+
                         {!editingUser && (
                             <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' }, gap: 2 }}>
-                                <TextField fullWidth label="Password" type="password" value={formData.password} onChange={e => setFormData({...formData, password: e.target.value})} required />
-                                <TextField fullWidth label="Confirm Password" type="password" value={formData.confirmPassword} onChange={e => setFormData({...formData, confirmPassword: e.target.value})} required />
+                                <TextField fullWidth label="Password" type="password" value={formData.password} onChange={e => setFormData({ ...formData, password: e.target.value })} required />
+                                <TextField fullWidth label="Confirm Password" type="password" value={formData.confirmPassword} onChange={e => setFormData({ ...formData, confirmPassword: e.target.value })} required />
                             </Box>
                         )}
-                        
+
                         <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' }, gap: 2 }}>
-                            <TextField fullWidth select label="Role" value={formData.role} onChange={e => setFormData({...formData, role: e.target.value})} required>
+                            <TextField fullWidth select label="Role" value={formData.role} onChange={e => setFormData({ ...formData, role: e.target.value })} required>
                                 <MenuItem value="ADMIN">Admin</MenuItem>
                             </TextField>
                             <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                                <FormControlLabel control={<Switch checked={formData.active} onChange={e => setFormData({...formData, active: e.target.checked})} color="success" />} label="Active Status" />
+                                <FormControlLabel control={<Switch checked={formData.active} onChange={e => setFormData({ ...formData, active: e.target.checked })} color="success" />} label="Active Status" />
                             </Box>
                         </Box>
                     </Box>
@@ -299,8 +299,8 @@ const SystemUsersPage: React.FC = () => {
                 </DialogActions>
             </Dialog>
 
-            <Snackbar open={notification.open} autoHideDuration={6000} onClose={() => setNotification({...notification, open: false})}>
-                <Alert severity={notification.severity} onClose={() => setNotification({...notification, open: false})}>
+            <Snackbar open={notification.open} autoHideDuration={6000} onClose={() => setNotification({ ...notification, open: false })}>
+                <Alert severity={notification.severity} onClose={() => setNotification({ ...notification, open: false })}>
                     {notification.message}
                 </Alert>
             </Snackbar>

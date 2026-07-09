@@ -236,7 +236,7 @@ function ItemPage() {
 
   return (
     <Box>
-      <Typography variant="h4" sx={{ fontWeight: "bold" }} gutterBottom>
+      <Typography variant="h4" className="page-title" sx={{ fontWeight: "bold" }} gutterBottom>
         Item / Product Management
       </Typography>
 
@@ -388,14 +388,14 @@ function ItemPage() {
         ) : (
           <Box sx={{ overflowX: "auto" }}>
             <Table>
-              <TableHead sx={{ backgroundColor: "#f3f4f6", borderBottom: "2px solid #e5e7eb" }}>
+              <TableHead sx={{ backgroundColor: "var(--table-header-bg)", borderBottom: "2px solid var(--border-color)" }}>
                 <TableRow>
-                  <TableCell sx={{ fontWeight: "bold", color: "#374151" }}>Item Name</TableCell>
-                  <TableCell sx={{ fontWeight: "bold", color: "#374151" }}>Category</TableCell>
-                  <TableCell sx={{ fontWeight: "bold", color: "#374151" }}>Unit Price</TableCell>
-                  <TableCell sx={{ fontWeight: "bold", color: "#374151" }}>Reorder Level</TableCell>
-                  <TableCell sx={{ fontWeight: "bold", color: "#374151" }}>Status</TableCell>
-                  <TableCell sx={{ fontWeight: "bold", color: "#374151" }}>Action</TableCell>
+                  <TableCell sx={{ fontWeight: "bold", color: "var(--text-color)" }}>Item Name</TableCell>
+                  <TableCell sx={{ fontWeight: "bold", color: "var(--text-color)" }}>Category</TableCell>
+                  <TableCell sx={{ fontWeight: "bold", color: "var(--text-color)" }}>Unit Price</TableCell>
+                  <TableCell sx={{ fontWeight: "bold", color: "var(--text-color)" }}>Reorder Level</TableCell>
+                  <TableCell sx={{ fontWeight: "bold", color: "var(--text-color)" }}>Status</TableCell>
+                  <TableCell sx={{ fontWeight: "bold", color: "var(--text-color)" }}>Action</TableCell>
                 </TableRow>
               </TableHead>
 
@@ -416,7 +416,7 @@ function ItemPage() {
                   return name.includes(term) || category.includes(term);
                 }).map((item) => (
                   <TableRow key={item.id || item.itemId}>
-                    <TableCell sx={{ fontWeight: "bold", color: "#111827" }}>
+                    <TableCell sx={{ fontWeight: "bold", color: "var(--text-color)" }}>
                       {item.name}
                     </TableCell>
 

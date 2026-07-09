@@ -107,7 +107,7 @@ const ManageShopsPage: React.FC = () => {
         <Box>
             <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 3 }}>
                 <Box>
-                    <Typography variant="h4" sx={{ fontWeight: 'bold' }}>
+                    <Typography variant="h4" className="page-title" sx={{ fontWeight: 'bold' }}>
                         Manage Shops
                     </Typography>
                     <Typography color="text.secondary">

@@ -122,7 +122,7 @@ const UserManagementDashboard: React.FC = () => {
 
     return (
         <Box sx={{ p: 3, maxWidth: 1200, mx: 'auto' }}>
-            <Typography variant="h4" sx={{ fontWeight: 'bold', mb: 4, color: '#1e293b' }}>
+            <Typography variant="h4" className="page-title" sx={{ fontWeight: 'bold', mb: 4, color: "var(--text-primary)" }}>
                 System Access & User Management
             </Typography>
 
@@ -130,7 +130,7 @@ const UserManagementDashboard: React.FC = () => {
                 {/* Form Column */}
                 <Grid size={{ xs: 12, md:4 }}>
                     <Paper sx={{ p: 3, borderRadius: 2, boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}>
-                        <Typography variant="h6" sx={{ mb: 3, fontWeight: 'bold' }}>Provision New Account</Typography>
+                        <Typography variant="h6" className="card-title" sx={{ mb: 3, fontWeight: 'bold' }}>Provision New Account</Typography>
                         {message && <Alert severity={message.type} sx={{ mb: 3 }}>{message.text}</Alert>}
 
                         <form onSubmit={handleCreateUser}>

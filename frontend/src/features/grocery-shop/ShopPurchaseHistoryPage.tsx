@@ -98,10 +98,10 @@ function ShopPurchaseHistoryPage() {
     <Box sx={{ p: 3, maxWidth: 1200, mx: "auto" }}>
       <Box sx={{ display: "flex", justifyContent: "space-between", mb: 3 }}>
         <Box>
-          <Typography variant="h4" sx={{ fontWeight: "bold", color: "#1e293b", mb: 1 }}>
+          <Typography variant="h4" className="page-title" sx={{ fontWeight: "bold", color: "var(--text-primary)", mb: 1 }}>
             Purchase History
           </Typography>
-          <Typography variant="body1" sx={{ color: "#64748b" }}>
+          <Typography variant="body1" sx={{ color: "var(--text-secondary)" }}>
             View goods received from the Main Shop.
           </Typography>
         </Box>
@@ -121,7 +121,7 @@ function ShopPurchaseHistoryPage() {
               <Typography variant="body2" sx={{ color: "#166534", fontWeight: "bold", mb: 1 }}>
                 Total Received Orders
               </Typography>
-              <Typography variant="h4" sx={{ color: "#15803d", fontWeight: "bold" }}>
+              <Typography variant="h4" className="page-title" sx={{ color: "#15803d", fontWeight: "bold" }}>
                 {totalOrders}
               </Typography>
             </CardContent>
@@ -133,7 +133,7 @@ function ShopPurchaseHistoryPage() {
               <Typography variant="body2" sx={{ color: "#1e40af", fontWeight: "bold", mb: 1 }}>
                 Total Received Quantity
               </Typography>
-              <Typography variant="h4" sx={{ color: "#1d4ed8", fontWeight: "bold" }}>
+              <Typography variant="h4" className="page-title" sx={{ color: "#1d4ed8", fontWeight: "bold" }}>
                 {totalQuantity}
               </Typography>
             </CardContent>
@@ -145,7 +145,7 @@ function ShopPurchaseHistoryPage() {
               <Typography variant="body2" sx={{ color: "#86198f", fontWeight: "bold", mb: 1 }}>
                 Total Received Value
               </Typography>
-              <Typography variant="h4" sx={{ color: "#a21caf", fontWeight: "bold" }}>
+              <Typography variant="h4" className="page-title" sx={{ color: "#a21caf", fontWeight: "bold" }}>
                 Rs. {totalValue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
               </Typography>
             </CardContent>
@@ -377,11 +377,11 @@ function ShopPurchaseHistoryPage() {
             <Box sx={{ display: "flex", gap: 4, ml: 2 }}>
               <Box>
                 <Typography variant="body2" color="text.secondary">Total Quantity</Typography>
-                <Typography variant="h6" sx={{ fontWeight: "bold" }}>{selectedOrder.totalQuantity}</Typography>
+                <Typography variant="h6" className="card-title" sx={{ fontWeight: "bold" }}>{selectedOrder.totalQuantity}</Typography>
               </Box>
               <Box>
                 <Typography variant="body2" color="text.secondary">Total Amount</Typography>
-                <Typography variant="h6" sx={{ fontWeight: "bold" }}>
+                <Typography variant="h6" className="card-title" sx={{ fontWeight: "bold" }}>
                   Rs. {selectedOrder.totalAmount.toLocaleString(undefined, { minimumFractionDigits: 2 })}
                 </Typography>
               </Box>

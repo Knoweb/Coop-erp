@@ -96,7 +96,7 @@ function StockAdjustmentPage() {
 
   return (
     <Box>
-      <Typography variant="h4" sx={{ fontWeight: "bold" }} gutterBottom>
+      <Typography variant="h4" className="page-title" sx={{ fontWeight: "bold" }} gutterBottom>
         Stock Count / Adjustments
       </Typography>
 

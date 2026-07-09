@@ -7,6 +7,7 @@ import {
   Typography,
   Button,
 } from "@mui/material";
+import SettingsIcon from "@mui/icons-material/Settings";
 import { Outlet, useLocation, useNavigate } from "react-router-dom";
 import { logoutUser } from "../services/authService"; 
 
@@ -24,6 +25,7 @@ function ShopLayout() {
     { label: "Purchase History", path: "/shop/purchase-history" },
     { label: "Sales", path: "/shop/sales" },
     { label: "Reports", path: "/shop/reports" },
+    { label: "Settings", path: "/shop/settings", icon: <SettingsIcon /> },
   ];
 
   if (role === 'ROLE_SHOP_ADMIN' || role === 'SHOP_ADMIN') {
@@ -44,7 +46,7 @@ function ShopLayout() {
       sx={{
         display: "flex",
         minHeight: "100vh",
-        backgroundColor: "#fff7ed",
+        backgroundColor: "var(--bg-color)",
       }}
     >
       <Drawer
@@ -55,8 +57,8 @@ function ShopLayout() {
           "& .MuiDrawer-paper": {
             width: drawerWidth,
             boxSizing: "border-box",
-            backgroundColor: "#7f1d1d",
-            color: "white",
+            backgroundColor: "var(--sidebar-bg)",
+            color: "var(--sidebar-text)",
             borderRight: "none",
           },
         }}
@@ -85,16 +87,16 @@ function ShopLayout() {
                 sx={{
                   borderRadius: 2,
                   mb: 0.5,
-                  color: "white",
+                  color: "inherit",
                   "&.Mui-selected": {
-                    backgroundColor: "#f97316",
+                    backgroundColor: "var(--primary-color)",
                     color: "white",
                   },
                   "&.Mui-selected:hover": {
-                    backgroundColor: "#ea580c",
+                    backgroundColor: "var(--secondary-color)",
                   },
                   "&:hover": {
-                    backgroundColor: "#991b1b",
+                    backgroundColor: "rgba(255,255,255,0.1)",
                   },
                 }}
               >

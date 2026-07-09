@@ -10,9 +10,10 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class BackupSettingsDto {
-    private boolean enableAutomaticBackup;
-    private String backupFrequency; // DAILY, WEEKLY, MONTHLY
+    private boolean autoBackupEnabled;
+    private String backupFrequency; 
     private String backupTime;
-    private String lastBackupTime;
-    private boolean maintenanceMode;
+    private int retentionDays;
+    private String lastBackupAt;
+    private String lastBackupStatus;
 }

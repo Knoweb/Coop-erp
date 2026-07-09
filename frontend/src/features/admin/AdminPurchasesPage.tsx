@@ -311,7 +311,7 @@ function AdminPurchasesPage() {
 
   return (
     <Box>
-      <Typography variant="h4" sx={{ fontWeight: "bold" }} gutterBottom>
+      <Typography variant="h4" className="page-title" sx={{ fontWeight: "bold" }} gutterBottom>
         Purchases / GRN
       </Typography>
 
@@ -401,7 +401,7 @@ function AdminPurchasesPage() {
                 mb: 2,
               }}
             >
-              <Typography variant="h6" sx={{ fontWeight: "bold" }}>
+              <Typography variant="h6" className="card-title" sx={{ fontWeight: "bold" }}>
                 Received Items
               </Typography>
 
@@ -548,15 +548,15 @@ function AdminPurchasesPage() {
         ) : (
           <Box sx={{ overflowX: "auto" }}>
             <Table>
-              <TableHead sx={{ backgroundColor: "#f3f4f6", borderBottom: "2px solid #e5e7eb" }}>
+              <TableHead sx={{ backgroundColor: "var(--table-header-bg)", borderBottom: "2px solid var(--border-color)" }}>
                 <TableRow>
-                  <TableCell sx={{ fontWeight: "bold", color: "#374151" }}>GRN Number</TableCell>
-                  <TableCell sx={{ fontWeight: "bold", color: "#374151" }}>Date</TableCell>
-                  <TableCell sx={{ fontWeight: "bold", color: "#374151" }}>Supplier</TableCell>
-                  <TableCell sx={{ fontWeight: "bold", color: "#374151" }}>Items Count</TableCell>
-                  <TableCell sx={{ fontWeight: "bold", color: "#374151" }}>Total Quantity</TableCell>
-                  <TableCell sx={{ fontWeight: "bold", color: "#374151" }}>Total Amount</TableCell>
-                  <TableCell sx={{ fontWeight: "bold", color: "#374151" }}>View Details</TableCell>
+                  <TableCell sx={{ fontWeight: "bold", color: "var(--text-color)" }}>GRN Number</TableCell>
+                  <TableCell sx={{ fontWeight: "bold", color: "var(--text-color)" }}>Date</TableCell>
+                  <TableCell sx={{ fontWeight: "bold", color: "var(--text-color)" }}>Supplier</TableCell>
+                  <TableCell sx={{ fontWeight: "bold", color: "var(--text-color)" }}>Items Count</TableCell>
+                  <TableCell sx={{ fontWeight: "bold", color: "var(--text-color)" }}>Total Quantity</TableCell>
+                  <TableCell sx={{ fontWeight: "bold", color: "var(--text-color)" }}>Total Amount</TableCell>
+                  <TableCell sx={{ fontWeight: "bold", color: "var(--text-color)" }}>View Details</TableCell>
                 </TableRow>
               </TableHead>
 
@@ -570,7 +570,7 @@ function AdminPurchasesPage() {
                       <TableCell>{grn.invoiceNumber || "-"}</TableCell>
                       <TableCell>{grn.invoiceDate}</TableCell>
 
-                      <TableCell sx={{ fontWeight: "bold", color: "#111827" }}>
+                      <TableCell sx={{ fontWeight: "bold", color: "var(--text-color)" }}>
                         {grn.supplierName}
                       </TableCell>
 
@@ -658,7 +658,7 @@ function AdminPurchasesPage() {
               </Table>
 
               <Box sx={{ display: "flex", justifyContent: "flex-end", mt: 2 }}>
-                <Typography variant="h6" sx={{ fontWeight: "bold" }}>
+                <Typography variant="h6" className="card-title" sx={{ fontWeight: "bold" }}>
                   Total Amount: Rs. {formatMoney(selectedGrn.totalAmount)}
                 </Typography>
               </Box>

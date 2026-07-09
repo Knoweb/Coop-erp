@@ -212,7 +212,7 @@ function DailySalesPage() {
 
   return (
     <Box>
-      <Typography variant="h4" sx={{ fontWeight: "bold" }} gutterBottom>
+      <Typography variant="h4" className="page-title" sx={{ fontWeight: "bold" }} gutterBottom>
         Daily Sales / Cash Handover
       </Typography>
 
@@ -237,7 +237,7 @@ function DailySalesPage() {
               {selectedMonthName} Recorded Sales
             </Typography>
 
-            <Typography variant="h4" sx={{ fontWeight: "bold", mt: 1 }}>
+            <Typography variant="h4" className="page-title" sx={{ fontWeight: "bold", mt: 1 }}>
               Rs. {formatMoney(totalRecordedSales)}
             </Typography>
           </CardContent>
@@ -249,7 +249,7 @@ function DailySalesPage() {
               {selectedMonthName} Cash Handed Over
             </Typography>
 
-            <Typography variant="h4" sx={{ fontWeight: "bold", mt: 1 }}>
+            <Typography variant="h4" className="page-title" sx={{ fontWeight: "bold", mt: 1 }}>
               Rs. {formatMoney(totalCashHandedOver)}
             </Typography>
           </CardContent>
@@ -415,30 +415,30 @@ function DailySalesPage() {
             <Table>
               <TableHead
                 sx={{
-                  backgroundColor: "#f3f4f6",
-                  borderBottom: "2px solid #e5e7eb",
+                  backgroundColor: "var(--table-header-bg)",
+                  borderBottom: "2px solid var(--border-color)",
                 }}
               >
                 <TableRow>
-                  <TableCell sx={{ fontWeight: "bold", color: "#374151" }}>
+                  <TableCell sx={{ fontWeight: "bold", color: "var(--text-color)" }}>
                     Date
                   </TableCell>
-                  <TableCell sx={{ fontWeight: "bold", color: "#374151" }}>
+                  <TableCell sx={{ fontWeight: "bold", color: "var(--text-color)" }}>
                     Total Sales
                   </TableCell>
-                  <TableCell sx={{ fontWeight: "bold", color: "#374151" }}>
+                  <TableCell sx={{ fontWeight: "bold", color: "var(--text-color)" }}>
                     Cash Handed Over
                   </TableCell>
-                  <TableCell sx={{ fontWeight: "bold", color: "#374151" }}>
+                  <TableCell sx={{ fontWeight: "bold", color: "var(--text-color)" }}>
                     Difference
                   </TableCell>
-                  <TableCell sx={{ fontWeight: "bold", color: "#374151" }}>
+                  <TableCell sx={{ fontWeight: "bold", color: "var(--text-color)" }}>
                     Status
                   </TableCell>
-                  <TableCell sx={{ fontWeight: "bold", color: "#374151" }}>
+                  <TableCell sx={{ fontWeight: "bold", color: "var(--text-color)" }}>
                     Received By
                   </TableCell>
-                  <TableCell sx={{ fontWeight: "bold", color: "#374151" }}>
+                  <TableCell sx={{ fontWeight: "bold", color: "var(--text-color)" }}>
                     Remarks
                   </TableCell>
                 </TableRow>
@@ -447,7 +447,7 @@ function DailySalesPage() {
               <TableBody>
                 {selectedMonthSalesList.map((item) => (
                   <TableRow key={item.id}>
-                    <TableCell sx={{ fontWeight: "bold", color: "#111827" }}>
+                    <TableCell sx={{ fontWeight: "bold", color: "var(--text-color)" }}>
                       {item.salesDate}
                     </TableCell>
 

@@ -141,7 +141,7 @@ function SupplierPage() {
 
   return (
     <Box>
-      <Typography variant="h4" sx={{ fontWeight: "bold" }} gutterBottom>
+      <Typography variant="h4" className="page-title" sx={{ fontWeight: "bold" }} gutterBottom>
         Supplier Management
       </Typography>
 
@@ -238,12 +238,12 @@ function SupplierPage() {
         ) : (
           <Box sx={{ overflowX: "auto" }}>
             <Table>
-              <TableHead sx={{ backgroundColor: "#f3f4f6", borderBottom: "2px solid #e5e7eb" }}>
+              <TableHead sx={{ backgroundColor: "var(--table-header-bg)", borderBottom: "2px solid var(--border-color)" }}>
                 <TableRow>
-                  <TableCell sx={{ fontWeight: "bold", color: "#374151" }}>Supplier Name</TableCell>
-                  <TableCell sx={{ fontWeight: "bold", color: "#374151" }}>Contact Number</TableCell>
-                  <TableCell sx={{ fontWeight: "bold", color: "#374151" }}>Address</TableCell>
-                  <TableCell sx={{ fontWeight: "bold", color: "#374151" }}>Edit</TableCell>
+                  <TableCell sx={{ fontWeight: "bold", color: "var(--text-color)" }}>Supplier Name</TableCell>
+                  <TableCell sx={{ fontWeight: "bold", color: "var(--text-color)" }}>Contact Number</TableCell>
+                  <TableCell sx={{ fontWeight: "bold", color: "var(--text-color)" }}>Address</TableCell>
+                  <TableCell sx={{ fontWeight: "bold", color: "var(--text-color)" }}>Edit</TableCell>
                 </TableRow>
               </TableHead>
 
@@ -252,7 +252,7 @@ function SupplierPage() {
                   <TableRow key={supplier.id}>
                     
                     {/* Supplier Name: Bold and Dark to anchor the row */}
-                    <TableCell sx={{ fontWeight: "bold", color: "#111827" }}>
+                    <TableCell sx={{ fontWeight: "bold", color: "var(--text-color)" }}>
                       {supplier.name}
                     </TableCell>
                     

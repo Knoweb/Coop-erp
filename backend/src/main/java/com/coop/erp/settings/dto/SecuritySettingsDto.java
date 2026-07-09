@@ -11,8 +11,10 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class SecuritySettingsDto {
     private int minimumPasswordLength;
-    private boolean requireStrongPassword;
+    private boolean requireUppercase;
+    private boolean requireNumber;
+    private boolean requireSpecialCharacter;
     private int sessionTimeoutMinutes;
-    private boolean enableAccountLocking;
-    private int maxFailedLoginAttempts;
+    private int maxLoginAttempts;
+    private int accountLockMinutes;
 }

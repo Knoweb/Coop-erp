@@ -120,7 +120,7 @@ const ShopUsersPage: React.FC = () => {
         <Box>
             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 3 }}>
                 <Box>
-                    <Typography variant="h4" sx={{ fontWeight: 'bold' }}>
+                    <Typography variant="h4" className="page-title" sx={{ fontWeight: 'bold' }}>
                         Shop Users
                     </Typography>
                     <Typography color="text.secondary">
