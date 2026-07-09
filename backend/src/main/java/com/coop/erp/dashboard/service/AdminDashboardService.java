@@ -3,10 +3,13 @@ package com.coop.erp.dashboard.service;
 import com.coop.erp.core.repository.ShopRepository;
 import com.coop.erp.core.repository.UserRepository;
 import com.coop.erp.dashboard.dto.DashboardSummaryResponse;
+import com.coop.erp.inventory.repository.SaleRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 @Service
 @RequiredArgsConstructor
@@ -14,6 +17,7 @@ public class AdminDashboardService {
 
     private final ShopRepository shopRepository;
     private final UserRepository userRepository;
+    private final SaleRepository saleRepository;
 
     public DashboardSummaryResponse getSummary() {
         long totalShops = shopRepository.count();
@@ -30,6 +34,17 @@ public class AdminDashboardService {
         long totalSuppliers = 0;
         long totalCustomers = 0;
 
+        // Calculate Admin Today's Sales
+        LocalDateTime startOfDay = LocalDate.now().atStartOfDay();
+        LocalDateTime endOfDay = startOfDay.plusDays(1);
+        
+        long todaySalesCount = saleRepository.countBySourceShopIsNullAndSaleDateBetween(startOfDay, endOfDay);
+        BigDecimal todaySalesAmount = saleRepository.sumTotalAmountBySourceShopIsNullAndSaleDateBetween(startOfDay, endOfDay);
+        
+        if (todaySalesAmount == null) {
+            todaySalesAmount = BigDecimal.ZERO;
+        }
+
         return DashboardSummaryResponse.builder()
                 .totalShops(totalShops)
                 .activeShops(activeShops)
@@ -37,8 +52,10 @@ public class AdminDashboardService {
                 .totalProducts(totalProducts)
                 .totalStockQuantity(totalStockQuantity)
                 .lowStockItems(lowStockItems)
-                .todaySales(todaySales)
-                .todayRevenue(todayRevenue)
+                .todaySales(todaySalesCount)
+                .todayRevenue(todaySalesAmount)
+                .todaySalesCount(todaySalesCount)
+                .todaySalesAmount(todaySalesAmount)
                 .pendingPurchases(pendingPurchases)
                 .totalSuppliers(totalSuppliers)
                 .totalCustomers(totalCustomers)

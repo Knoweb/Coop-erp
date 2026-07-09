@@ -15,6 +15,13 @@ public interface SaleRepository extends JpaRepository<Sale, UUID> {
     java.util.Optional<Sale> findByIdAndTargetShopId(UUID id, UUID targetShopId);
 
     long countBySourceShopIdAndSaleDateBetween(UUID sourceShopId, java.time.LocalDateTime startOfDay, java.time.LocalDateTime endOfDay);
+    
+    long countBySourceShopIsNullAndSaleDateBetween(java.time.LocalDateTime startOfDay, java.time.LocalDateTime endOfDay);
+
+    @org.springframework.data.jpa.repository.Query("SELECT COALESCE(SUM(s.totalAmount), 0) FROM Sale s WHERE s.sourceShop IS NULL AND s.saleDate >= :startOfDay AND s.saleDate < :endOfDay")
+    java.math.BigDecimal sumTotalAmountBySourceShopIsNullAndSaleDateBetween(
+            @org.springframework.data.repository.query.Param("startOfDay") java.time.LocalDateTime startOfDay,
+            @org.springframework.data.repository.query.Param("endOfDay") java.time.LocalDateTime endOfDay);
 
     @org.springframework.data.jpa.repository.Query("SELECT COALESCE(SUM(s.totalAmount), 0) FROM Sale s WHERE s.sourceShop.id = :shopId AND s.saleDate >= :startOfDay AND s.saleDate < :endOfDay")
     java.math.BigDecimal sumTotalAmountBySourceShopIdAndSaleDateBetween(
