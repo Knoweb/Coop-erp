@@ -24,9 +24,9 @@ public class UtilityBillService {
     public UtilityBillResponse recordBill(UtilityBillRequest request) {
 
         // 1. Strict Ratio Validation
-        BigDecimal totalRatio = request.milkShopRatio().add(request.roomSectionRatio());
+        BigDecimal totalRatio = request.mainShopRatio().add(request.subShopRatio());
         if (totalRatio.compareTo(BigDecimal.ONE) != 0) {
-            throw new IllegalArgumentException("CRITICAL ERROR: Milk Shop Ratio and Room Section Ratio must exactly equal 1.00. Provided sum is: " + totalRatio);
+            throw new IllegalArgumentException("CRITICAL ERROR: Main shop ratio and Sub shop ratio must exactly equal 1.00. Provided sum is: " + totalRatio);
         }
 
         // 2. Map and Save
@@ -34,8 +34,8 @@ public class UtilityBillService {
                 .utilityType(UtilityType.valueOf(request.utilityType().toUpperCase()))
                 .billingMonth(request.billingMonth())
                 .totalAmount(request.totalAmount())
-                .milkShopRatio(request.milkShopRatio())
-                .roomSectionRatio(request.roomSectionRatio())
+                .mainShopRatio(request.mainShopRatio())
+                .subShopRatio(request.subShopRatio())
                 .recordedBy(request.recordedBy())
                 .build();
 
@@ -53,16 +53,16 @@ public class UtilityBillService {
 
     private UtilityBillResponse mapToResponse(UtilityBill bill) {
         // Calculate the specific financial allocations dynamically
-        BigDecimal milkShopAllocation = bill.getTotalAmount().multiply(bill.getMilkShopRatio()).setScale(2, RoundingMode.HALF_UP);
-        BigDecimal roomSectionAllocation = bill.getTotalAmount().multiply(bill.getRoomSectionRatio()).setScale(2, RoundingMode.HALF_UP);
+        BigDecimal milkShopAllocation = bill.getTotalAmount().multiply(bill.getMainShopRatio()).setScale(2, RoundingMode.HALF_UP);
+        BigDecimal roomSectionAllocation = bill.getTotalAmount().multiply(bill.getSubShopRatio()).setScale(2, RoundingMode.HALF_UP);
 
         return new UtilityBillResponse(
                 bill.getId(),
                 bill.getUtilityType().name(),
                 bill.getBillingMonth(),
                 bill.getTotalAmount(),
-                bill.getMilkShopRatio(),
-                bill.getRoomSectionRatio(),
+                bill.getMainShopRatio(),
+                bill.getSubShopRatio(),
                 milkShopAllocation,
                 roomSectionAllocation,
                 bill.getRecordedBy(),

@@ -7,7 +7,7 @@ import java.math.BigDecimal;
 import java.util.UUID;
 
 @Entity
-@Table(name = "purchase_invoice_item", schema = "schema_milk_shop")
+@Table(name = "purchase_invoice_items", schema = "grocery")
 @Getter
 @Setter
 @NoArgsConstructor

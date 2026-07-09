@@ -8,7 +8,6 @@ import com.coop.erp.settings.entity.SystemSetting;
 import com.coop.erp.settings.repository.SystemSettingRepository;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -24,7 +23,6 @@ public class SettingsService {
     private static final String USER_PREFS_KEY = "USER_PREFERENCES";
     private static final String BACKUP_SETTINGS_KEY = "BACKUP_SETTINGS";
 
-    @PostConstruct
     public void seedDefaultSettings() {
         seedSettingIfMissing(BUSINESS_PROFILE_KEY, BusinessProfileDto.builder()
                 .businessName("Coop Grocery")

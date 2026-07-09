@@ -8,7 +8,7 @@ import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Entity
-@Table(name = "stock_ledger", schema = "schema_milk_shop")
+@Table(name = "stock_ledger", schema = "grocery")
 @Getter
 @Setter
 @NoArgsConstructor

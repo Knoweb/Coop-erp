@@ -28,6 +28,8 @@ import {
 import DeleteIcon from "@mui/icons-material/Delete";
 import AddIcon from "@mui/icons-material/Add";
 import api from "../../api/axiosConfig";
+import { getAdminStock } from "../../services/adminStockService";
+import { getShopStock } from "../../services/shopStockService";
 
 type SaleItemRequest = {
   productId: string;
@@ -113,7 +115,7 @@ function SalesPage() {
       }
 
       // To get available products with stock:
-      const stockRes = await api.get("/shop/stock");
+      const stockRes = isAdmin ? await getAdminStock() : await getShopStock();
 
       const availableProducts = stockRes.data.map((ledger: any) => ({
         id: ledger.item.id,
@@ -156,11 +158,13 @@ function SalesPage() {
   };
 
   const handleRemoveLineItem = (index: number) => {
-    if (lineItems.length === 1) {
-      setError("At least one item is required.");
-      return;
-    }
-    setLineItems((prev) => prev.filter((_, i) => i !== index));
+    setLineItems((prev) => {
+      const filtered = prev.filter((_, i) => i !== index);
+      if (filtered.length === 0) {
+        return [{ productId: "", quantity: "", unitPrice: "", discountPercentage: "" }];
+      }
+      return filtered;
+    });
   };
 
   const handleLineItemChange = (index: number, field: string, value: string) => {
@@ -173,9 +177,19 @@ function SalesPage() {
         if (prod) {
           updated[index].unitPrice = String(prod.unitPrice);
         }
+        if (value && index === prev.length - 1) {
+          updated.push({ productId: "", quantity: "", unitPrice: "", discountPercentage: "" });
+        }
       }
       return updated;
     });
+
+    if (field === "productId" && value) {
+      setTimeout(() => {
+        const qtyInput = document.getElementById(`quantity-${index}`);
+        if (qtyInput) qtyInput.focus();
+      }, 50);
+    }
   };
 
   const calculateLineSubtotal = (item: any) => {
@@ -209,11 +223,20 @@ function SalesPage() {
     setLineItems([{ productId: "", quantity: "", unitPrice: "", discountPercentage: "" }]);
   };
 
+  const getValidItemsForSubmission = () => {
+    return lineItems.filter(item => item.productId && Number(item.quantity) > 0);
+  };
+
   const isFormValid = () => {
     if (isAdmin && saleType === "SHOP" && !targetShopId) {
       return false;
     }
-    for (const item of lineItems) {
+    const fullyValidItems = getValidItemsForSubmission();
+    if (fullyValidItems.length === 0) return false;
+
+    const partiallyFilledItems = lineItems.filter(item => item.productId || item.quantity || item.unitPrice || item.discountPercentage);
+
+    for (const item of partiallyFilledItems) {
       if (!item.productId || Number(item.quantity) <= 0 || Number(item.unitPrice) < 0) {
         return false;
       }
@@ -237,7 +260,7 @@ function SalesPage() {
     const payload: SaleRequest = {
       saleType: isAdmin ? saleType : "CUSTOMER",
       targetShopId: isAdmin && saleType === "SHOP" ? targetShopId : undefined,
-      items: lineItems.map(item => ({
+      items: getValidItemsForSubmission().map(item => ({
         productId: item.productId,
         quantity: Number(item.quantity),
         unitPrice: Number(item.unitPrice),
@@ -404,7 +427,7 @@ function SalesPage() {
                                 {...params}
                                 placeholder="Search product by name or code"
                                 size="small"
-                                required
+                                required={!!item.quantity || !!item.unitPrice}
                                 fullWidth
                               />
                             )}
@@ -428,13 +451,14 @@ function SalesPage() {
                         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
                           <Typography sx={{ display: { xs: 'block', lg: 'none' }, fontWeight: 'bold', fontSize: '0.875rem' }}>Quantity</Typography>
                           <TextField
+                            id={`quantity-${index}`}
                             type="number"
                             fullWidth
                             size="small"
-                            value={item.quantity}
+                            value={item.quantity === 0 ? "" : item.quantity ?? ""}
                             onChange={(e) => handleLineItemChange(index, "quantity", e.target.value)}
                             slotProps={{ htmlInput: { min: 1 } }}
-                            required
+                            required={!!item.productId}
                           />
                         </Box>
 
@@ -444,10 +468,10 @@ function SalesPage() {
                             type="number"
                             fullWidth
                             size="small"
-                            value={item.unitPrice}
+                            value={item.unitPrice === 0 ? "" : item.unitPrice ?? ""}
                             onChange={(e) => handleLineItemChange(index, "unitPrice", e.target.value)}
                             slotProps={{ htmlInput: { min: 0, step: "0.01" } }}
-                            required
+                            required={!!item.productId}
                           />
                         </Box>
 
@@ -457,7 +481,7 @@ function SalesPage() {
                             type="number"
                             fullWidth
                             size="small"
-                            value={item.discountPercentage}
+                            value={item.discountPercentage === 0 ? "" : item.discountPercentage ?? ""}
                             onChange={(e) => handleLineItemChange(index, "discountPercentage", e.target.value)}
                             slotProps={{ htmlInput: { min: 0, max: 100 } }}
                           />

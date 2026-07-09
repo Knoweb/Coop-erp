@@ -20,7 +20,7 @@ import {
   TextField,
   Typography,
 } from "@mui/material";
-import api from "../../api/axiosConfig";
+import { getAdminSuppliers, createAdminSupplier, updateAdminSupplier } from "../../services/adminSupplierService";
 
 type Supplier = {
   id: string;
@@ -50,7 +50,7 @@ function SupplierPage() {
     try {
       setLoading(true);
 
-      const response = await api.get(`/shop/suppliers`);
+      const response = await getAdminSuppliers();
       const data: Supplier[] = response.data;
 
       const sortedData = data.sort((a, b) =>
@@ -81,7 +81,7 @@ function SupplierPage() {
     }
 
     try {
-      await api.post(`/shop/suppliers`, {
+      await createAdminSupplier({
         name: supplierName,
         contactNumber,
         address,
@@ -123,7 +123,7 @@ function SupplierPage() {
     }
 
     try {
-      await api.put(`/shop/suppliers/${editingSupplierId}`, {
+      await updateAdminSupplier(editingSupplierId, {
         name: editSupplierName,
         contactNumber: editContactNumber,
         address: editAddress,
@@ -180,7 +180,7 @@ function SupplierPage() {
               <TextField
                 label="Supplier Name"
                 fullWidth
-                value={supplierName}
+                value={supplierName ?? ""}
                 onChange={(e) => setSupplierName(e.target.value)}
                 placeholder="Example: Highland Dairy Products"
               />
@@ -188,7 +188,7 @@ function SupplierPage() {
               <TextField
                 label="Contact Number"
                 fullWidth
-                value={contactNumber}
+                value={contactNumber ?? ""}
                 onChange={(e) => setContactNumber(e.target.value)}
                 placeholder="Example: 0771234567"
               />
@@ -198,7 +198,7 @@ function SupplierPage() {
                 fullWidth
                 multiline
                 minRows={2}
-                value={address}
+                value={address ?? ""}
                 onChange={(e) => setAddress(e.target.value)}
                 placeholder="Example: No. 25, Galle Road, Colombo"
                 sx={{
@@ -296,14 +296,14 @@ function SupplierPage() {
             <TextField
               label="Supplier Name"
               fullWidth
-              value={editSupplierName}
+              value={editSupplierName ?? ""}
               onChange={(e) => setEditSupplierName(e.target.value)}
             />
 
             <TextField
               label="Contact Number"
               fullWidth
-              value={editContactNumber}
+              value={editContactNumber ?? ""}
               onChange={(e) => setEditContactNumber(e.target.value)}
             />
 
@@ -312,7 +312,7 @@ function SupplierPage() {
               fullWidth
               multiline
               minRows={2}
-              value={editAddress}
+              value={editAddress ?? ""}
               onChange={(e) => setEditAddress(e.target.value)}
             />
           </Box>

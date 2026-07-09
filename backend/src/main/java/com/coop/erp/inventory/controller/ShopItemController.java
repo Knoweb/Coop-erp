@@ -13,26 +13,23 @@ import java.util.List;
 import java.util.UUID;
 
 @RestController
-@RequestMapping("/api/v1/shop/shop-items")
+@RequestMapping("/api/v1/shop/items")
 @RequiredArgsConstructor
 public class ShopItemController {
 
     private final ShopItemService shopItemService;
 
     @GetMapping
-    @PreAuthorize("hasAnyAuthority('ADMIN', 'ROLE_ADMIN', 'ROLE_SUPER_ADMIN', 'SHOP_ADMIN', 'ROLE_SHOP_ADMIN', 'SHOP_USER', 'ROLE_SHOP_USER')")
     public List<ShopItemResponse> getShopItems() {
         return shopItemService.getShopItems();
     }
 
     @PostMapping
-    @PreAuthorize("hasAnyAuthority('ADMIN', 'ROLE_ADMIN', 'ROLE_SUPER_ADMIN', 'SHOP_ADMIN', 'ROLE_SHOP_ADMIN', 'SHOP_USER', 'ROLE_SHOP_USER')")
     public ShopItemResponse selectItemForShop(@Valid @RequestBody ShopItemRequest request) {
         return shopItemService.selectItemForShop(request);
     }
 
     @PutMapping("/{id}/reorder-level")
-    @PreAuthorize("hasAnyAuthority('ADMIN', 'ROLE_ADMIN', 'ROLE_SUPER_ADMIN', 'SHOP_ADMIN', 'ROLE_SHOP_ADMIN', 'SHOP_USER', 'ROLE_SHOP_USER')")
     public ShopItemResponse updateReorderLevel(
             @PathVariable UUID id,
             @Valid @RequestBody ShopItemReorderLevelRequest request) {
@@ -40,7 +37,6 @@ public class ShopItemController {
     }
 
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasAnyAuthority('ADMIN', 'ROLE_ADMIN', 'ROLE_SUPER_ADMIN', 'SHOP_ADMIN', 'ROLE_SHOP_ADMIN', 'SHOP_USER', 'ROLE_SHOP_USER')")
     public void unselectItem(@PathVariable UUID id) {
         shopItemService.unselectItem(id);
     }

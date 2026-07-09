@@ -26,6 +26,8 @@ import {
 import DeleteIcon from "@mui/icons-material/Delete";
 import AddIcon from "@mui/icons-material/Add";
 import api from "../../api/axiosConfig";
+import { getAdminSuppliers } from "../../services/adminSupplierService";
+import { getAdminItems } from "../../services/adminItemService";
 
 type Supplier = {
   id: string;
@@ -119,14 +121,14 @@ function AdminPurchasesPage() {
   const [error, setError] = useState("");
 
   const loadSuppliers = async () => {
-    const response = await api.get(`/shop/suppliers`);
+    const response = await getAdminSuppliers();
     const data: Supplier[] = response.data;
     const sortedData = data.sort((a, b) => a.name.localeCompare(b.name));
     setSuppliers(sortedData);
   };
 
   const loadItems = async () => {
-    const response = await api.get(`/shop/items`);
+    const response = await getAdminItems();
     const data: ItemProduct[] = response.data;
     const sortedData = data.sort((a, b) => a.name.localeCompare(b.name));
     setItems(sortedData);

@@ -9,7 +9,7 @@ import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Entity
-@Table(name = "utility_bill", schema = "schema_admin")
+@Table(name = "utility_bill", schema = "admin")
 @Getter
 @Setter
 @NoArgsConstructor
@@ -31,11 +31,11 @@ public class UtilityBill {
     @Column(name = "total_amount", nullable = false, precision = 12, scale = 2)
     private BigDecimal totalAmount;
 
-    @Column(name = "milk_shop_ratio", nullable = false, precision = 3, scale = 2)
-    private BigDecimal milkShopRatio;
+    @Column(name = "main_shop_ratio", nullable = false, precision = 3, scale = 2)
+    private BigDecimal mainShopRatio;
 
-    @Column(name = "room_section_ratio", nullable = false, precision = 3, scale = 2)
-    private BigDecimal roomSectionRatio;
+    @Column(name = "sub_shop_ratio", nullable = false, precision = 3, scale = 2)
+    private BigDecimal subShopRatio;
 
     @Column(name = "recorded_by", nullable = false)
     private UUID recordedBy;

@@ -4,6 +4,7 @@ import com.coop.erp.core.entity.Shop;
 import com.coop.erp.core.entity.User;
 import com.coop.erp.core.repository.ShopRepository;
 import com.coop.erp.core.repository.UserRepository;
+import com.coop.erp.settings.service.SettingsService;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
@@ -15,16 +16,19 @@ public class DatabaseSeeder implements CommandLineRunner {
     private final UserRepository userRepository;
     private final ShopRepository shopRepository;
     private final PasswordEncoder passwordEncoder;
+    private final SettingsService settingsService;
 
-    public DatabaseSeeder(UserRepository userRepository, ShopRepository shopRepository, PasswordEncoder passwordEncoder) {
+    public DatabaseSeeder(UserRepository userRepository, ShopRepository shopRepository, PasswordEncoder passwordEncoder, SettingsService settingsService) {
         this.userRepository = userRepository;
         this.shopRepository = shopRepository;
         this.passwordEncoder = passwordEncoder;
+        this.settingsService = settingsService;
     }
 
     @Override
     @Transactional
     public void run(String... args) throws Exception {
+        settingsService.seedDefaultSettings();
         seedAdminUser();
         seedShopsAndShopAdmins();
     }

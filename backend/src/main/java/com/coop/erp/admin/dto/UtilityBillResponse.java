@@ -9,8 +9,8 @@ public record UtilityBillResponse(
         String utilityType,
         String billingMonth,
         BigDecimal totalAmount,
-        BigDecimal milkShopRatio,
-        BigDecimal roomSectionRatio,
+        BigDecimal mainShopRatio,
+        BigDecimal subShopRatio,
         BigDecimal milkShopAllocatedAmount, // Calculated dynamically
         BigDecimal roomSectionAllocatedAmount, // Calculated dynamically
         UUID recordedBy,

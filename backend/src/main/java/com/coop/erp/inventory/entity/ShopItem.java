@@ -8,7 +8,7 @@ import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Entity
-@Table(name = "shop_item", schema = "schema_milk_shop", uniqueConstraints = {
+@Table(name = "shop_items", schema = "grocery", uniqueConstraints = {
         @UniqueConstraint(columnNames = {"shop_id", "item_id"})
 })
 @Getter

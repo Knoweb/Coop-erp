@@ -12,7 +12,7 @@ import java.util.List;
 import java.util.UUID;
 
 @RestController
-@RequestMapping("/api/v1/shop/items")
+@RequestMapping("/api/v1/admin/products")
 @RequiredArgsConstructor
 public class ItemProductController {
 
@@ -24,13 +24,11 @@ public class ItemProductController {
     }
 
     @PostMapping
-    @PreAuthorize("hasAnyAuthority('ADMIN', 'ROLE_ADMIN', 'ROLE_SUPER_ADMIN')")
     public ItemProduct createItem(@Valid @RequestBody ItemProductRequest request) {
         return itemProductService.createItem(request);
     }
 
     @PutMapping("/{id}")
-    @PreAuthorize("hasAnyAuthority('ADMIN', 'ROLE_ADMIN', 'ROLE_SUPER_ADMIN')")
     public ItemProduct updateItem(
             @PathVariable UUID id,
             @Valid @RequestBody ItemProductRequest request

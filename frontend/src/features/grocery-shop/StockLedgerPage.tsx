@@ -17,7 +17,8 @@ import {
   Typography,
 } from "@mui/material";
 import SearchIcon from "@mui/icons-material/Search";
-import api from "../../api/axiosConfig";
+import { getAdminStock } from "../../services/adminStockService";
+import { getShopStock } from "../../services/shopStockService";
 
 type ChipColor =
   | "default"
@@ -63,6 +64,8 @@ const formatDateTime = (dateString: string) => {
 };
 
 function StockLedgerPage() {
+  const role = localStorage.getItem("user_role");
+  const isAdmin = role === "ROLE_ADMIN" || role === "ADMIN";
   const [stockLedgers, setStockLedgers] = useState<StockLedger[]>([]);
   const [activeFilter, setActiveFilter] = useState<StockFilter>("ALL");
   const [searchQuery, setSearchQuery] = useState("");
@@ -74,7 +77,7 @@ function StockLedgerPage() {
     try {
       setLoading(true);
 
-      const response = await api.get(`/shop/stock`);
+      const response = isAdmin ? await getAdminStock() : await getShopStock();
       const data: StockLedger[] = response.data;
 
       const sortedData = data.sort((a, b) =>

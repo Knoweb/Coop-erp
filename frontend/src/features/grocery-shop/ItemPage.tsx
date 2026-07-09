@@ -88,7 +88,7 @@ function ItemPage() {
     try {
       setLoading(true);
 
-      const url = isAdmin ? `/shop/items` : `/shop/shop-items`;
+      const url = isAdmin ? `/admin/products` : `/shop/items`;
       const response = await api.get(url);
       const data: ItemProduct[] = response.data;
 
@@ -120,10 +120,11 @@ function ItemPage() {
     }
 
     try {
-      await api.post(`/shop/items`, {
+      const url = `/admin/products`;
+      await api.post(url, {
         name,
-        category: finalCategory, // Sending the final category
-        reorderLevel: Number(reorderLevel),
+        category: finalCategory,
+        defaultReorderLevel: Number(reorderLevel),
         unitPrice: Number(unitPrice),
       });
 
@@ -168,10 +169,10 @@ function ItemPage() {
   const handleToggleShopItem = async (item: ItemProduct) => {
     try {
       if (item.isSelected && item.shopItemId) {
-        await api.delete(`/shop/shop-items/${item.shopItemId}`);
+        await api.delete(`/shop/items/${item.shopItemId}`);
         setMessage("Item removed from your shop.");
       } else {
-        await api.post(`/shop/shop-items`, { itemId: item.itemId });
+        await api.post(`/shop/items`, { itemId: item.itemId });
         setMessage("Item added to your shop.");
       }
       await loadItems();
@@ -208,7 +209,7 @@ function ItemPage() {
 
     try {
       if (isAdmin) {
-        await api.put(`/shop/items/${editingItemId}`, {
+        await api.put(`/admin/products/${editingItemId}`, {
           name: editName,
           category: finalEditCategory,
           defaultReorderLevel: Number(editReorderLevel),
@@ -217,7 +218,7 @@ function ItemPage() {
       } else {
         const item = items.find(i => i.shopItemId === editingItemId);
         if (item) {
-          await api.put(`/shop/shop-items/${item.shopItemId}/reorder-level`, {
+          await api.put(`/shop/items/${item.shopItemId}/reorder-level`, {
             reorderLevel: Number(editReorderLevel),
           });
         }

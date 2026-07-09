@@ -15,13 +15,13 @@ public record UtilityBillRequest(
         @DecimalMin(value = "0.01", message = "Total amount must be greater than 0")
         BigDecimal totalAmount,
 
-        @NotNull(message = "Milk shop ratio is required")
+        @NotNull(message = "Main shop ratio is required")
         @DecimalMin(value = "0.00") @DecimalMax(value = "1.00")
-        BigDecimal milkShopRatio,
+        BigDecimal mainShopRatio,
 
-        @NotNull(message = "Room section ratio is required")
+        @NotNull(message = "Sub shop ratio is required")
         @DecimalMin(value = "0.00") @DecimalMax(value = "1.00")
-        BigDecimal roomSectionRatio,
+        BigDecimal subShopRatio,
 
         @NotNull(message = "Recorded by user ID is required")
         UUID recordedBy

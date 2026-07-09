@@ -40,4 +40,11 @@ public class SupplierService {
 
         return supplierRepository.save(supplier);
     }
+
+    public Supplier toggleSupplierStatus(UUID id) {
+        Supplier supplier = supplierRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Supplier not found"));
+        supplier.setIsActive(!supplier.getIsActive());
+        return supplierRepository.save(supplier);
+    }
 }

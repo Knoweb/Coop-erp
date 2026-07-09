@@ -29,6 +29,7 @@ const Login: React.FC = () => {
     const handleLogin = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
         setErrorMsg('');
+        localStorage.clear();
 
         if (!loginType) {
             setErrorMsg('Critical: Login type selection is required.');

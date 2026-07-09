@@ -6,7 +6,7 @@ import lombok.*;
 import java.util.UUID;
 
 @Entity
-@Table(name = "supplier", schema = "schema_milk_shop")
+@Table(name = "suppliers", schema = "grocery")
 @Getter
 @Setter
 @NoArgsConstructor

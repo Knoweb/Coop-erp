@@ -10,10 +10,13 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 import java.util.UUID;
 
+import org.springframework.security.access.prepost.PreAuthorize;
+
 @RestController
-@RequestMapping("/api/v1/shop/suppliers")
+@RequestMapping("/api/v1/admin/suppliers")
 @RequiredArgsConstructor
-public class SupplierController {
+@PreAuthorize("hasAuthority('ADMIN')")
+public class AdminSupplierController {
 
     private final SupplierService supplierService;
 
@@ -33,5 +36,10 @@ public class SupplierController {
             @Valid @RequestBody SupplierRequest request
     ) {
         return supplierService.updateSupplier(id, request);
+    }
+
+    @PatchMapping("/{id}/status")
+    public Supplier toggleSupplierStatus(@PathVariable UUID id) {
+        return supplierService.toggleSupplierStatus(id);
     }
 }

@@ -1,299 +1,198 @@
 -- ==============================================================================
--- INITIALIZATION
+-- COOP GROCERY MANAGEMENT SYSTEM - INITIALIZATION
 -- ==============================================================================
+
 -- Enable UUID extension for secure, distributed primary keys
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
--- Create isolated schemas for each microservice domain
-CREATE SCHEMA IF NOT EXISTS schema_admin;
-CREATE SCHEMA IF NOT EXISTS schema_milk_shop;
-CREATE SCHEMA IF NOT EXISTS schema_beer_garden;
-CREATE SCHEMA IF NOT EXISTS schema_room_section;
+-- Create schemas
+CREATE SCHEMA IF NOT EXISTS admin;
+CREATE SCHEMA IF NOT EXISTS grocery;
 
 -- ==============================================================================
--- 1. ADMIN & IAM SCHEMA (schema_admin)
+-- 1. ADMIN SCHEMA
 -- ==============================================================================
 
-CREATE TABLE schema_admin.users (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    name VARCHAR(150) NOT NULL,
+CREATE TABLE IF NOT EXISTS admin.shops (
+    id UUID PRIMARY KEY DEFAULT public.uuid_generate_v4(),
+    code VARCHAR(50) UNIQUE NOT NULL,
+    name VARCHAR(100) NOT NULL,
+    address VARCHAR(255),
+    contact_number VARCHAR(50),
+    is_active BOOLEAN NOT NULL DEFAULT TRUE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS admin.users (
+    id UUID PRIMARY KEY DEFAULT public.uuid_generate_v4(),
+    name VARCHAR(255) NOT NULL,
     username VARCHAR(50) UNIQUE NOT NULL,
+    email VARCHAR(100) UNIQUE,
     password_hash VARCHAR(255) NOT NULL,
     role VARCHAR(50) NOT NULL, 
-    is_active BOOLEAN DEFAULT TRUE,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    is_active BOOLEAN NOT NULL DEFAULT TRUE,
+    shop_id UUID REFERENCES admin.shops(id),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE TABLE schema_admin.utility_bill (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    utility_type VARCHAR(50) NOT NULL, 
-    billing_month VARCHAR(7) NOT NULL, 
-    total_amount DECIMAL(12, 2) NOT NULL,
-    milk_shop_ratio DECIMAL(3, 2) NOT NULL,
-    room_section_ratio DECIMAL(3, 2) NOT NULL, 
-    recorded_by UUID NOT NULL,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+CREATE TABLE IF NOT EXISTS admin.system_settings (
+    setting_key VARCHAR(100) PRIMARY KEY,
+    setting_value TEXT,
+    updated_by VARCHAR(50),
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE TABLE schema_admin.audit_log (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+CREATE TABLE IF NOT EXISTS admin.audit_log (
+    id UUID PRIMARY KEY DEFAULT public.uuid_generate_v4(),
     user_id UUID NOT NULL,
-    service_name VARCHAR(50) NOT NULL,
-    action VARCHAR(100) NOT NULL,
+    service_name VARCHAR(255) NOT NULL,
+    action VARCHAR(255) NOT NULL,
     description TEXT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
+CREATE TABLE IF NOT EXISTS admin.utility_bill (
+    id UUID PRIMARY KEY DEFAULT public.uuid_generate_v4(),
+    utility_type VARCHAR(50) NOT NULL, 
+    billing_month VARCHAR(7) NOT NULL, 
+    total_amount NUMERIC(12, 2) NOT NULL,
+    main_shop_ratio NUMERIC(3, 2) NOT NULL,
+    sub_shop_ratio NUMERIC(3, 2) NOT NULL, 
+    recorded_by UUID NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
 -- ==============================================================================
--- 2. MILK SHOP SCHEMA (schema_milk_shop)
+-- 2. GROCERY SCHEMA
 -- ==============================================================================
 
-CREATE TABLE schema_milk_shop.supplier (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+CREATE TABLE IF NOT EXISTS grocery.suppliers (
+    id UUID PRIMARY KEY DEFAULT public.uuid_generate_v4(),
     name VARCHAR(100) NOT NULL,
     contact_number VARCHAR(20),
     address VARCHAR(255),
     is_active BOOLEAN DEFAULT TRUE
 );
 
-CREATE TABLE schema_milk_shop.item_product (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+CREATE TABLE IF NOT EXISTS grocery.products (
+    id UUID PRIMARY KEY DEFAULT public.uuid_generate_v4(),
     name VARCHAR(100) NOT NULL,
     category VARCHAR(50) NOT NULL,
-    reorder_level INT NOT NULL DEFAULT 10,
-    unit_price DECIMAL(10, 2) NOT NULL,
+    default_reorder_level INTEGER NOT NULL DEFAULT 10,
+    unit_price NUMERIC(10, 2) NOT NULL,
     is_active BOOLEAN DEFAULT TRUE
 );
 
-CREATE TABLE schema_milk_shop.stock_ledger (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    item_id UUID NOT NULL REFERENCES schema_milk_shop.item_product(id),
-    current_qty INT NOT NULL DEFAULT 0,
-    last_updated TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+CREATE TABLE IF NOT EXISTS grocery.shop_items (
+    id UUID PRIMARY KEY DEFAULT public.uuid_generate_v4(),
+    shop_id UUID NOT NULL REFERENCES admin.shops(id),
+    item_id UUID NOT NULL REFERENCES grocery.products(id),
+    reorder_level INTEGER NOT NULL,
+    is_active BOOLEAN DEFAULT TRUE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(shop_id, item_id)
 );
 
-CREATE TABLE schema_milk_shop.purchase_invoice ( 
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    supplier_id UUID NOT NULL REFERENCES schema_milk_shop.supplier(id),
+CREATE TABLE IF NOT EXISTS grocery.stock_ledger (
+    id UUID PRIMARY KEY DEFAULT public.uuid_generate_v4(),
+    shop_id UUID REFERENCES admin.shops(id),
+    item_id UUID NOT NULL REFERENCES grocery.products(id),
+    current_qty INTEGER NOT NULL DEFAULT 0,
+    last_updated TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(shop_id, item_id)
+);
+
+CREATE TABLE IF NOT EXISTS grocery.stock_adjustment_log (
+    id UUID PRIMARY KEY DEFAULT public.uuid_generate_v4(),
+    item_id UUID NOT NULL REFERENCES grocery.products(id),
+    adjustment_type VARCHAR(50) NOT NULL,
+    previous_qty INTEGER NOT NULL,
+    quantity_changed INTEGER NOT NULL,
+    new_qty INTEGER NOT NULL,
+    unit_price NUMERIC(10, 2) NOT NULL DEFAULT 0.00,
+    total_amount NUMERIC(12, 2) NOT NULL DEFAULT 0.00,
+    reason VARCHAR(100),
+    remarks VARCHAR(255),
+    adjustment_date DATE NOT NULL DEFAULT CURRENT_DATE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS grocery.purchase_invoices ( 
+    id UUID PRIMARY KEY DEFAULT public.uuid_generate_v4(),
+    supplier_id UUID NOT NULL REFERENCES grocery.suppliers(id),
     invoice_number VARCHAR(50),
-    total_amount DECIMAL(12, 2) NOT NULL,
+    total_amount NUMERIC(12, 2) NOT NULL,
     invoice_date DATE NOT NULL DEFAULT CURRENT_DATE,
     remarks VARCHAR(255),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- new table to link purchase invoices to their line items
-CREATE TABLE IF NOT EXISTS schema_milk_shop.purchase_invoice_item (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    purchase_invoice_id UUID NOT NULL REFERENCES schema_milk_shop.purchase_invoice(id) ON DELETE CASCADE,
-    item_id UUID NOT NULL REFERENCES schema_milk_shop.item_product(id),
-    quantity INT NOT NULL,
-    unit_price DECIMAL(10, 2) NOT NULL,
-    line_total DECIMAL(12, 2) NOT NULL
+CREATE TABLE IF NOT EXISTS grocery.purchase_invoice_items (
+    id UUID PRIMARY KEY DEFAULT public.uuid_generate_v4(),
+    purchase_invoice_id UUID NOT NULL REFERENCES grocery.purchase_invoices(id) ON DELETE CASCADE,
+    item_id UUID NOT NULL REFERENCES grocery.products(id),
+    quantity INTEGER NOT NULL,
+    unit_price NUMERIC(10, 2) NOT NULL,
+    line_total NUMERIC(12, 2) NOT NULL
 );
 
-CREATE TABLE schema_milk_shop.daily_sales (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    sales_date DATE UNIQUE NOT NULL,
-    total_sales_value DECIMAL(12, 2) NOT NULL,
-    cash_handed_over DECIMAL(12, 2) NOT NULL,
-    discrepancy DECIMAL(10, 2) DEFAULT 0.00,
-    operator_id UUID NOT NULL,
-    received_by VARCHAR(100),
-    remarks VARCHAR(255),
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+CREATE TABLE IF NOT EXISTS grocery.sales (
+    id UUID PRIMARY KEY DEFAULT public.uuid_generate_v4(),
+    sale_number VARCHAR(255) UNIQUE NOT NULL,
+    sale_type VARCHAR(255) NOT NULL CHECK (sale_type IN ('CUSTOMER','SHOP')),
+    target_shop_id UUID REFERENCES admin.shops(id),
+    source_shop_id UUID REFERENCES admin.shops(id),
+    sale_date TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    total_amount NUMERIC(12, 2) NOT NULL,
+    notes VARCHAR(255),
+    subtotal NUMERIC(12, 2) NOT NULL DEFAULT 0.00,
+    total_discount NUMERIC(12, 2) NOT NULL DEFAULT 0.00,
+    created_by VARCHAR(255) NOT NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE TABLE IF NOT EXISTS schema_milk_shop.stock_adjustment_log (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-
-    item_id UUID NOT NULL REFERENCES schema_milk_shop.item_product(id),
-
-    adjustment_type VARCHAR(50) NOT NULL,
-
-    previous_qty INT NOT NULL,
-    quantity_changed INT NOT NULL,
-    new_qty INT NOT NULL,
-
-    unit_price DECIMAL(10, 2) NOT NULL DEFAULT 0.00,
-    total_amount DECIMAL(12, 2) NOT NULL DEFAULT 0.00,
-
-    reason VARCHAR(100),
-    remarks VARCHAR(255),
-
-    adjustment_date DATE NOT NULL DEFAULT CURRENT_DATE,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+CREATE TABLE IF NOT EXISTS grocery.sale_items (
+    id UUID PRIMARY KEY DEFAULT public.uuid_generate_v4(),
+    sale_id UUID NOT NULL REFERENCES grocery.sales(id) ON DELETE CASCADE,
+    item_id UUID NOT NULL REFERENCES grocery.products(id),
+    quantity INTEGER NOT NULL,
+    unit_price NUMERIC(10, 2) NOT NULL,
+    discount_percentage NUMERIC(5, 2) DEFAULT 0.00,
+    discount_amount NUMERIC(12, 2) DEFAULT 0.00,
+    line_total NUMERIC(12, 2) NOT NULL
 );
 
 -- ==============================================================================
--- 3. BEER GARDEN SCHEMA (schema_beer_garden) - FULLY NORMALIZED
+-- 3. CONSTRAINTS & INDEXES
 -- ==============================================================================
 
--- 1. Master Item Catalog
-CREATE TABLE schema_beer_garden.beer_items (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    item_code VARCHAR(50) UNIQUE NOT NULL,
-    beer_name VARCHAR(100) NOT NULL,
-    category VARCHAR(50),
-    current_stock INT NOT NULL DEFAULT 0, 
-    unit_price DECIMAL(12, 2) 
-);
-
--- 2. Supplier Profiles
-CREATE TABLE schema_beer_garden.suppliers (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    supplier_name VARCHAR(255) NOT NULL,
-    license_number VARCHAR(100),
-    territory VARCHAR(100),
-    contact_details VARCHAR(255),
-    credit_terms VARCHAR(100),
-    outstanding_balance DECIMAL(15, 2) DEFAULT 0.00,
-    is_active BOOLEAN DEFAULT TRUE,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
-
--- 3. Price List
-CREATE TABLE schema_beer_garden.beer_price_list (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    beer_item_id UUID NOT NULL REFERENCES schema_beer_garden.beer_items(id) ON DELETE CASCADE,
-    unit_price DECIMAL(12, 2) NOT NULL,
-    effective_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    authorized_by VARCHAR(255) NOT NULL
-);
-
--- 4. GRN Parent Table
-CREATE TABLE schema_beer_garden.beer_garden_grn (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    grn_number VARCHAR(100),
-    supplier_name VARCHAR(255),
-    received_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    total_amount DECIMAL(12, 2),
-    amount_paid DECIMAL(12, 2) DEFAULT 0.00,
-    status VARCHAR(50)
-);
-
--- 5. GRN Items
-CREATE TABLE schema_beer_garden.grn_item (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    grn_invoice_id UUID NOT NULL REFERENCES schema_beer_garden.beer_garden_grn(id) ON DELETE CASCADE,
-    beer_item_id UUID NOT NULL REFERENCES schema_beer_garden.beer_items(id),
-    quantity INT NOT NULL CHECK (quantity > 0),
-    unit_cost DECIMAL(12, 2) NOT NULL CHECK (unit_cost >= 0),
-    line_total DECIMAL(12, 2) NOT NULL
-);
-
--- 6. Supplier Payments Ledger (THE FIX IS HERE)
-CREATE TABLE schema_beer_garden.supplier_payments (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    supplier_id UUID NOT NULL REFERENCES schema_beer_garden.suppliers(id),
-    -- Fixed: Now correctly points to beer_garden_grn instead of the deleted table
-    grn_invoice_id UUID REFERENCES schema_beer_garden.beer_garden_grn(id), 
-    payment_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    amount DECIMAL(12, 2) NOT NULL CHECK (amount > 0),
-    payment_reference VARCHAR(100)
-);
-
--- 7. Issuance Invoice (Sales)
-CREATE TABLE schema_beer_garden.issuance_invoice (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    invoice_number VARCHAR(50) NOT NULL UNIQUE,
-    operator_name VARCHAR(150) NOT NULL,
-    issued_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    total_stock_value DECIMAL(12, 2) NOT NULL DEFAULT 0.00,
-    total_commission DECIMAL(12, 2) NOT NULL DEFAULT 0.00,
-    grand_total DECIMAL(12, 2) NOT NULL DEFAULT 0.00,
-    issued_by_role VARCHAR(255) NOT NULL,
-    status VARCHAR(50),                                  
-    priority_level VARCHAR(50) DEFAULT 'MEDIUM'          
-);
-
--- 8. Payment Record (For Issuance Invoices)
-CREATE TABLE IF NOT EXISTS schema_beer_garden.payment_record (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    invoice_id UUID NOT NULL REFERENCES schema_beer_garden.issuance_invoice(id),
-    amount_paid DECIMAL(12, 2) NOT NULL,
-    payment_method VARCHAR(20) NOT NULL,
-    reference_number VARCHAR(50), 
-    payment_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
-
--- 9. Issuance Item 
-CREATE TABLE schema_beer_garden.issuance_item (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    invoice_id UUID NOT NULL REFERENCES schema_beer_garden.issuance_invoice(id) ON DELETE CASCADE,
-    beer_item_id UUID NOT NULL REFERENCES schema_beer_garden.beer_items(id),
-    quantity INT NOT NULL,
-    unit_price DECIMAL(12, 2) NOT NULL,
-    commission_per_bottle DECIMAL(12, 2) NOT NULL,
-    line_total DECIMAL(12, 2) NOT NULL
-);
-
--- 10. Performance Index
-CREATE INDEX idx_beer_invoice_status ON schema_beer_garden.issuance_invoice(status);
--- ==============================================================================
--- 4. ROOM SECTION SCHEMA (schema_room_section)
--- ==============================================================================
-
-CREATE TABLE schema_room_section.room (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    room_number VARCHAR(10) UNIQUE NOT NULL,
-    room_type VARCHAR(20) NOT NULL, -- AC, NON_AC
-    base_price DECIMAL(10, 2) NOT NULL,
-    extra_hour_rate DECIMAL(10, 2) DEFAULT 0.00,
-    status VARCHAR(20) NOT NULL DEFAULT 'AVAILABLE' -- AVAILABLE, OCCUPIED, MAINTENANCE
-);
-
-CREATE TABLE schema_room_section.room_billing_setting (
-    id INT PRIMARY KEY,
-    vat_rate DECIMAL(5, 2) NOT NULL DEFAULT 18.00,
-    sscl_rate DECIMAL(5, 2) NOT NULL DEFAULT 2.50
-);
-
-CREATE TABLE schema_room_section.guest_booking (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    room_id UUID NOT NULL REFERENCES schema_room_section.room(id),
-    
-    guest_name VARCHAR(100) NOT NULL,
-    nic_passport VARCHAR(50) NOT NULL,
-    adults INT DEFAULT 1,                            
-    children INT DEFAULT 0,                            
-    
-    check_in TIMESTAMP NOT NULL,
-    check_out TIMESTAMP,
-
-    no_of_days INT DEFAULT 1,
-    extra_hours INT DEFAULT 0,
-    extra_hour_charge DECIMAL(12, 2) DEFAULT 0.00,
-
-    service_charge_amount DECIMAL(12, 2) DEFAULT 0.00, 
-
-    advance_payment DECIMAL(10, 2) DEFAULT 0.00,
-
-    final_payment_amount DECIMAL(12, 2) DEFAULT 0.00,
-    final_payment_date TIMESTAMP,
-    payment_status VARCHAR(20) DEFAULT 'PARTIAL',       -- PARTIAL, PAID
-
-    sub_total DECIMAL(12, 2) NOT NULL,
-    vat_rate DECIMAL(5, 2) DEFAULT 18.00,
-    sscl_rate DECIMAL(5, 2) DEFAULT 2.50,
-    tax_amount DECIMAL(10, 2) NOT NULL,                 -- VAT + SSCL
-    total_due DECIMAL(12, 2) NOT NULL,
-
-    status VARCHAR(20) NOT NULL DEFAULT 'ACTIVE'        -- ACTIVE, CHECKED_OUT, CANCELLED
-);
-
-CREATE TABLE schema_room_section.daily_remittance (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    remittance_date DATE UNIQUE NOT NULL,
-    total_collected DECIMAL(12, 2) NOT NULL,
-    receptionist_id UUID NOT NULL, -- Soft reference to admin.users
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
+CREATE INDEX IF NOT EXISTS idx_users_username ON admin.users(username);
+CREATE INDEX IF NOT EXISTS idx_users_shop_id ON admin.users(shop_id);
+CREATE INDEX IF NOT EXISTS idx_shops_code ON admin.shops(code);
+CREATE INDEX IF NOT EXISTS idx_products_category ON grocery.products(category);
+CREATE INDEX IF NOT EXISTS idx_purchase_invoices_supplier ON grocery.purchase_invoices(supplier_id);
+CREATE INDEX IF NOT EXISTS idx_sales_sale_number ON grocery.sales(sale_number);
+CREATE INDEX IF NOT EXISTS idx_sales_source_shop ON grocery.sales(source_shop_id);
+CREATE INDEX IF NOT EXISTS idx_sales_target_shop ON grocery.sales(target_shop_id);
 
 -- ==============================================================================
--- INDEXING FOR PERFORMANCE
+-- 4. SEED DATA
 -- ==============================================================================
-CREATE INDEX idx_milk_sales_date ON schema_milk_shop.daily_sales(sales_date);
-DROP INDEX IF EXISTS schema_beer_garden.idx_beer_invoice_status;
-CREATE INDEX idx_beer_invoice_status ON schema_beer_garden.issuance_invoice(status);
-CREATE INDEX idx_room_booking_dates ON schema_room_section.guest_booking(check_in, check_out);
+
+DO $$
+BEGIN
+    -- Seed System Settings
+    INSERT INTO admin.system_settings (setting_key, setting_value, updated_by, updated_at) VALUES 
+    ('BUSINESS_PROFILE', '{"name":"Coop Grocery","currency":"LKR"}', 'system', CURRENT_TIMESTAMP),
+    ('SECURITY_SETTINGS', '{"mfa_enabled":false}', 'system', CURRENT_TIMESTAMP),
+    ('USER_PREFERENCES', '{}', 'system', CURRENT_TIMESTAMP),
+    ('BACKUP_SETTINGS', '{"auto_backup":true}', 'system', CURRENT_TIMESTAMP)
+    ON CONFLICT (setting_key) DO NOTHING;
+
+    -- NOTE: Users and Shops are handled automatically by the Spring Boot DatabaseSeeder 
+    -- during startup. Valid BCrypt hashes are correctly managed by the passwordEncoder 
+    -- in DatabaseSeeder.java, ensuring compatibility and secure initialization.
+END $$;

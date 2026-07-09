@@ -11,7 +11,7 @@ import java.util.List;
 import java.util.UUID;
 
 @Entity
-@Table(name = "sale", schema = "schema_milk_shop")
+@Table(name = "sales", schema = "grocery")
 @Getter
 @Setter
 @NoArgsConstructor
