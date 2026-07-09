@@ -101,9 +101,11 @@ CREATE TABLE IF NOT EXISTS grocery.stock_ledger (
     shop_id UUID REFERENCES admin.shops(id),
     item_id UUID NOT NULL REFERENCES grocery.products(id),
     current_qty INTEGER NOT NULL DEFAULT 0,
-    last_updated TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    UNIQUE(shop_id, item_id)
+    last_updated TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
+
+CREATE UNIQUE INDEX IF NOT EXISTS ux_stock_ledger_main_item ON grocery.stock_ledger(item_id) WHERE shop_id IS NULL;
+CREATE UNIQUE INDEX IF NOT EXISTS ux_stock_ledger_shop_item ON grocery.stock_ledger(shop_id, item_id) WHERE shop_id IS NOT NULL;
 
 CREATE TABLE IF NOT EXISTS grocery.stock_adjustment_log (
     id UUID PRIMARY KEY DEFAULT public.uuid_generate_v4(),

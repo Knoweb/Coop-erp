@@ -39,12 +39,11 @@ public class GrnService {
         String username = SecurityContextHolder.getContext().getAuthentication().getName();
         User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new RuntimeException("User not found"));
-        if (user.getShop() == null) {
-            throw new RuntimeException("User is not assigned to any shop");
-        }
+        // If user is ADMIN or doesn't have a shop, return null for Main Shop stock
         return user.getShop();
     }
 
+    @org.springframework.transaction.annotation.Transactional
     public GrnResponse createGrn(GrnRequest request) {
         Shop currentShop = getCurrentUserShop();
 
@@ -65,6 +64,13 @@ public class GrnService {
         PurchaseInvoice savedInvoice = purchaseInvoiceRepository.save(purchaseInvoice);
 
         for (GrnItemRequest itemRequest : request.getItems()) {
+            if (itemRequest.getQuantity() == null || itemRequest.getQuantity() <= 0) {
+                throw new org.springframework.web.server.ResponseStatusException(org.springframework.http.HttpStatus.BAD_REQUEST, "Item quantity must be greater than 0");
+            }
+            if (itemRequest.getUnitPrice() == null || itemRequest.getUnitPrice().compareTo(BigDecimal.ZERO) < 0) {
+                throw new org.springframework.web.server.ResponseStatusException(org.springframework.http.HttpStatus.BAD_REQUEST, "Item unit price cannot be negative");
+            }
+            
             ItemProduct item = itemProductRepository.findById(itemRequest.getItemId())
                     .orElseThrow(() -> new RuntimeException("Item not found"));
 
@@ -102,15 +108,29 @@ public class GrnService {
     }
 
     private void increaseStock(ItemProduct item, Integer quantity, Shop shop) {
-        StockLedger stockLedger = stockLedgerRepository.findByItemIdAndShopId(item.getId(), shop.getId())
-                .orElseGet(() -> {
-                    StockLedger newStock = new StockLedger();
-                    newStock.setItem(item);
-                    newStock.setShop(shop);
-                    newStock.setCurrentQty(0);
-                    newStock.setLastUpdated(LocalDateTime.now());
-                    return newStock;
-                });
+        StockLedger stockLedger;
+        
+        if (shop != null) {
+            stockLedger = stockLedgerRepository.findByItemIdAndShopId(item.getId(), shop.getId())
+                    .orElseGet(() -> {
+                        StockLedger newStock = new StockLedger();
+                        newStock.setItem(item);
+                        newStock.setShop(shop);
+                        newStock.setCurrentQty(0);
+                        newStock.setLastUpdated(LocalDateTime.now());
+                        return newStock;
+                    });
+        } else {
+            stockLedger = stockLedgerRepository.findByItemIdAndShopIsNull(item.getId())
+                    .orElseGet(() -> {
+                        StockLedger newStock = new StockLedger();
+                        newStock.setItem(item);
+                        newStock.setShop(null);
+                        newStock.setCurrentQty(0);
+                        newStock.setLastUpdated(LocalDateTime.now());
+                        return newStock;
+                    });
+        }
 
         stockLedger.setCurrentQty(stockLedger.getCurrentQty() + quantity);
         stockLedger.setLastUpdated(LocalDateTime.now());
