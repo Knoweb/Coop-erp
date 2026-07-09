@@ -43,18 +43,30 @@ public class StockLedgerService {
         Integer reorderLevel = null;
         java.util.UUID shopItemId = null;
         
-        if (shopId != null) {
-            java.util.Optional<com.coop.erp.inventory.entity.ShopItem> optShopItem = shopItemRepository.findByShopIdAndItemId(shopId, ledger.getItem().getId());
+        // determine if this is the main shop/admin ledger
+        boolean isAdminLedger = (shopId == null) || (ledger.getShop() != null && 
+            ("MAIN_SHOP".equals(ledger.getShop().getCode()) || "MAIN".equals(ledger.getShop().getCode())));
+        
+        java.util.UUID queryShopId = shopId != null ? shopId : (ledger.getShop() != null ? ledger.getShop().getId() : null);
+
+        if (queryShopId != null) {
+            java.util.Optional<com.coop.erp.inventory.entity.ShopItem> optShopItem = shopItemRepository.findByShopIdAndItemId(queryShopId, ledger.getItem().getId());
             if (optShopItem.isPresent()) {
                 reorderLevel = optShopItem.get().getReorderLevel();
                 shopItemId = optShopItem.get().getId();
             }
         }
+        
+        if (reorderLevel == null && isAdminLedger) {
+            reorderLevel = ledger.getItem().getDefaultReorderLevel();
+        }
 
         String status = "AVAILABLE";
+        Integer effectiveReorderLevel = reorderLevel != null ? reorderLevel : ledger.getItem().getDefaultReorderLevel();
+        
         if (ledger.getCurrentQty() == 0) {
             status = "OUT OF STOCK";
-        } else if (reorderLevel != null && ledger.getCurrentQty() <= reorderLevel) {
+        } else if (effectiveReorderLevel != null && ledger.getCurrentQty() <= effectiveReorderLevel) {
             status = "LOW STOCK";
         }
 

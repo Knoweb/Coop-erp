@@ -117,12 +117,14 @@ function SalesPage() {
       // To get available products with stock:
       const stockRes = isAdmin ? await getAdminStock() : await getShopStock();
 
-      const availableProducts = stockRes.data.map((ledger: any) => ({
-        id: ledger.item.id,
-        name: ledger.item.name,
-        unitPrice: ledger.item.unitPrice,
-        currentQty: ledger.currentQty
-      }));
+      const availableProducts = stockRes.data
+        .map((ledger: any) => ({
+          id: ledger.itemId || ledger.item?.id || ledger.product?.id || ledger.id,
+          name: ledger.productName || ledger.itemName || ledger.name || ledger.item?.name || "-",
+          unitPrice: ledger.sellingPrice ?? ledger.unitPrice ?? ledger.item?.unitPrice ?? 0,
+          currentQty: ledger.currentQty ?? ledger.currentQuantity ?? 0
+        }))
+        .filter((prod: any) => prod.id);
 
       setProducts(availableProducts);
 
