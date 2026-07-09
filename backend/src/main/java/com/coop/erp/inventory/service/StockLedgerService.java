@@ -22,6 +22,7 @@ public class StockLedgerService {
 
     private final StockLedgerRepository stockLedgerRepository;
     private final UserRepository userRepository;
+    private final com.coop.erp.inventory.repository.ShopItemRepository shopItemRepository;
 
     private Shop getCurrentUserShopOrNull() {
         String username = SecurityContextHolder.getContext().getAuthentication().getName();
@@ -38,19 +39,61 @@ public class StockLedgerService {
         return shop;
     }
 
-    public List<StockLedger> getAllStock(java.util.UUID shopId) {
+    private com.coop.erp.inventory.dto.StockLedgerResponse mapToResponse(StockLedger ledger, java.util.UUID shopId) {
+        Integer reorderLevel = null;
+        java.util.UUID shopItemId = null;
+        
         if (shopId != null) {
-            return stockLedgerRepository.findByShopId(shopId);
+            java.util.Optional<com.coop.erp.inventory.entity.ShopItem> optShopItem = shopItemRepository.findByShopIdAndItemId(shopId, ledger.getItem().getId());
+            if (optShopItem.isPresent()) {
+                reorderLevel = optShopItem.get().getReorderLevel();
+                shopItemId = optShopItem.get().getId();
+            }
         }
-        return stockLedgerRepository.findByShopIsNull();
+
+        String status = "AVAILABLE";
+        if (ledger.getCurrentQty() == 0) {
+            status = "OUT OF STOCK";
+        } else if (reorderLevel != null && ledger.getCurrentQty() <= reorderLevel) {
+            status = "LOW STOCK";
+        }
+
+        return com.coop.erp.inventory.dto.StockLedgerResponse.builder()
+                .id(ledger.getId())
+                .itemId(ledger.getItem().getId())
+                .shopItemId(shopItemId)
+                .productCode(ledger.getItem().getCategory())
+                .productName(ledger.getItem().getName())
+                .category(ledger.getItem().getCategory())
+                .currentQty(ledger.getCurrentQty())
+                .reorderLevel(reorderLevel)
+                .unitCost(ledger.getItem().getUnitPrice())
+                .sellingPrice(ledger.getItem().getUnitPrice())
+                .lastPurchaseDate(ledger.getLastUpdated())
+                .status(status)
+                .build();
     }
 
-    public List<StockLedger> getLowStockItems(java.util.UUID shopId) {
-        return stockLedgerRepository.findLowStockItems(shopId);
+    public List<com.coop.erp.inventory.dto.StockLedgerResponse> getAllStock(java.util.UUID shopId) {
+        List<StockLedger> ledgers;
+        if (shopId != null) {
+            ledgers = stockLedgerRepository.findByShopId(shopId);
+        } else {
+            ledgers = stockLedgerRepository.findByShopIsNull();
+        }
+        return ledgers.stream().map(l -> mapToResponse(l, shopId)).toList();
     }
 
-    public List<StockLedger> getOutOfStockItems(java.util.UUID shopId) {
-        return stockLedgerRepository.findOutOfStockItems(shopId);
+    public List<com.coop.erp.inventory.dto.StockLedgerResponse> getLowStockItems(java.util.UUID shopId) {
+        return stockLedgerRepository.findLowStockItems(shopId).stream()
+                .map(l -> mapToResponse(l, shopId))
+                .toList();
+    }
+
+    public List<com.coop.erp.inventory.dto.StockLedgerResponse> getOutOfStockItems(java.util.UUID shopId) {
+        return stockLedgerRepository.findOutOfStockItems(shopId).stream()
+                .map(l -> mapToResponse(l, shopId))
+                .toList();
     }
 
     public StockReduceResponse reduceStock(StockReduceRequest request, java.util.UUID shopId) {
@@ -117,5 +160,31 @@ public class StockLedgerService {
                 .lastUpdated(saved.getLastUpdated())
                 .message("Stock adjusted successfully")
                 .build();
+    }
+
+    public void updateReorderLevel(java.util.UUID itemId, Integer reorderLevel, java.util.UUID shopId) {
+        if (shopId == null) {
+            throw new RuntimeException("Shop ID is required to update reorder level");
+        }
+        
+        java.util.Optional<com.coop.erp.inventory.entity.ShopItem> optShopItem = shopItemRepository.findByShopIdAndItemId(shopId, itemId);
+        com.coop.erp.inventory.entity.ShopItem shopItem;
+        
+        if (optShopItem.isPresent()) {
+            shopItem = optShopItem.get();
+        } else {
+            com.coop.erp.core.entity.Shop shop = new com.coop.erp.core.entity.Shop();
+            shop.setId(shopId);
+            com.coop.erp.inventory.entity.ItemProduct item = new com.coop.erp.inventory.entity.ItemProduct();
+            item.setId(itemId);
+            
+            shopItem = com.coop.erp.inventory.entity.ShopItem.builder()
+                    .shop(shop)
+                    .item(item)
+                    .build();
+        }
+        
+        shopItem.setReorderLevel(reorderLevel);
+        shopItemRepository.save(shopItem);
     }
 }

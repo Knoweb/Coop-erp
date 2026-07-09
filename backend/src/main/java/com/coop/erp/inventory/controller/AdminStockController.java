@@ -19,7 +19,7 @@ public class AdminStockController {
     private final StockLedgerService stockLedgerService;
 
     @GetMapping
-    public List<StockLedger> getAllStock() {
+    public List<com.coop.erp.inventory.dto.StockLedgerResponse> getAllStock() {
         // null shopId implies main shop stock
         return stockLedgerService.getAllStock(null);
     }

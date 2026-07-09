@@ -31,17 +31,17 @@ public class StockLedgerController {
     }
 
     @GetMapping
-    public List<StockLedger> getAllStock(HttpServletRequest request) {
+    public List<com.coop.erp.inventory.dto.StockLedgerResponse> getAllStock(HttpServletRequest request) {
         return stockLedgerService.getAllStock(getShopIdFromRequest(request));
     }
 
     @GetMapping("/alerts")
-    public List<StockLedger> getLowStockAlerts(HttpServletRequest request) {
+    public List<com.coop.erp.inventory.dto.StockLedgerResponse> getLowStockAlerts(HttpServletRequest request) {
         return stockLedgerService.getLowStockItems(getShopIdFromRequest(request));
     }
 
     @GetMapping("/out-of-stock")
-    public List<StockLedger> getOutOfStockItems(HttpServletRequest request) {
+    public List<com.coop.erp.inventory.dto.StockLedgerResponse> getOutOfStockItems(HttpServletRequest request) {
         return stockLedgerService.getOutOfStockItems(getShopIdFromRequest(request));
     }
 
@@ -59,5 +59,15 @@ public class StockLedgerController {
             @Valid @RequestBody StockAdjustRequest req, HttpServletRequest request
     ) {
         return stockLedgerService.adjustStockToActualQuantity(req, getShopIdFromRequest(request));
+    }
+
+    @PutMapping("/{itemId}/reorder-level")
+    @PreAuthorize("hasAnyAuthority('SHOP_ADMIN', 'SHOP_USER')")
+    public void updateReorderLevel(
+            @PathVariable java.util.UUID itemId,
+            @Valid @RequestBody com.coop.erp.inventory.dto.ShopItemReorderLevelRequest req,
+            HttpServletRequest request
+    ) {
+        stockLedgerService.updateReorderLevel(itemId, req.getReorderLevel(), getShopIdFromRequest(request));
     }
 }

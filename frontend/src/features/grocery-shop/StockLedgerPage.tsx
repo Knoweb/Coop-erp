@@ -15,10 +15,18 @@ import {
   TableRow,
   TextField,
   Typography,
+  Button,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  IconButton,
 } from "@mui/material";
+import EditIcon from "@mui/icons-material/Edit";
 import SearchIcon from "@mui/icons-material/Search";
 import { getAdminStock } from "../../services/adminStockService";
 import { getShopStock } from "../../services/shopStockService";
+import api from "../../api/axiosConfig";
 
 type ChipColor =
   | "default"
@@ -41,9 +49,17 @@ type ItemProduct = {
 
 type StockLedger = {
   id: string;
-  item: ItemProduct;
+  itemId: string;
+  shopItemId?: string;
+  productCode: string;
+  productName: string;
+  category: string;
   currentQty: number;
-  lastUpdated: string;
+  reorderLevel: number | null;
+  unitCost: number;
+  sellingPrice: number;
+  lastPurchaseDate: string;
+  status: string;
 };
 
 const formatDateTime = (dateString: string) => {
@@ -72,17 +88,50 @@ function StockLedgerPage() {
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
+
+  const [editModalOpen, setEditModalOpen] = useState(false);
+  const [selectedLedger, setSelectedLedger] = useState<StockLedger | null>(null);
+  const [newReorderLevel, setNewReorderLevel] = useState<number | "">("");
+  const [savingReorderLevel, setSavingReorderLevel] = useState(false);
 
   const loadStockLedgers = async () => {
     try {
       setLoading(true);
 
       const response = isAdmin ? await getAdminStock() : await getShopStock();
-      const data: StockLedger[] = response.data;
+      const rawData = response.data || [];
 
-      const sortedData = data.sort((a, b) =>
-        a.item.name.localeCompare(b.item.name)
-      );
+      const normalizedData: StockLedger[] = rawData.map((row: any) => {
+        const reorderLvl = row.reorderLevel ?? row.item?.reorderLevel ?? null;
+        const curQty = row.currentQty ?? row.currentQuantity ?? 0;
+        let stat = row.status;
+        if (!stat) {
+           stat = curQty === 0 ? "OUT OF STOCK" : (reorderLvl != null && curQty <= reorderLvl ? "LOW STOCK" : "AVAILABLE");
+        }
+        
+        return {
+          ...row,
+          id: row.id || row.item?.id,
+          itemId: row.itemId || row.item?.id,
+          shopItemId: row.shopItemId,
+          productCode: row.productCode || row.item?.category || row.category || "-",
+          productName: row.productName || row.itemName || row.name || row.item?.name || "-",
+          category: row.category || row.item?.category || "-",
+          currentQty: curQty,
+          reorderLevel: reorderLvl,
+          unitCost: row.unitCost ?? row.unitPrice ?? row.item?.unitPrice ?? 0,
+          sellingPrice: row.sellingPrice ?? row.unitPrice ?? row.item?.unitPrice ?? 0,
+          lastPurchaseDate: row.lastPurchaseDate || row.lastUpdated || null,
+          status: stat,
+        };
+      });
+
+      const sortedData = [...normalizedData].sort((a, b) => {
+        const nameA = (a.productName || "").toString().toLowerCase();
+        const nameB = (b.productName || "").toString().toLowerCase();
+        return nameA.localeCompare(nameB);
+      });
 
       setStockLedgers(sortedData);
     } catch (err) {
@@ -97,47 +146,67 @@ function StockLedgerPage() {
     loadStockLedgers();
   }, []);
 
+  const handleOpenEditModal = (ledger: StockLedger) => {
+    setSelectedLedger(ledger);
+    setNewReorderLevel(ledger.reorderLevel ?? "");
+    setEditModalOpen(true);
+  };
+
+  const handleCloseEditModal = () => {
+    setEditModalOpen(false);
+    setSelectedLedger(null);
+    setNewReorderLevel("");
+  };
+
+  const handleSaveReorderLevel = async () => {
+    if (!selectedLedger || !selectedLedger.itemId) return;
+    if (newReorderLevel === "" || Number(newReorderLevel) < 0) {
+      setError("Please enter a valid reorder level (0 or greater).");
+      return;
+    }
+
+    try {
+      setSavingReorderLevel(true);
+      await api.put(`/shop/stock/${selectedLedger.itemId}/reorder-level`, {
+        reorderLevel: Number(newReorderLevel),
+      });
+      setSuccess("Reorder level updated successfully!");
+      handleCloseEditModal();
+      loadStockLedgers();
+    } catch (err: any) {
+      console.error(err);
+      setError(err.response?.data?.message || "Failed to update reorder level.");
+    } finally {
+      setSavingReorderLevel(false);
+    }
+  };
+
   const getStockStatus = (ledger: StockLedger) => {
-    if (ledger.currentQty === 0) {
-      return "OUT OF STOCK";
-    }
-
-    if (ledger.currentQty <= ledger.item.reorderLevel) {
-      return "LOW STOCK";
-    }
-
-    return "AVAILABLE";
+    return ledger.status;
   };
 
   const getStockStatusColor = (ledger: StockLedger): ChipColor => {
-    if (ledger.currentQty === 0) {
-      return "error";
-    }
-
-    if (ledger.currentQty <= ledger.item.reorderLevel) {
-      return "warning";
-    }
-
+    if (ledger.status === "OUT OF STOCK") return "error";
+    if (ledger.status === "LOW STOCK") return "warning";
     return "success";
   };
 
   const totalItems = stockLedgers.length;
 
   const availableItems = stockLedgers.filter(
-    (ledger) => ledger.currentQty > ledger.item.reorderLevel
+    (ledger) => ledger.status === "AVAILABLE"
   );
 
   const lowStockItems = stockLedgers.filter(
-    (ledger) =>
-      ledger.currentQty > 0 && ledger.currentQty <= ledger.item.reorderLevel
+    (ledger) => ledger.status === "LOW STOCK"
   );
 
   const outOfStockItems = stockLedgers.filter(
-    (ledger) => ledger.currentQty === 0
+    (ledger) => ledger.status === "OUT OF STOCK"
   );
 
   const filteredStockLedgers = stockLedgers.filter((ledger) => {
-    const matchesSearch = ledger.item.name
+    const matchesSearch = ledger.productName
       .toLowerCase()
       .includes(searchQuery.toLowerCase());
 
@@ -147,16 +216,13 @@ function StockLedgerPage() {
       return true;
     }
     if (activeFilter === "AVAILABLE") {
-      return ledger.currentQty > ledger.item.reorderLevel;
+      return ledger.status === "AVAILABLE";
     }
     if (activeFilter === "LOW_STOCK") {
-      return (
-        ledger.currentQty > 0 &&
-        ledger.currentQty <= ledger.item.reorderLevel
-      );
+      return ledger.status === "LOW STOCK";
     }
     if (activeFilter === "OUT_OF_STOCK") {
-      return ledger.currentQty === 0;
+      return ledger.status === "OUT OF STOCK";
     }
 
     return true;
@@ -333,16 +399,29 @@ function StockLedgerPage() {
               <TableBody>
                 {filteredStockLedgers.map((ledger) => (
                   <TableRow key={ledger.id}>
-                    <TableCell>{ledger.item.category}</TableCell>
-                    <TableCell sx={{ fontWeight: "bold", color: "#111827" }}>{ledger.item.name}</TableCell>
+                    <TableCell>{ledger.productCode}</TableCell>
+                    <TableCell sx={{ fontWeight: "bold", color: "#111827" }}>{ledger.productName}</TableCell>
                     <TableCell sx={{ fontWeight: "bold", fontSize: "1.05rem" }}>{ledger.currentQty}</TableCell>
-                    <TableCell>{ledger.item.reorderLevel}</TableCell>
-                    <TableCell>Rs. {ledger.item.unitPrice}</TableCell>
-                    <TableCell>Rs. {ledger.item.unitPrice}</TableCell>
-                    <TableCell>{formatDateTime(ledger.lastUpdated)}</TableCell>
+                    <TableCell>
+                      <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                        <Typography>{ledger.reorderLevel ?? '-'}</Typography>
+                        {!isAdmin && (
+                          <Button
+                            size="small"
+                            variant="outlined"
+                            onClick={() => handleOpenEditModal(ledger)}
+                          >
+                            {ledger.reorderLevel != null ? "Edit" : "Set"}
+                          </Button>
+                        )}
+                      </Box>
+                    </TableCell>
+                    <TableCell>Rs. {ledger.unitCost}</TableCell>
+                    <TableCell>Rs. {ledger.sellingPrice}</TableCell>
+                    <TableCell>{formatDateTime(ledger.lastPurchaseDate)}</TableCell>
                     <TableCell>
                       <Chip
-                        label={getStockStatus(ledger)}
+                        label={ledger.status}
                         color={getStockStatusColor(ledger)}
                         size="small"
                         sx={{ fontWeight: "bold" }}
@@ -377,6 +456,52 @@ function StockLedgerPage() {
           {error}
         </Alert>
       </Snackbar>
+
+      <Snackbar
+        open={!!success}
+        autoHideDuration={4000}
+        onClose={() => setSuccess("")}
+      >
+        <Alert severity="success" onClose={() => setSuccess("")}>
+          {success}
+        </Alert>
+      </Snackbar>
+
+      {/* Edit Reorder Level Modal */}
+      <Dialog open={editModalOpen} onClose={handleCloseEditModal} maxWidth="xs" fullWidth>
+        <DialogTitle>Set Reorder Level</DialogTitle>
+        <DialogContent>
+          <Box sx={{ pt: 2 }}>
+            <Typography variant="body2" sx={{ mb: 2 }}>
+              Update reorder level for <strong>{selectedLedger?.productName}</strong>.
+            </Typography>
+            <TextField
+              label="Reorder Level"
+              type="number"
+              fullWidth
+              value={newReorderLevel}
+              onChange={(e) => setNewReorderLevel(e.target.value === "" ? "" : Number(e.target.value))}
+              slotProps={{
+                input: {
+                  inputProps: { min: 0 }
+                }
+              }}
+            />
+          </Box>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleCloseEditModal} disabled={savingReorderLevel}>
+            Cancel
+          </Button>
+          <Button
+            onClick={handleSaveReorderLevel}
+            variant="contained"
+            disabled={savingReorderLevel}
+          >
+            {savingReorderLevel ? "Saving..." : "Save"}
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 }

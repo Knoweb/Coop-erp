@@ -20,7 +20,6 @@ function ShopLayout() {
   
   const menuItems = [
     { label: "Dashboard", path: "/shop/dashboard" },
-    { label: "Products", path: "/shop/products" },
     { label: "Stock / Inventory", path: "/shop/inventory" },
     { label: "Purchase History", path: "/shop/purchase-history" },
     { label: "Sales", path: "/shop/sales" },
