@@ -313,8 +313,8 @@ function Form({ stockLedgers, onSuccess, onError, reloadData }: Props) {
             <Table>
               <TableHead
                 sx={{
-                  backgroundColor: "#f3f4f6",
-                  borderBottom: "2px solid #e5e7eb",
+                  backgroundColor: "var(--table-header-bg)",
+                  borderBottom: "2px solid var(--border-color)",
                 }}
               >
                 <TableRow>

@@ -5,15 +5,14 @@ export interface AuthResponse {
     role: string;
 }
 
-const extractRoleFromToken = (token: string): string => {
+const extractPayloadFromToken = (token: string): any => {
     try {
         const base64Url = token.split('.')[1];
         const jsonPayload = atob(base64Url);
-        const payload = JSON.parse(jsonPayload);
-        return payload.role || payload.authorities?.[0] || 'UNKNOWN_ROLE';
+        return JSON.parse(jsonPayload);
     } catch (error) {
         console.error("Failed to parse JWT token:", error);
-        return 'UNKNOWN_ROLE';
+        return {};
     }
 };
 
@@ -28,10 +27,15 @@ export const loginUser = async (usernameOrEmail: string, password: string): Prom
         // Backend returns { token: "..." }
         const token = response.data.token; 
         
-        const actualRole = extractRoleFromToken(token);
+        const payload = extractPayloadFromToken(token);
+        const actualRole = payload.role || payload.authorities?.[0] || 'UNKNOWN_ROLE';
         
         localStorage.setItem('jwt_token', token);
         localStorage.setItem('user_role', actualRole);
+        if (payload.sub) localStorage.setItem('username', payload.sub);
+        if (payload.shopId) localStorage.setItem('shopId', payload.shopId);
+        if (payload.shopCode) localStorage.setItem('shopCode', payload.shopCode);
+        if (payload.shopName) localStorage.setItem('shopName', payload.shopName);
         
         return {
             token,
@@ -46,4 +50,12 @@ export const loginUser = async (usernameOrEmail: string, password: string): Prom
 export const logoutUser = (): void => {
     localStorage.removeItem('jwt_token');
     localStorage.removeItem('user_role');
+    localStorage.removeItem('username');
+    localStorage.removeItem('shopId');
+    localStorage.removeItem('shopCode');
+    localStorage.removeItem('shopName');
+    
+    // Clear old global theme key side effect
+    localStorage.removeItem('theme');
+    localStorage.removeItem('defaultTheme');
 };

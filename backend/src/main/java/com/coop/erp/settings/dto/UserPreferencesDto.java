@@ -13,5 +13,5 @@ public class UserPreferencesDto {
     private String defaultTheme; // LIGHT, DARK, SYSTEM
     private int dashboardRefreshIntervalSeconds;
     private int itemsPerPage;
-    private boolean enableNotifications;
+    private boolean enableSystemNotifications;
 }

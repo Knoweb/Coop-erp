@@ -16,6 +16,7 @@ import SettingsPage from "./features/admin/SettingsPage";
 
 import GroceryShopDashboard from "./features/grocery-shop/GroceryShopDashboard";
 import SupplierPage from "./features/grocery-shop/SupplierPage";
+import ShopSettingsPage from "./features/grocery-shop/ShopSettingsPage";
 import ItemPage from "./features/grocery-shop/ItemPage";
 import AdminPurchasesPage from "./features/admin/AdminPurchasesPage";
 import StockLedgerPage from "./features/grocery-shop/StockLedgerPage";
@@ -94,6 +95,7 @@ function App() {
             <Route path="customers" element={<div style={{padding: '20px'}}>Customers Module Coming Soon</div>} />
             <Route path="users" element={<ShopUsersPage />} />
             <Route path="reports" element={<div style={{padding: '20px'}}>Reports Module Coming Soon</div>} />
+            <Route path="settings" element={<ShopSettingsPage />} />
           </Route>
         </Route>
 

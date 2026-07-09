@@ -2,38 +2,53 @@ import api from '../../../api/axiosConfig';
 
 export interface BusinessProfile {
     businessName: string;
-    registrationNumber: string;
+    mainShopName: string;
     address: string;
-    contactNumber: string;
+    phone: string;
     email: string;
     taxNumber: string;
-    receiptFooterText: string;
+    receiptFooter: string;
 }
 
 export interface SecuritySettings {
     minimumPasswordLength: number;
-    requireStrongPassword: boolean;
+    requireUppercase: boolean;
+    requireNumber: boolean;
+    requireSpecialCharacter: boolean;
     sessionTimeoutMinutes: number;
-    enableAccountLocking: boolean;
-    maxFailedLoginAttempts: number;
+    maxLoginAttempts: number;
+    accountLockMinutes: number;
 }
 
 export interface UserPreferences {
     defaultTheme: string;
     dashboardRefreshIntervalSeconds: number;
     itemsPerPage: number;
-    enableNotifications: boolean;
+    enableSystemNotifications: boolean;
 }
 
 export interface BackupSettings {
-    enableAutomaticBackup: boolean;
+    autoBackupEnabled: boolean;
     backupFrequency: string;
     backupTime: string;
-    lastBackupTime?: string | null;
-    maintenanceMode: boolean;
+    retentionDays: number;
+    lastBackupAt?: string | null;
+    lastBackupStatus?: string | null;
+}
+
+export interface AllSettings {
+    businessProfile: BusinessProfile;
+    securitySettings: SecuritySettings;
+    userPreferences: UserPreferences;
+    backupSettings: BackupSettings;
 }
 
 export const settingsService = {
+    getAllSettings: async (): Promise<AllSettings> => {
+        const response = await api.get('/admin/settings');
+        return response.data;
+    },
+
     getBusinessProfile: async (): Promise<BusinessProfile> => {
         const response = await api.get('/admin/settings/business-profile');
         return response.data;
@@ -58,6 +73,14 @@ export const settingsService = {
         await api.put('/admin/settings/user-preferences', payload);
     },
 
+    getShopUserPreferences: async (): Promise<UserPreferences> => {
+        const response = await api.get('/shop/settings/user-preferences');
+        return response.data;
+    },
+    updateShopUserPreferences: async (payload: UserPreferences): Promise<void> => {
+        await api.put('/shop/settings/user-preferences', payload);
+    },
+
     getBackupSettings: async (): Promise<BackupSettings> => {
         const response = await api.get('/admin/settings/backup');
         return response.data;
@@ -66,7 +89,7 @@ export const settingsService = {
         await api.put('/admin/settings/backup', payload);
     },
 
-    runManualBackup: async (): Promise<string> => {
+    runManualBackup: async (): Promise<any> => {
         const response = await api.post('/admin/settings/backup/run-now');
         return response.data;
     }

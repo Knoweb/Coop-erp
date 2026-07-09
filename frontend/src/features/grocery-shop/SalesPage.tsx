@@ -287,7 +287,7 @@ function SalesPage() {
   return (
     <Box sx={{ width: "100%", maxWidth: 1400, mx: "auto", boxSizing: "border-box", overflowX: "hidden" }}>
       <Box sx={{ mb: 4 }}>
-        <Typography variant="h4" sx={{ fontWeight: "bold" }} gutterBottom>
+        <Typography variant="h4" className="page-title" sx={{ fontWeight: "bold" }} gutterBottom>
           Create Sale Order
         </Typography>
         <Typography color="text.secondary">
@@ -303,8 +303,8 @@ function SalesPage() {
             mb: 3,
             display: "inline-flex",
             borderRadius: 2,
-            border: '1px solid #e5e7eb',
-            backgroundColor: '#fff'
+            border: "1px solid var(--border-color)",
+            backgroundColor: "var(--card-bg)"
           }}
         >
           <ToggleButtonGroup
@@ -334,7 +334,7 @@ function SalesPage() {
         }}>
             <Card sx={{ borderRadius: 3 }}>
               <CardContent sx={{ p: 3 }}>
-                <Typography variant="h6" sx={{ fontWeight: "bold", mb: 3 }}>
+                <Typography variant="h6" className="card-title" sx={{ fontWeight: "bold", mb: 3 }}>
                   {saleType === "CUSTOMER" ? "Customer Sale Information" : "Shop Sale Information"}
                 </Typography>
 
@@ -375,7 +375,7 @@ function SalesPage() {
                 <Divider sx={{ my: 4 }} />
 
                 <Box sx={{ display: "flex", flexWrap: "wrap", justifyContent: "space-between", alignItems: "center", mb: 3, gap: 2 }}>
-                  <Typography variant="h6" sx={{ fontWeight: "bold" }}>Items</Typography>
+                  <Typography variant="h6" className="card-title" sx={{ fontWeight: "bold" }}>Items</Typography>
                   <Button variant="outlined" startIcon={<AddIcon />} onClick={handleAddLineItem} sx={{ width: { xs: '100%', sm: 'auto' } }}>
                     Add Item
                   </Button>
@@ -491,7 +491,7 @@ function SalesPage() {
 
                         <Box sx={{ display: 'flex', flexDirection: { xs: 'row', lg: 'column' }, justifyContent: { xs: 'space-between', lg: 'center' }, alignItems: { xs: 'center', lg: 'flex-start' }, wordBreak: "break-word" }}>
                           <Typography sx={{ display: { xs: 'block', lg: 'none' }, fontWeight: 'bold', fontSize: '0.875rem' }}>Amount</Typography>
-                          <Typography sx={{ fontWeight: 'bold', lineHeight: 1.3, color: '#111827' }}>
+                          <Typography sx={{ fontWeight: 'bold', lineHeight: 1.3, color: "var(--text-color)" }}>
                             Rs. {formatMoney(calculateLineTotal(item))}
                           </Typography>
                         </Box>
@@ -566,7 +566,7 @@ function SalesPage() {
           ) : (
             <Box sx={{ overflowX: "auto" }}>
               <Table>
-                <TableHead sx={{ backgroundColor: "#f3f4f6" }}>
+                <TableHead sx={{ backgroundColor: "var(--table-header-bg)" }}>
                   <TableRow>
                     <TableCell sx={{ fontWeight: "bold" }}>Sale Number</TableCell>
                     <TableCell sx={{ fontWeight: "bold" }}>Date</TableCell>
@@ -638,7 +638,7 @@ function SalesPage() {
               </Box>
 
               <Table size="small">
-                <TableHead sx={{ backgroundColor: "#f3f4f6" }}>
+                <TableHead sx={{ backgroundColor: "var(--table-header-bg)" }}>
                   <TableRow>
                     <TableCell>Product</TableCell>
                     <TableCell>Quantity</TableCell>
@@ -670,7 +670,7 @@ function SalesPage() {
               <Box sx={{ mt: 3, display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 1 }}>
                 <Typography>Subtotal: Rs. {formatMoney(selectedSale.subtotal)}</Typography>
                 <Typography color="error">Total Discount: -Rs. {formatMoney(selectedSale.totalDiscount)}</Typography>
-                <Typography variant="h6" sx={{ fontWeight: "bold" }}>Total: Rs. {formatMoney(selectedSale.totalAmount)}</Typography>
+                <Typography variant="h6" className="card-title" sx={{ fontWeight: "bold" }}>Total: Rs. {formatMoney(selectedSale.totalAmount)}</Typography>
               </Box>
             </Box>
           )}

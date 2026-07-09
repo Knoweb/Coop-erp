@@ -110,33 +110,33 @@ function HistooryTable({
           <Table>
             <TableHead
               sx={{
-                backgroundColor: "#f3f4f6",
-                borderBottom: "2px solid #e5e7eb",
+                backgroundColor: "var(--table-header-bg)",
+                borderBottom: "2px solid var(--border-color)",
               }}
             >
               <TableRow>
-                <TableCell sx={{ fontWeight: "bold", color: "#374151" }}>
+                <TableCell sx={{ fontWeight: "bold", color: "var(--text-color)" }}>
                   Date
                 </TableCell>
-                <TableCell sx={{ fontWeight: "bold", color: "#374151" }}>
+                <TableCell sx={{ fontWeight: "bold", color: "var(--text-color)" }}>
                   Item
                 </TableCell>
-                <TableCell sx={{ fontWeight: "bold", color: "#374151" }}>
+                <TableCell sx={{ fontWeight: "bold", color: "var(--text-color)" }}>
                   Type
                 </TableCell>
-                <TableCell sx={{ fontWeight: "bold", color: "#374151" }}>
+                <TableCell sx={{ fontWeight: "bold", color: "var(--text-color)" }}>
                   Previous Qty
                 </TableCell>
-                <TableCell sx={{ fontWeight: "bold", color: "#374151" }}>
+                <TableCell sx={{ fontWeight: "bold", color: "var(--text-color)" }}>
                   Change
                 </TableCell>
-                <TableCell sx={{ fontWeight: "bold", color: "#374151" }}>
+                <TableCell sx={{ fontWeight: "bold", color: "var(--text-color)" }}>
                   New Qty
                 </TableCell>
-                <TableCell sx={{ fontWeight: "bold", color: "#374151" }}>
+                <TableCell sx={{ fontWeight: "bold", color: "var(--text-color)" }}>
                   Unit Price
                 </TableCell>
-                <TableCell sx={{ fontWeight: "bold", color: "#374151" }}>
+                <TableCell sx={{ fontWeight: "bold", color: "var(--text-color)" }}>
                   Total Amount
                 </TableCell>
               </TableRow>
@@ -145,7 +145,7 @@ function HistooryTable({
             <TableBody>
               {adjustments.map((item) => (
                 <TableRow key={item.id}>
-                  <TableCell sx={{ fontWeight: "bold", color: "#111827" }}>
+                  <TableCell sx={{ fontWeight: "bold", color: "var(--text-color)" }}>
                     {item.adjustmentDate}
                   </TableCell>
 

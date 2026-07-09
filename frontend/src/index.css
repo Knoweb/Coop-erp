@@ -1,3 +1,81 @@
+:root {
+  --bg-color: #fff7ed;
+  --card-bg: #ffffff;
+  --text-primary: #111827;
+  --text-secondary: #4b5563;
+  --text-muted: #6b7280;
+  --table-header-bg: #f3f4f6;
+  --table-header-text: #111827;
+  --table-row-text: #111827;
+  --border-color: #e5e7eb;
+  --primary-color: #e5261f;
+  --secondary-color: #ff6b00;
+  --sidebar-bg: #7f1d1d;
+  --sidebar-text: #ffffff;
+}
+
+:root[data-theme="dark"] {
+  --bg-color: #111827;
+  --card-bg: #1f2937;
+  --text-primary: #f9fafb;
+  --text-secondary: #e5e7eb;
+  --text-muted: #d1d5db;
+  --table-header-bg: #374151;
+  --table-header-text: #f9fafb;
+  --table-row-text: #f9fafb;
+  --border-color: #4b5563;
+  --primary-color: #f97316;
+  --secondary-color: #ea580c;
+  --sidebar-bg: #1f2937;
+  --sidebar-text: #f9fafb;
+}
+
+/* Typography styles */
+.page-title {
+  color: var(--text-primary);
+}
+
+.page-subtitle {
+  color: var(--text-secondary);
+}
+
+.section-title {
+  color: var(--text-primary);
+}
+
+.card-title {
+  color: var(--text-primary);
+}
+
+/* Table styles */
+table thead th,
+.MuiTableHead-root .MuiTableCell-head,
+.MuiDataGrid-columnHeaders,
+.MuiDataGrid-columnHeader {
+  background-color: var(--table-header-bg) !important;
+  color: var(--table-header-text) !important;
+  font-weight: 700 !important;
+}
+
+.MuiDataGrid-columnHeaderTitle {
+  color: var(--table-header-text) !important;
+  font-weight: 700 !important;
+}
+
+tbody td,
+.MuiTableBody-root .MuiTableCell-body {
+  color: var(--table-row-text) !important;
+}
+
+/* Global body overrides */
 body {
   margin: 0;
+  background-color: var(--bg-color);
+  color: var(--text-primary);
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+.MuiCard-root {
+  background-color: var(--card-bg) !important;
+  color: var(--text-primary) !important;
 }

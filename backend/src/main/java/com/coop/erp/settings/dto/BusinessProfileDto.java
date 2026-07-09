@@ -11,10 +11,10 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class BusinessProfileDto {
     private String businessName;
-    private String registrationNumber;
+    private String mainShopName;
     private String address;
-    private String contactNumber;
+    private String phone;
     private String email;
     private String taxNumber;
-    private String receiptFooterText;
+    private String receiptFooter;
 }

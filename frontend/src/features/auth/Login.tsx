@@ -50,7 +50,7 @@ const Login: React.FC = () => {
             height: '100vh',
             width: '100vw',
             fontFamily: '"Inter", "Segoe UI", sans-serif',
-            backgroundColor: '#ffffff',
+            backgroundColor: "var(--card-bg)",
             margin: 0,
             overflow: 'hidden'
         },
@@ -200,7 +200,7 @@ const Login: React.FC = () => {
                 <div style={styles.formContainer}>
                     <div style={styles.formHeader}>
                         <h2 style={styles.mainTitle}>Welcome Back</h2>
-                        <p style={styles.subTitle}>Login to access your dashboard.</p>
+                        <p style={styles.subTitle}>Login to access yourgit status dashboard.</p>
                     </div>
 
                     {errorMsg && <div style={styles.errorMsg}>{errorMsg}</div>}

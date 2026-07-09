@@ -35,7 +35,7 @@ function AdminLayout() {
   }
 
   return (
-    <Box sx={{ display: "flex", minHeight: "100vh", backgroundColor: "#fff7ed" }}>
+    <Box sx={{ display: "flex", minHeight: "100vh", backgroundColor: "var(--bg-color)" }}>
       <Drawer
         variant="permanent"
         sx={{
@@ -44,8 +44,8 @@ function AdminLayout() {
           "& .MuiDrawer-paper": {
             width: drawerWidth,
             boxSizing: "border-box",
-            backgroundColor: "#7f1d1d",
-            color: "white",
+            backgroundColor: "var(--sidebar-bg)",
+            color: "var(--sidebar-text)",
             borderRight: "none",
           },
         }}
@@ -65,10 +65,10 @@ function AdminLayout() {
               selected={isActive(item.path)}
               onClick={() => navigate(item.path)}
               sx={{
-                borderRadius: 2, mb: 0.5, color: "white",
-                "&.Mui-selected": { backgroundColor: "#f97316", color: "white" },
-                "&.Mui-selected:hover": { backgroundColor: "#ea580c" },
-                "&:hover": { backgroundColor: "#991b1b" },
+                borderRadius: 2, mb: 0.5, color: "inherit",
+                "&.Mui-selected": { backgroundColor: "var(--primary-color)", color: "white" },
+                "&.Mui-selected:hover": { backgroundColor: "var(--secondary-color)" },
+                "&:hover": { backgroundColor: "rgba(255,255,255,0.1)" },
               }}
             >
               <Typography sx={{ fontSize: 15, fontWeight: isActive(item.path) ? "bold" : "normal" }}>
@@ -88,10 +88,10 @@ function AdminLayout() {
               selected={isActive(item.path)}
               onClick={() => navigate(item.path)}
               sx={{
-                borderRadius: 2, mb: 0.5, color: "white",
-                "&.Mui-selected": { backgroundColor: "#f97316", color: "white" },
-                "&.Mui-selected:hover": { backgroundColor: "#ea580c" },
-                "&:hover": { backgroundColor: "#991b1b" },
+                borderRadius: 2, mb: 0.5, color: "inherit",
+                "&.Mui-selected": { backgroundColor: "var(--primary-color)", color: "white" },
+                "&.Mui-selected:hover": { backgroundColor: "var(--secondary-color)" },
+                "&:hover": { backgroundColor: "rgba(255,255,255,0.1)" },
               }}
             >
               <Typography sx={{ fontSize: 15, fontWeight: isActive(item.path) ? "bold" : "normal" }}>

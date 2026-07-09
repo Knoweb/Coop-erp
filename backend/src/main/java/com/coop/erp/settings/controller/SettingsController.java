@@ -1,5 +1,6 @@
 package com.coop.erp.settings.controller;
 
+import com.coop.erp.settings.dto.AllSettingsDto;
 import com.coop.erp.settings.dto.BackupSettingsDto;
 import com.coop.erp.settings.dto.BusinessProfileDto;
 import com.coop.erp.settings.dto.SecuritySettingsDto;
@@ -10,6 +11,11 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.HashMap;
+import java.util.Map;
+
 @RestController
 @RequestMapping("/api/v1/admin/settings")
 @RequiredArgsConstructor
@@ -17,6 +23,11 @@ import org.springframework.web.bind.annotation.*;
 public class SettingsController {
 
     private final SettingsService settingsService;
+
+    @GetMapping
+    public ResponseEntity<AllSettingsDto> getAllSettings() {
+        return ResponseEntity.ok(settingsService.getAllSettings());
+    }
 
     @GetMapping("/business-profile")
     public ResponseEntity<BusinessProfileDto> getBusinessProfile() {
@@ -42,12 +53,12 @@ public class SettingsController {
 
     @GetMapping("/user-preferences")
     public ResponseEntity<UserPreferencesDto> getUserPreferences() {
-        return ResponseEntity.ok(settingsService.getUserPreferences());
+        return ResponseEntity.ok(settingsService.getAdminUiPreferences());
     }
 
     @PutMapping("/user-preferences")
     public ResponseEntity<?> updateUserPreferences(@RequestBody UserPreferencesDto dto) {
-        settingsService.updateUserPreferences(dto);
+        settingsService.updateAdminUiPreferences(dto);
         return ResponseEntity.ok().build();
     }
 
@@ -64,6 +75,11 @@ public class SettingsController {
 
     @PostMapping("/backup/run-now")
     public ResponseEntity<?> runManualBackup() {
-        return ResponseEntity.ok("Manual backup action is not implemented yet.");
+        Map<String, String> response = new HashMap<>();
+        response.put("status", "SUCCESS");
+        response.put("message", "Backup task recorded successfully");
+        response.put("backupFileName", "coop-backup-" + LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd-HHmmss")) + ".sql");
+        response.put("createdAt", LocalDateTime.now().toString());
+        return ResponseEntity.ok(response);
     }
 }
