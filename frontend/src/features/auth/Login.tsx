@@ -1,50 +1,33 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { loginUser, fetchLoginTypes } from '../../services/authService';
+import { loginUser } from '../../services/authService';
 import heroImage from '../../assets/hero.png';
 
 const Login: React.FC = () => {
-    const [loginType, setLoginType] = useState<string>('');
-    const [loginTypes, setLoginTypes] = useState<{code: string, label: string}[]>([]);
+
     const [username, setUsername] = useState<string>('');
     const [password, setPassword] = useState<string>('');
     const [errorMsg, setErrorMsg] = useState<string>('');
     const [isLoading, setIsLoading] = useState<boolean>(false);
     const [showPassword, setShowPassword] = useState<boolean>(false);
-    
+
     const navigate = useNavigate();
 
-    useEffect(() => {
-        const loadLoginTypes = async () => {
-            try {
-                const types = await fetchLoginTypes();
-                setLoginTypes(types);
-            } catch (err) {
-                console.error("Failed to load login types", err);
-            }
-        };
-        loadLoginTypes();
-    }, []);
 
     const handleLogin = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
         setErrorMsg('');
         localStorage.clear();
 
-        if (!loginType) {
-            setErrorMsg('Critical: Login type selection is required.');
-            return;
-        }
-
         setIsLoading(true);
 
         try {
-            const userData = await loginUser(loginType, username, password) as any;
-            const actualRole = userData.role ? userData.role.replace(/^ROLE_/, '') : null; 
-            
-            if (loginType === 'ADMIN' || actualRole === 'ADMIN') {
+            const userData = await loginUser(username, password) as any;
+            const actualRole = userData.role ? userData.role.replace(/^ROLE_/, '') : null;
+
+            if (actualRole === 'ADMIN') {
                 navigate('/admin/dashboard');
-            } else if (loginType === 'SHOP' || actualRole === 'SHOP_ADMIN' || actualRole === 'SHOP_USER') {
+            } else if (actualRole === 'SHOP_ADMIN' || actualRole === 'SHOP_USER') {
                 navigate('/shop/dashboard');
             } else {
                 throw new Error("Invalid routing selection.");
@@ -53,7 +36,7 @@ const Login: React.FC = () => {
             const status = err?.response?.status;
             setErrorMsg(
                 status === 403 || err.message === "Unauthorized"
-                    ? 'Authentication failed: Unauthorized access.' 
+                    ? 'Authentication failed: Unauthorized access.'
                     : 'System connection error. Please try again.'
             );
         } finally {
@@ -180,7 +163,7 @@ const Login: React.FC = () => {
         button: {
             width: '100%',
             padding: '14px',
-            backgroundColor: '#FF5A00', 
+            backgroundColor: '#FF5A00',
             color: 'white',
             border: 'none',
             borderRadius: '8px',
@@ -188,7 +171,7 @@ const Login: React.FC = () => {
             fontWeight: '600',
             cursor: isLoading ? 'wait' : 'pointer',
             marginTop: '10px',
-            boxShadow: '0 4px 12px rgba(255, 90, 0, 0.3)', 
+            boxShadow: '0 4px 12px rgba(255, 90, 0, 0.3)',
             transition: 'background-color 0.2s ease, transform 0.1s ease',
             opacity: isLoading ? 0.7 : 1
         },
@@ -207,7 +190,7 @@ const Login: React.FC = () => {
     return (
         <div style={styles.wrapper}>
             <div style={styles.heroSection}>
-                <h1 style={styles.heroTitle}>Coop Grocery<br/>Management<br/>System</h1>
+                <h1 style={styles.heroTitle}>Coop Grocery<br />Management<br />System</h1>
                 <p style={styles.heroSubtitle}>
                     Centralized management for cooperative grocery shops, inventory, purchases, sales, and users.
                 </p>
@@ -217,53 +200,38 @@ const Login: React.FC = () => {
                 <div style={styles.formContainer}>
                     <div style={styles.formHeader}>
                         <h2 style={styles.mainTitle}>Welcome Back</h2>
-                        <p style={styles.subTitle}>Login to access your admin or shop dashboard.</p>
+                        <p style={styles.subTitle}>Login to access your dashboard.</p>
                     </div>
-                    
+
                     {errorMsg && <div style={styles.errorMsg}>{errorMsg}</div>}
-                    
+
                     <form onSubmit={handleLogin}>
-                        <div style={styles.inputGroup}>
-                            <label style={styles.label}>Login Type</label>
-                            <select 
-                                style={{...styles.input, ...styles.selectInput}} 
-                                value={loginType}
-                                onChange={(e) => setLoginType(e.target.value)}
-                            >
-                                <option value="" disabled>-- Select Login Type --</option>
-                                {loginTypes.map((type) => (
-                                    <option key={type.code} value={type.code}>
-                                        {type.label}
-                                    </option>
-                                ))}
-                            </select>
-                        </div>
 
                         <div style={styles.inputGroup}>
                             <label style={styles.label}>Username</label>
-                            <input 
-                                type="text" 
-                                value={username} 
-                                onChange={(e) => setUsername(e.target.value)} 
+                            <input
+                                type="text"
+                                value={username}
+                                onChange={(e) => setUsername(e.target.value)}
                                 placeholder="e.g., admin or shop1admin"
-                                required 
+                                required
                                 style={styles.input}
                             />
                         </div>
-                        
+
                         <div style={styles.inputGroup}>
                             <label style={styles.label}>Password</label>
                             <div style={styles.inputWrapper}>
-                                <input 
-                                    type={showPassword ? 'text' : 'password'} 
-                                    value={password} 
-                                    onChange={(e) => setPassword(e.target.value)} 
+                                <input
+                                    type={showPassword ? 'text' : 'password'}
+                                    value={password}
+                                    onChange={(e) => setPassword(e.target.value)}
                                     placeholder="••••••••"
-                                    required 
-                                    style={{...styles.input, paddingRight: '40px'}}
+                                    required
+                                    style={{ ...styles.input, paddingRight: '40px' }}
                                 />
-                                <div 
-                                    style={styles.eyeIcon} 
+                                <div
+                                    style={styles.eyeIcon}
                                     onClick={() => setShowPassword(!showPassword)}
                                     title={showPassword ? "Hide Password" : "Show Password"}
                                 >
@@ -275,10 +243,10 @@ const Login: React.FC = () => {
                                 </div>
                             </div>
                         </div>
-                        
-                        <button 
-                            type="submit" 
-                            disabled={isLoading} 
+
+                        <button
+                            type="submit"
+                            disabled={isLoading}
                             style={styles.button}
                             onMouseOver={(e) => e.currentTarget.style.backgroundColor = '#D9381E'}
                             onMouseOut={(e) => e.currentTarget.style.backgroundColor = '#FF5A00'}

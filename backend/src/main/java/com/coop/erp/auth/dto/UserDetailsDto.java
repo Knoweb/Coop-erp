@@ -16,7 +16,6 @@ public class UserDetailsDto {
     private String username;
     private String email;
     private String role;
-    private String loginType;
     private UUID shopId;
     private String shopCode;
     private String shopName;

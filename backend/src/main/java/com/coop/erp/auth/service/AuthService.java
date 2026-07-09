@@ -2,7 +2,6 @@ package com.coop.erp.auth.service;
 
 import com.coop.erp.auth.dto.AuthResponse;
 import com.coop.erp.auth.dto.LoginRequest;
-import com.coop.erp.auth.dto.LoginType;
 import com.coop.erp.auth.dto.UserDetailsDto;
 
 import com.coop.erp.core.entity.User;
@@ -32,7 +31,6 @@ public class AuthService {
     public AuthResponse generateToken(LoginRequest loginRequest) {
         String usernameOrEmail = loginRequest.getUsernameOrEmail();
         String password = loginRequest.getPassword();
-        LoginType loginType = loginRequest.getLoginType();
 
         User user = repository.findByUsernameOrEmail(usernameOrEmail, usernameOrEmail)
                 .orElseThrow(() -> new RuntimeException("User not found"));
@@ -41,26 +39,17 @@ public class AuthService {
             throw new RuntimeException("Invalid password");
         }
 
-        if (loginType == LoginType.ADMIN && !user.getRole().equals("ADMIN")) {
-            throw new RuntimeException("Invalid login type for user");
-        }
-
-        if (loginType == LoginType.SHOP && (!user.getRole().equals("SHOP_ADMIN") && !user.getRole().equals("SHOP_USER"))) {
-            throw new RuntimeException("Invalid login type for user");
-        }
-
         String shopId = user.getShop() != null ? user.getShop().getId().toString() : null;
         String shopCode = user.getShop() != null ? user.getShop().getCode() : null;
         String shopName = user.getShop() != null ? user.getShop().getName() : null;
 
-        String token = jwtService.generateToken(user.getUsername(), user.getRole(), loginType.name(), shopId, shopCode, shopName);
+        String token = jwtService.generateToken(user.getUsername(), user.getRole(), shopId, shopCode, shopName);
 
         UserDetailsDto userDetailsDto = UserDetailsDto.builder()
                 .id(user.getId())
                 .username(user.getUsername())
                 .email(user.getEmail())
                 .role("ROLE_" + user.getRole())
-                .loginType(loginType.name())
                 .shopId(user.getShop() != null ? user.getShop().getId() : null)
                 .shopCode(shopCode)
                 .shopName(shopName)

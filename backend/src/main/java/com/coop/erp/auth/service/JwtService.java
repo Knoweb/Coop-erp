@@ -16,10 +16,9 @@ public class JwtService {
 
     public static final String SECRET = "dGhpc2lzYW11Y2hsb25nZXJzZWNyZXRrZXl0aGF0bWVldHN0aGUyNTZiaXRyZXF1aXJlbWVudA==";
 
-    public String generateToken(String userName, String role, String loginType, String shopId, String shopCode, String shopName) {
+    public String generateToken(String userName, String role, String shopId, String shopCode, String shopName) {
         Map<String, Object> claims = new HashMap<>();
         claims.put("role", role);
-        claims.put("loginType", loginType);
         if (shopId != null) {
             claims.put("shopId", shopId);
         }
@@ -59,9 +58,7 @@ public class JwtService {
         return (String) Jwts.parserBuilder().setSigningKey(getSignKey()).build().parseClaimsJws(token).getBody().get("role");
     }
 
-    public String extractLoginType(String token) {
-        return (String) Jwts.parserBuilder().setSigningKey(getSignKey()).build().parseClaimsJws(token).getBody().get("loginType");
-    }
+
 
     public String extractShopId(String token) {
         return (String) Jwts.parserBuilder().setSigningKey(getSignKey()).build().parseClaimsJws(token).getBody().get("shopId");

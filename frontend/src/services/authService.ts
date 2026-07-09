@@ -3,7 +3,6 @@ import api from '../api/axiosConfig';
 export interface AuthResponse {
     token: string;
     role: string;
-    loginType: string;
 }
 
 const extractRoleFromToken = (token: string): string => {
@@ -18,15 +17,10 @@ const extractRoleFromToken = (token: string): string => {
     }
 };
 
-export const fetchLoginTypes = async (): Promise<{code: string, label: string}[]> => {
-    const response = await api.get('/auth/login-types');
-    return response.data;
-}
 
-export const loginUser = async (loginType: string, usernameOrEmail: string, password: string): Promise<AuthResponse> => {
+export const loginUser = async (usernameOrEmail: string, password: string): Promise<AuthResponse> => {
     try {
         const response = await api.post('/auth/login', {
-            loginType,
             usernameOrEmail,
             password
         });
@@ -38,12 +32,10 @@ export const loginUser = async (loginType: string, usernameOrEmail: string, pass
         
         localStorage.setItem('jwt_token', token);
         localStorage.setItem('user_role', actualRole);
-        localStorage.setItem('login_type', loginType);
         
         return {
             token,
-            role: actualRole,
-            loginType
+            role: actualRole
         };
     } catch (error) {
         console.error("Login failed:", error);
@@ -54,5 +46,4 @@ export const loginUser = async (loginType: string, usernameOrEmail: string, pass
 export const logoutUser = (): void => {
     localStorage.removeItem('jwt_token');
     localStorage.removeItem('user_role');
-    localStorage.removeItem('login_type');
 };

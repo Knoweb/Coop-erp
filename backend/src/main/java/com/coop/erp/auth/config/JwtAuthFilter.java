@@ -33,7 +33,6 @@ public class JwtAuthFilter extends OncePerRequestFilter {
         String token = null;
         String username = null;
         String role = null;
-        String loginType = null;
         String shopId = null;
 
         if (authHeader != null && authHeader.startsWith("Bearer ")) {
@@ -42,7 +41,6 @@ public class JwtAuthFilter extends OncePerRequestFilter {
                 jwtService.validateToken(token);
                 username = jwtService.extractUsername(token);
                 role = jwtService.extractRole(token);
-                loginType = jwtService.extractLoginType(token);
                 shopId = jwtService.extractShopId(token);
             } catch (Exception e) {
                 // Invalid token
@@ -58,7 +56,6 @@ public class JwtAuthFilter extends OncePerRequestFilter {
             
             System.out.println("Authenticated " + username + " for " + request.getRequestURI() + " with authorities " + authToken.getAuthorities());
             
-            request.setAttribute("loginType", loginType);
             request.setAttribute("shopId", shopId);
         }
 

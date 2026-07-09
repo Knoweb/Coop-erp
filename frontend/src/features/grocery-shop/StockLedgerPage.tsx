@@ -20,9 +20,7 @@ import {
   DialogTitle,
   DialogContent,
   DialogActions,
-  IconButton,
 } from "@mui/material";
-import EditIcon from "@mui/icons-material/Edit";
 import SearchIcon from "@mui/icons-material/Search";
 import { getAdminStock } from "../../services/adminStockService";
 import { getShopStock } from "../../services/shopStockService";
@@ -38,14 +36,6 @@ type ChipColor =
   | "warning";
 
 type StockFilter = "ALL" | "AVAILABLE" | "LOW_STOCK" | "OUT_OF_STOCK";
-
-type ItemProduct = {
-  id: string;
-  name: string;
-  category: string;
-  reorderLevel: number;
-  unitPrice: number;
-};
 
 type StockLedger = {
   id: string;
@@ -179,10 +169,6 @@ function StockLedgerPage() {
     } finally {
       setSavingReorderLevel(false);
     }
-  };
-
-  const getStockStatus = (ledger: StockLedger) => {
-    return ledger.status;
   };
 
   const getStockStatusColor = (ledger: StockLedger): ChipColor => {

@@ -2,14 +2,12 @@ package com.coop.erp.auth.controller;
 
 import com.coop.erp.auth.dto.AuthResponse;
 import com.coop.erp.auth.dto.LoginRequest;
-import com.coop.erp.auth.dto.LoginTypeResponse;
 import com.coop.erp.core.entity.User;
 import com.coop.erp.auth.service.AuthService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.Arrays;
 
 @RestController
 @RequestMapping("/api/v1/auth")
@@ -23,13 +21,7 @@ public class AuthController {
         return service.saveUser(user);
     }
 
-    @GetMapping("/login-types")
-    public List<LoginTypeResponse> getLoginTypes() {
-        return Arrays.asList(
-                new LoginTypeResponse("ADMIN", "Admin"),
-                new LoginTypeResponse("SHOP", "Shops")
-        );
-    }
+
 
     @PostMapping("/login")
     public AuthResponse login(@RequestBody LoginRequest loginRequest) {
