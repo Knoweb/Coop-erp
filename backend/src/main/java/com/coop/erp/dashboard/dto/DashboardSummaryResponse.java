@@ -24,6 +24,10 @@ public class DashboardSummaryResponse {
     private long totalSuppliers;
     private long totalUsers;
 
+    // Added as per requirement
+    private BigDecimal todaySalesAmount;
+    private long todaySalesCount;
+
     // Admin specific
     private Long totalShops;
     private Long activeShops;

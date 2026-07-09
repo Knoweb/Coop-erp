@@ -10,18 +10,30 @@ import org.springframework.stereotype.Service;
 import java.math.BigDecimal;
 import java.util.UUID;
 
+import com.coop.erp.inventory.repository.SaleRepository;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+
 @Service
 @RequiredArgsConstructor
 public class ShopDashboardService {
 
     private final UserRepository userRepository;
     private final ShopRepository shopRepository;
+    private final SaleRepository saleRepository;
 
     public DashboardSummaryResponse getSummary(String shopIdStr) {
         UUID shopId = UUID.fromString(shopIdStr);
         Shop shop = shopRepository.findById(shopId).orElseThrow(() -> new RuntimeException("Shop not found"));
 
         long totalUsers = userRepository.countByShopId(shopId);
+
+        LocalDate today = LocalDate.now();
+        LocalDateTime startOfDay = today.atStartOfDay();
+        LocalDateTime endOfDay = today.plusDays(1).atStartOfDay();
+
+        long todaySalesCount = saleRepository.countBySourceShopIdAndSaleDateBetween(shopId, startOfDay, endOfDay);
+        BigDecimal todaySalesAmount = saleRepository.sumTotalAmountBySourceShopIdAndSaleDateBetween(shopId, startOfDay, endOfDay);
 
         // TODO: Implement actual queries for these scoped to the shopId once the tables/entities are created
         long totalProducts = 0;
@@ -42,6 +54,8 @@ public class ShopDashboardService {
                 .lowStockItems(lowStockItems)
                 .todaySales(todaySales)
                 .todayRevenue(todayRevenue)
+                .todaySalesAmount(todaySalesAmount)
+                .todaySalesCount(todaySalesCount)
                 .pendingPurchases(pendingPurchases)
                 .totalSuppliers(totalSuppliers)
                 .build();

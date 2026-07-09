@@ -6,6 +6,8 @@ export interface ShopDashboardSummary {
     lowStockItems: number;
     todaySales: number;
     todayRevenue: number;
+    todaySalesAmount?: number;
+    todaySalesCount?: number;
     pendingPurchases: number;
     totalSuppliers: number;
     totalUsers: number;

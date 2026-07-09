@@ -130,8 +130,8 @@ const GroceryShopDashboard: React.FC = () => {
                             </Avatar>
                             <Box>
                                 <Typography variant="body2" color="text.secondary" sx={{ fontWeight: 'bold' }}>TODAY'S SALES</Typography>
-                                <Typography variant="h4" sx={{ fontWeight: 'bold' }}>${stats?.todayRevenue || 0}</Typography>
-                                <Typography variant="caption" color="text.secondary">{stats?.todaySales || 0} Transactions</Typography>
+                                <Typography variant="h4" sx={{ fontWeight: 'bold' }}>Rs. {Number(stats?.todaySalesAmount || 0).toLocaleString()}</Typography>
+                                <Typography variant="caption" color="text.secondary">{stats?.todaySalesCount || 0} Transactions</Typography>
                             </Box>
                         </CardContent>
                     </Card>
