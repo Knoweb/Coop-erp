@@ -22,6 +22,7 @@ import {
   TableRow,
   TextField,
   Typography,
+  Autocomplete,
 } from "@mui/material";
 import DeleteIcon from "@mui/icons-material/Delete";
 import AddIcon from "@mui/icons-material/Add";
@@ -347,19 +348,21 @@ function AdminPurchasesPage() {
                 gap: 2,
               }}
             >
-              <TextField
-                select
-                label="Supplier"
-                fullWidth
-                value={supplierId}
-                onChange={(e) => setSupplierId(e.target.value)}
-              >
-                {suppliers.map((supplier) => (
-                  <MenuItem key={supplier.id} value={supplier.id}>
-                    {supplier.name}
-                  </MenuItem>
-                ))}
-              </TextField>
+              <Autocomplete
+                options={suppliers}
+                getOptionLabel={(option) => `${option.name}${option.contactNumber ? ` - ${option.contactNumber}` : ''}`}
+                value={suppliers.find((s) => s.id === supplierId) || null}
+                onChange={(_, newValue) => setSupplierId(newValue?.id || "")}
+                noOptionsText="No matching supplier found"
+                renderInput={(params) => (
+                  <TextField
+                    {...params}
+                    label="Supplier"
+                    placeholder="Search supplier..."
+                    fullWidth
+                  />
+                )}
+              />
 
               <TextField
                 label="GRN/Purchase Number"
@@ -431,21 +434,23 @@ function AdminPurchasesPage() {
                   {lineItems.map((lineItem, index) => (
                     <TableRow key={index}>
                       <TableCell sx={{ minWidth: 260 }}>
-                        <TextField
-                          select
-                          fullWidth
-                          value={lineItem.itemId}
-                          onChange={(e) =>
-                            handleLineItemChange(index, "itemId", e.target.value)
+                        <Autocomplete
+                          options={items}
+                          getOptionLabel={(option) => `${option.name} - ${option.category}`}
+                          value={items.find((i) => i.id === lineItem.itemId) || null}
+                          onChange={(_, newValue) =>
+                            handleLineItemChange(index, "itemId", newValue?.id || "")
                           }
                           size="small"
-                        >
-                          {items.map((item) => (
-                            <MenuItem key={item.id} value={item.id}>
-                              {item.name} - {item.category}
-                            </MenuItem>
-                          ))}
-                        </TextField>
+                          noOptionsText="No matching product found"
+                          renderInput={(params) => (
+                            <TextField
+                              {...params}
+                              placeholder="Search product..."
+                              fullWidth
+                            />
+                          )}
+                        />
                       </TableCell>
 
                       <TableCell sx={{ minWidth: 140 }}>
