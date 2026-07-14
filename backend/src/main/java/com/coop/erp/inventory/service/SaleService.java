@@ -9,11 +9,14 @@ import com.coop.erp.inventory.entity.Sale;
 import com.coop.erp.inventory.entity.SaleItem;
 import com.coop.erp.inventory.entity.SaleType;
 import com.coop.erp.inventory.entity.StockLedger;
+import com.coop.erp.accounting.service.JournalEntryService;
+import com.coop.erp.inventory.entity.ItemProduct;
 import com.coop.erp.inventory.repository.ItemProductRepository;
 import com.coop.erp.inventory.repository.SaleRepository;
 import com.coop.erp.inventory.repository.StockLedgerRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
@@ -31,6 +34,7 @@ public class SaleService {
     private final StockLedgerRepository stockLedgerRepository;
     private final ItemProductRepository itemProductRepository;
     private final ShopRepository shopRepository;
+    private final JournalEntryService journalEntryService;
 
     @Transactional
     public SaleResponse createAdminSale(SaleRequest request, String username) {
@@ -112,6 +116,36 @@ public class SaleService {
         sale.setTotalAmount(subtotal.subtract(totalDiscount));
         
         Sale savedSale = saleRepository.save(sale);
+
+        // Accounting Entry
+        if (request.getSaleType() != SaleType.SHOP) {
+            BigDecimal totalCogs = BigDecimal.ZERO;
+            for (SaleItem si : savedSale.getItems()) {
+                if (si.getItem().getCostPrice() != null) {
+                    totalCogs = totalCogs.add(si.getItem().getCostPrice().multiply(BigDecimal.valueOf(si.getQuantity())));
+                }
+            }
+
+            List<JournalEntryService.JournalLineRequest> lines = new ArrayList<>(List.of(
+                    new JournalEntryService.JournalLineRequest("1000", "Sale Receipt", savedSale.getTotalAmount(), BigDecimal.ZERO),
+                    new JournalEntryService.JournalLineRequest("4000", "Sale Revenue", BigDecimal.ZERO, savedSale.getTotalAmount())
+            ));
+
+            if (totalCogs.compareTo(BigDecimal.ZERO) > 0) {
+                lines.add(new JournalEntryService.JournalLineRequest("5000", "COGS", totalCogs, BigDecimal.ZERO));
+                lines.add(new JournalEntryService.JournalLineRequest("1200", "Inventory Reduction", BigDecimal.ZERO, totalCogs));
+            }
+
+            journalEntryService.postEntry(
+                    "SALE",
+                    savedSale.getId(),
+                    savedSale.getSaleDate().toLocalDate(),
+                    "Customer Sale " + savedSale.getSaleNumber(),
+                    savedSale.getCreatedBy(),
+                    lines
+            );
+        }
+
         return mapToResponse(savedSale);
     }
 
@@ -178,6 +212,34 @@ public class SaleService {
         sale.setTotalAmount(subtotal.subtract(totalDiscount));
         
         Sale savedSale = saleRepository.save(sale);
+
+        // Accounting Entry
+        BigDecimal totalCogs = BigDecimal.ZERO;
+        for (SaleItem si : savedSale.getItems()) {
+            if (si.getItem().getCostPrice() != null) {
+                totalCogs = totalCogs.add(si.getItem().getCostPrice().multiply(BigDecimal.valueOf(si.getQuantity())));
+            }
+        }
+
+        List<JournalEntryService.JournalLineRequest> lines = new ArrayList<>(List.of(
+                new JournalEntryService.JournalLineRequest("1000", "Sale Receipt", savedSale.getTotalAmount(), BigDecimal.ZERO),
+                new JournalEntryService.JournalLineRequest("4000", "Sale Revenue", BigDecimal.ZERO, savedSale.getTotalAmount())
+        ));
+
+        if (totalCogs.compareTo(BigDecimal.ZERO) > 0) {
+            lines.add(new JournalEntryService.JournalLineRequest("5000", "COGS", totalCogs, BigDecimal.ZERO));
+            lines.add(new JournalEntryService.JournalLineRequest("1200", "Inventory Reduction", BigDecimal.ZERO, totalCogs));
+        }
+
+        journalEntryService.postEntry(
+                "SALE",
+                savedSale.getId(),
+                savedSale.getSaleDate().toLocalDate(),
+                "Shop Sale " + savedSale.getSaleNumber(),
+                savedSale.getCreatedBy(),
+                lines
+        );
+
         return mapToResponse(savedSale);
     }
 

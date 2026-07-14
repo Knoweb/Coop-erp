@@ -9,6 +9,7 @@ import com.coop.erp.inventory.entity.PurchaseInvoiceItem;
 import com.coop.erp.inventory.entity.StockLedger;
 import com.coop.erp.inventory.entity.Supplier;
 import com.coop.erp.inventory.repository.ItemProductRepository;
+import com.coop.erp.accounting.service.JournalEntryService;
 import com.coop.erp.inventory.repository.PurchaseInvoiceItemRepository;
 import com.coop.erp.inventory.repository.PurchaseInvoiceRepository;
 import com.coop.erp.inventory.repository.StockLedgerRepository;
@@ -34,6 +35,7 @@ public class GrnService {
     private final ItemProductRepository itemProductRepository;
     private final StockLedgerRepository stockLedgerRepository;
     private final UserRepository userRepository;
+    private final JournalEntryService journalEntryService;
 
     private Shop getCurrentUserShop() {
         String username = SecurityContextHolder.getContext().getAuthentication().getName();
@@ -88,6 +90,28 @@ public class GrnService {
             purchaseInvoiceItemRepository.save(invoiceItem);
 
             increaseStock(item, itemRequest.getQuantity(), currentShop);
+        }
+
+        // Accounting Entry
+        try {
+            List<JournalEntryService.JournalLineRequest> lines = List.of(
+                    new JournalEntryService.JournalLineRequest("1200", "Inventory Purchase", savedInvoice.getTotalAmount(), BigDecimal.ZERO),
+                    new JournalEntryService.JournalLineRequest("1000", "Payment", BigDecimal.ZERO, savedInvoice.getTotalAmount())
+            );
+
+            String username = SecurityContextHolder.getContext().getAuthentication() != null ? 
+                    SecurityContextHolder.getContext().getAuthentication().getName() : "System";
+
+            journalEntryService.postEntry(
+                    "PURCHASE",
+                    savedInvoice.getId(),
+                    savedInvoice.getInvoiceDate(),
+                    "Purchase " + savedInvoice.getInvoiceNumber(),
+                    username,
+                    lines
+            );
+        } catch (Exception e) {
+            System.err.println("Failed to create journal entry for purchase: " + e.getMessage());
         }
 
         return buildResponse(savedInvoice);

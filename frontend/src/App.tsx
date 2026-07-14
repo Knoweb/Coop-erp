@@ -23,6 +23,12 @@ import StockLedgerPage from "./features/grocery-shop/StockLedgerPage";
 import SalesPage from "./features/grocery-shop/SalesPage";
 import ShopPurchaseHistoryPage from "./features/grocery-shop/ShopPurchaseHistoryPage";
 
+import BalanceSheetPage from "./features/admin/reports/BalanceSheetPage";
+import IncomeStatementPage from "./features/admin/reports/IncomeStatementPage";
+import TrialBalancePage from "./features/admin/reports/TrialBalancePage";
+import CashFlowPage from "./features/admin/reports/CashFlowPage";
+import GeneralLedgerPage from "./features/admin/reports/GeneralLedgerPage";
+
 // --- UPGRADED: Role-Based Protected Route ---
 const ProtectedRoute = ({ allowedRoles }: { allowedRoles: string[] }) => {
   const token = localStorage.getItem('jwt_token');
@@ -79,7 +85,11 @@ function App() {
             <Route path="purchases" element={<AdminPurchasesPage />} />
             <Route path="sales" element={<SalesPage />} />
             <Route path="suppliers" element={<SupplierPage />} />
-            <Route path="reports" element={<div style={{padding: '20px'}}>Reports Module Coming Soon</div>} />
+            <Route path="reports/balance-sheet" element={<BalanceSheetPage />} />
+            <Route path="reports/income-statement" element={<IncomeStatementPage />} />
+            <Route path="reports/trial-balance" element={<TrialBalancePage />} />
+            <Route path="reports/cash-flow" element={<CashFlowPage />} />
+            <Route path="reports/general-ledger" element={<GeneralLedgerPage />} />
             <Route path="settings" element={<SettingsPage />} />
           </Route>
         </Route>

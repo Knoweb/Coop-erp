@@ -12,6 +12,8 @@ export interface DashboardSummary {
     totalShops: number;
     activeShops: number;
     totalCustomers: number;
+    todaySalesAmount?: number;
+    todaySalesCount?: number;
 }
 
 export interface ShopProductCountDto {

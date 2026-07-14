@@ -32,6 +32,9 @@ public class ItemProduct {
     @Column(name = "unit_price", nullable = false, precision = 10, scale = 2)
     private BigDecimal unitPrice;
 
+    @Column(name = "cost_price", precision = 10, scale = 2)
+    private BigDecimal costPrice;
+
     @Column(name = "is_active")
     @Builder.Default
     private Boolean isActive = true;

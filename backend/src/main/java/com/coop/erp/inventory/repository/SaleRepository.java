@@ -39,4 +39,12 @@ public interface SaleRepository extends JpaRepository<Sale, UUID> {
             @org.springframework.data.repository.query.Param("fromDate") java.time.LocalDateTime fromDate,
             @org.springframework.data.repository.query.Param("toDate") java.time.LocalDateTime toDate,
             @org.springframework.data.repository.query.Param("search") String search);
+
+    @org.springframework.data.jpa.repository.Query("SELECT COALESCE(SUM(s.totalAmount), 0) FROM Sale s WHERE s.saleDate >= :from AND s.saleDate <= :to")
+    java.math.BigDecimal sumTotalAmountBySaleDateBetween(@org.springframework.data.repository.query.Param("from") java.time.LocalDateTime from, @org.springframework.data.repository.query.Param("to") java.time.LocalDateTime to);
+
+    @org.springframework.data.jpa.repository.Query("SELECT COALESCE(SUM(s.totalAmount), 0) FROM Sale s WHERE s.saleDate <= :asOf")
+    java.math.BigDecimal sumTotalAmountBySaleDateBefore(@org.springframework.data.repository.query.Param("asOf") java.time.LocalDateTime asOf);
+
+    List<Sale> findBySaleDateBetween(java.time.LocalDateTime from, java.time.LocalDateTime to);
 }

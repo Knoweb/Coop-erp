@@ -62,22 +62,23 @@ const GroceryShopDashboard: React.FC = () => {
 
             <Grid container spacing={3} sx={{ mb: 4 }}>
                 <Grid size={{ xs: 12, sm: 6, md: 4 }}>
-                    <Card sx={{ borderRadius: 2, boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}>
-                        <CardContent sx={{ display: 'flex', alignItems: 'center', p: 3 }}>
+                    <Card sx={{ height: '100%', display: 'flex', borderRadius: 2, boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}>
+                        <CardContent sx={{ display: 'flex', alignItems: 'center', p: 3, width: '100%' }}>
                             <Avatar sx={{ bgcolor: '#eff6ff', color: '#3b82f6', width: 56, height: 56, mr: 2 }}>
                                 <StorefrontIcon fontSize="large" />
                             </Avatar>
                             <Box>
                                 <Typography variant="body2" color="text.secondary" sx={{ fontWeight: 'bold' }}>SHOP CODE</Typography>
-                                <Typography variant="h5" sx={{ fontWeight: 'bold', mt: 0.5 }}>{stats?.shopCode || 'N/A'}</Typography>
+                                <Typography variant="h4" className="page-title" sx={{ fontWeight: 'bold' }}>{stats?.shopCode || 'N/A'}</Typography>
+                                <Typography variant="caption" sx={{ visibility: 'hidden' }}>Placeholder</Typography>
                             </Box>
                         </CardContent>
                     </Card>
                 </Grid>
 
                 <Grid size={{ xs: 12, sm: 6, md: 4 }}>
-                    <Card sx={{ borderRadius: 2, boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}>
-                        <CardContent sx={{ display: 'flex', alignItems: 'center', p: 3 }}>
+                    <Card sx={{ height: '100%', display: 'flex', borderRadius: 2, boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}>
+                        <CardContent sx={{ display: 'flex', alignItems: 'center', p: 3, width: '100%' }}>
                             <Avatar sx={{ bgcolor: '#f0fdf4', color: '#22c55e', width: 56, height: 56, mr: 2 }}>
                                 <PeopleIcon fontSize="large" />
                             </Avatar>
@@ -91,8 +92,8 @@ const GroceryShopDashboard: React.FC = () => {
                 </Grid>
 
                 <Grid size={{ xs: 12, sm: 6, md: 4 }}>
-                    <Card sx={{ borderRadius: 2, boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}>
-                        <CardContent sx={{ display: 'flex', alignItems: 'center', p: 3 }}>
+                    <Card sx={{ height: '100%', display: 'flex', borderRadius: 2, boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}>
+                        <CardContent sx={{ display: 'flex', alignItems: 'center', p: 3, width: '100%' }}>
                             <Avatar sx={{ bgcolor: '#fff7ed', color: '#f97316', width: 56, height: 56, mr: 2 }}>
                                 <InventoryIcon fontSize="large" />
                             </Avatar>
@@ -108,8 +109,8 @@ const GroceryShopDashboard: React.FC = () => {
 
             <Grid container spacing={3} sx={{ mb: 4 }}>
                 <Grid size={{ xs: 12, sm: 6, md: 4 }}>
-                    <Card sx={{ borderRadius: 2, boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}>
-                        <CardContent sx={{ display: 'flex', alignItems: 'center', p: 3 }}>
+                    <Card sx={{ height: '100%', display: 'flex', borderRadius: 2, boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}>
+                        <CardContent sx={{ display: 'flex', alignItems: 'center', p: 3, width: '100%' }}>
                             <Avatar sx={{ bgcolor: '#fef2f2', color: '#ef4444', width: 56, height: 56, mr: 2 }}>
                                 <WarningIcon fontSize="large" />
                             </Avatar>
@@ -123,8 +124,8 @@ const GroceryShopDashboard: React.FC = () => {
                 </Grid>
 
                 <Grid size={{ xs: 12, sm: 6, md: 4 }}>
-                    <Card sx={{ borderRadius: 2, boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}>
-                        <CardContent sx={{ display: 'flex', alignItems: 'center', p: 3 }}>
+                    <Card sx={{ height: '100%', display: 'flex', borderRadius: 2, boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}>
+                        <CardContent sx={{ display: 'flex', alignItems: 'center', p: 3, width: '100%' }}>
                             <Avatar sx={{ bgcolor: '#f0fdf4', color: '#22c55e', width: 56, height: 56, mr: 2 }}>
                                 <AttachMoneyIcon fontSize="large" />
                             </Avatar>
@@ -138,8 +139,8 @@ const GroceryShopDashboard: React.FC = () => {
                 </Grid>
 
                 <Grid size={{ xs: 12, sm: 6, md: 4 }}>
-                    <Card sx={{ borderRadius: 2, boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}>
-                        <CardContent sx={{ display: 'flex', alignItems: 'center', p: 3 }}>
+                    <Card sx={{ height: '100%', display: 'flex', borderRadius: 2, boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}>
+                        <CardContent sx={{ display: 'flex', alignItems: 'center', p: 3, width: '100%' }}>
                             <Avatar sx={{ bgcolor: '#f8fafc', color: "var(--text-secondary)", width: 56, height: 56, mr: 2 }}>
                                 <ShoppingCartIcon fontSize="large" />
                             </Avatar>

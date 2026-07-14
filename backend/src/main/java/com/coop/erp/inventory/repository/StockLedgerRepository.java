@@ -34,4 +34,7 @@ public interface StockLedgerRepository extends JpaRepository<StockLedger, UUID> 
            AND (s.shop.id = :shopId OR (:shopId IS NULL AND s.shop IS NULL))
            """)
     List<StockLedger> findOutOfStockItems(UUID shopId);
+
+    @Query("SELECT COALESCE(SUM(s.currentQty * s.item.unitPrice), 0) FROM StockLedger s")
+    java.math.BigDecimal calculateTotalInventoryValue();
 }

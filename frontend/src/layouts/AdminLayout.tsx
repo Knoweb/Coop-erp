@@ -1,6 +1,8 @@
-import { Box, Divider, Drawer, List, ListItemButton, Typography, Button } from "@mui/material";
+import { Box, Divider, Drawer, List, ListItemButton, Typography, Button, Collapse } from "@mui/material";
+import { ExpandLess, ExpandMore } from "@mui/icons-material";
 import { Outlet, useLocation, useNavigate } from "react-router-dom";
-import { logoutUser } from "../services/authService"; // Ensure this path matches your folder structure
+import { logoutUser } from "../services/authService";
+import { useState } from "react";
 
 const drawerWidth = 240;
 
@@ -17,7 +19,14 @@ function AdminLayout() {
     { label: "Purchases / GRN", path: "/admin/purchases" },
     { label: "Sales", path: "/admin/sales" },
     { label: "Suppliers", path: "/admin/suppliers" },
-    { label: "Reports", path: "/admin/reports" },
+  ];
+
+  const reportItems = [
+    { label: "Balance Sheet", path: "/admin/reports/balance-sheet" },
+    { label: "Income Statement", path: "/admin/reports/income-statement" },
+    { label: "Trial Balance", path: "/admin/reports/trial-balance" },
+    { label: "Cash Flow", path: "/admin/reports/cash-flow" },
+    { label: "General Ledger", path: "/admin/reports/general-ledger" }
   ];
 
   const adminManagementItems = [
@@ -27,7 +36,14 @@ function AdminLayout() {
     { label: "Settings", path: "/admin/settings" },
   ];
 
-  const isActive = (path: string) => location.pathname.startsWith(path);
+  const isActive = (path: string) => location.pathname === path || location.pathname.startsWith(path + '/');
+  
+  const isReportsActive = location.pathname.startsWith("/admin/reports");
+  const [reportsOpen, setReportsOpen] = useState(isReportsActive);
+
+  const handleReportsClick = () => {
+    setReportsOpen(!reportsOpen);
+  };
 
   const handleLogout = () => {
       logoutUser();
@@ -76,6 +92,42 @@ function AdminLayout() {
               </Typography>
             </ListItemButton>
           ))}
+          
+          <ListItemButton
+            onClick={handleReportsClick}
+            sx={{
+              borderRadius: 2, mb: 0.5, color: "inherit",
+              backgroundColor: isReportsActive ? "rgba(255,255,255,0.05)" : "transparent",
+              "&:hover": { backgroundColor: "rgba(255,255,255,0.1)" },
+            }}
+          >
+            <Typography sx={{ fontSize: 15, fontWeight: isReportsActive ? "bold" : "normal", flexGrow: 1 }}>
+              Reports
+            </Typography>
+            {reportsOpen ? <ExpandLess /> : <ExpandMore />}
+          </ListItemButton>
+          
+          <Collapse in={reportsOpen} timeout="auto" unmountOnExit>
+            <List component="div" disablePadding>
+              {reportItems.map((item) => (
+                <ListItemButton
+                  key={item.path}
+                  selected={isActive(item.path)}
+                  onClick={() => navigate(item.path)}
+                  sx={{
+                    borderRadius: 2, mb: 0.5, color: "inherit", pl: 4,
+                    "&.Mui-selected": { backgroundColor: "var(--primary-color)", color: "white" },
+                    "&.Mui-selected:hover": { backgroundColor: "var(--secondary-color)" },
+                    "&:hover": { backgroundColor: "rgba(255,255,255,0.1)" },
+                  }}
+                >
+                  <Typography sx={{ fontSize: 14, fontWeight: isActive(item.path) ? "bold" : "normal" }}>
+                    {item.label}
+                  </Typography>
+                </ListItemButton>
+              ))}
+            </List>
+          </Collapse>
           
           <Divider sx={{ borderColor: "#b91c1c", my: 2 }} />
           

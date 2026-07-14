@@ -17,6 +17,12 @@ const AdminDashboard: React.FC = () => {
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
+    const formatCurrency = (value: number | undefined) =>
+        `Rs. ${Number(value || 0).toLocaleString("en-LK", {
+            minimumFractionDigits: 0,
+            maximumFractionDigits: 2
+        })}`;
+
     useEffect(() => {
         const fetchDashboardData = async () => {
             try {
@@ -70,8 +76,8 @@ const AdminDashboard: React.FC = () => {
 
             <Grid container spacing={3} sx={{ mb: 4 }}>
                 <Grid size={{ xs: 12, sm: 6, md: 4 }}>
-                    <Card sx={{ borderRadius: 2, boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}>
-                        <CardContent sx={{ display: 'flex', alignItems: 'center', p: 3 }}>
+                    <Card sx={{ height: '100%', display: 'flex', borderRadius: 2, boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}>
+                        <CardContent sx={{ display: 'flex', alignItems: 'center', p: 3, width: '100%' }}>
                             <Avatar sx={{ bgcolor: '#eff6ff', color: '#3b82f6', width: 56, height: 56, mr: 2 }}>
                                 <StorefrontIcon fontSize="large" />
                             </Avatar>
@@ -85,8 +91,8 @@ const AdminDashboard: React.FC = () => {
                 </Grid>
 
                 <Grid size={{ xs: 12, sm: 6, md: 4 }}>
-                    <Card sx={{ borderRadius: 2, boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}>
-                        <CardContent sx={{ display: 'flex', alignItems: 'center', p: 3 }}>
+                    <Card sx={{ height: '100%', display: 'flex', borderRadius: 2, boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}>
+                        <CardContent sx={{ display: 'flex', alignItems: 'center', p: 3, width: '100%' }}>
                             <Avatar sx={{ bgcolor: '#f0fdf4', color: '#22c55e', width: 56, height: 56, mr: 2 }}>
                                 <PeopleIcon fontSize="large" />
                             </Avatar>
@@ -100,8 +106,8 @@ const AdminDashboard: React.FC = () => {
                 </Grid>
 
                 <Grid size={{ xs: 12, sm: 6, md: 4 }}>
-                    <Card sx={{ borderRadius: 2, boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}>
-                        <CardContent sx={{ display: 'flex', alignItems: 'center', p: 3 }}>
+                    <Card sx={{ height: '100%', display: 'flex', borderRadius: 2, boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}>
+                        <CardContent sx={{ display: 'flex', alignItems: 'center', p: 3, width: '100%' }}>
                             <Avatar sx={{ bgcolor: '#fff7ed', color: '#f97316', width: 56, height: 56, mr: 2 }}>
                                 <InventoryIcon fontSize="large" />
                             </Avatar>
@@ -117,8 +123,8 @@ const AdminDashboard: React.FC = () => {
 
             <Grid container spacing={3} sx={{ mb: 4 }}>
                 <Grid size={{ xs: 12, sm: 6, md: 4 }}>
-                    <Card sx={{ borderRadius: 2, boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}>
-                        <CardContent sx={{ display: 'flex', alignItems: 'center', p: 3 }}>
+                    <Card sx={{ height: '100%', display: 'flex', borderRadius: 2, boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}>
+                        <CardContent sx={{ display: 'flex', alignItems: 'center', p: 3, width: '100%' }}>
                             <Avatar sx={{ bgcolor: '#fef2f2', color: '#ef4444', width: 56, height: 56, mr: 2 }}>
                                 <WarningIcon fontSize="large" />
                             </Avatar>
@@ -132,23 +138,23 @@ const AdminDashboard: React.FC = () => {
                 </Grid>
 
                 <Grid size={{ xs: 12, sm: 6, md: 4 }}>
-                    <Card sx={{ borderRadius: 2, boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}>
-                        <CardContent sx={{ display: 'flex', alignItems: 'center', p: 3 }}>
+                    <Card sx={{ height: '100%', display: 'flex', borderRadius: 2, boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}>
+                        <CardContent sx={{ display: 'flex', alignItems: 'center', p: 3, width: '100%' }}>
                             <Avatar sx={{ bgcolor: '#f0fdf4', color: '#22c55e', width: 56, height: 56, mr: 2 }}>
                                 <AttachMoneyIcon fontSize="large" />
                             </Avatar>
                             <Box>
                                 <Typography variant="body2" color="text.secondary" sx={{ fontWeight: 'bold' }}>TODAY'S SALES</Typography>
-                                <Typography variant="h4" className="page-title" sx={{ fontWeight: 'bold' }}>${stats?.todayRevenue || 0}</Typography>
-                                <Typography variant="caption" color="text.secondary">{stats?.todaySales || 0} Transactions</Typography>
+                                <Typography variant="h4" className="page-title" sx={{ fontWeight: 'bold' }}>{formatCurrency(stats?.todaySalesAmount ?? stats?.todayRevenue)}</Typography>
+                                <Typography variant="caption" color="text.secondary">{stats?.todaySalesCount ?? (stats?.todaySales || 0)} Transactions</Typography>
                             </Box>
                         </CardContent>
                     </Card>
                 </Grid>
 
                 <Grid size={{ xs: 12, sm: 6, md: 4 }}>
-                    <Card sx={{ borderRadius: 2, boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}>
-                        <CardContent sx={{ display: 'flex', alignItems: 'center', p: 3 }}>
+                    <Card sx={{ height: '100%', display: 'flex', borderRadius: 2, boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}>
+                        <CardContent sx={{ display: 'flex', alignItems: 'center', p: 3, width: '100%' }}>
                             <Avatar sx={{ bgcolor: '#f8fafc', color: "var(--text-secondary)", width: 56, height: 56, mr: 2 }}>
                                 <ShoppingCartIcon fontSize="large" />
                             </Avatar>
