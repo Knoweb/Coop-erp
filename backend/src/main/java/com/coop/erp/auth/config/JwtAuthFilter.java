@@ -34,6 +34,8 @@ public class JwtAuthFilter extends OncePerRequestFilter {
         String username = null;
         String role = null;
         String shopId = null;
+        String tenantId = null;
+        String tenantCode = null;
 
         if (authHeader != null && authHeader.startsWith("Bearer ")) {
             token = authHeader.substring(7);
@@ -42,6 +44,8 @@ public class JwtAuthFilter extends OncePerRequestFilter {
                 username = jwtService.extractUsername(token);
                 role = jwtService.extractRole(token);
                 shopId = jwtService.extractShopId(token);
+                tenantId = jwtService.extractTenantId(token);
+                tenantCode = jwtService.extractTenantCode(token);
             } catch (Exception e) {
                 // Invalid token
             }
@@ -57,6 +61,8 @@ public class JwtAuthFilter extends OncePerRequestFilter {
             System.out.println("Authenticated " + username + " for " + request.getRequestURI() + " with authorities " + authToken.getAuthorities());
             
             request.setAttribute("shopId", shopId);
+            request.setAttribute("tenantId", tenantId);
+            request.setAttribute("tenantCode", tenantCode);
         }
 
         filterChain.doFilter(request, response);

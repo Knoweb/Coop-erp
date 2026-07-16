@@ -1,14 +1,23 @@
 package com.coop.erp.inventory.entity;
 
 import jakarta.persistence.*;
+import com.coop.erp.admin.entity.Tenant;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.*;
+import com.coop.erp.admin.entity.Tenant;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import org.hibernate.annotations.UpdateTimestamp;
 
 import java.time.LocalDate;
+import com.coop.erp.admin.entity.Tenant;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import java.time.LocalDateTime;
+import com.coop.erp.admin.entity.Tenant;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import java.util.UUID;
 
 @Entity
+@org.hibernate.annotations.Filter(name = "tenantFilter", condition = "tenant_id = :tenantId")
 @Table(name = "sequence_counters", schema = "grocery", uniqueConstraints = {
         @UniqueConstraint(columnNames = {"scope", "sequence_date"})
 })
@@ -36,4 +45,11 @@ public class SequenceCounter {
     @UpdateTimestamp
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
+
+    @JsonIgnore
+    @ManyToOne(fetch = jakarta.persistence.FetchType.LAZY)
+    @JoinColumn(name = "tenant_id")
+    private Tenant tenant;
 }
+
+

@@ -3,8 +3,6 @@ package com.coop.erp.inventory.service;
 import com.coop.erp.inventory.dto.ItemProductRequest;
 import com.coop.erp.inventory.entity.ItemProduct;
 import com.coop.erp.inventory.repository.ItemProductRepository;
-import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Service;
 
 import com.coop.erp.core.entity.Shop;
 import com.coop.erp.core.repository.ShopRepository;

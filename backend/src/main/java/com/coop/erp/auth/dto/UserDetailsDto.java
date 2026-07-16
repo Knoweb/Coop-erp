@@ -19,4 +19,9 @@ public class UserDetailsDto {
     private UUID shopId;
     private String shopCode;
     private String shopName;
+
+    private UUID tenantId;
+    private String tenantCode;
 }
+
+

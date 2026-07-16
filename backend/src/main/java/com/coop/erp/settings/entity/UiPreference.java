@@ -1,14 +1,23 @@
 package com.coop.erp.settings.entity;
 
 import jakarta.persistence.*;
+import com.coop.erp.admin.entity.Tenant;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.*;
+import com.coop.erp.admin.entity.Tenant;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import org.hibernate.annotations.CreationTimestamp;
+import com.coop.erp.admin.entity.Tenant;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import org.hibernate.annotations.UpdateTimestamp;
 
 import java.time.LocalDateTime;
+import com.coop.erp.admin.entity.Tenant;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import java.util.UUID;
 
 @Entity
+@org.hibernate.annotations.Filter(name = "tenantFilter", condition = "tenant_id = :tenantId")
 @Table(
     name = "ui_preferences", 
     schema = "admin",
@@ -58,4 +67,11 @@ public class UiPreference {
 
     @Column(name = "updated_by", length = 100)
     private String updatedBy;
+
+    @JsonIgnore
+    @ManyToOne(fetch = jakarta.persistence.FetchType.LAZY)
+    @JoinColumn(name = "tenant_id")
+    private Tenant tenant;
 }
+
+

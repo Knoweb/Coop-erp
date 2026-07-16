@@ -1,14 +1,19 @@
 package com.coop.erp.core.config;
 
+import com.coop.erp.admin.entity.Tenant;
+import com.coop.erp.admin.repository.TenantRepository;
 import com.coop.erp.core.entity.Shop;
 import com.coop.erp.core.entity.User;
 import com.coop.erp.core.repository.ShopRepository;
 import com.coop.erp.core.repository.UserRepository;
 import com.coop.erp.settings.service.SettingsService;
+import jakarta.persistence.EntityManager;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
-import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionTemplate;
+
+import java.math.BigInteger;
 
 @Component
 public class DatabaseSeeder implements CommandLineRunner {
@@ -17,38 +22,121 @@ public class DatabaseSeeder implements CommandLineRunner {
     private final ShopRepository shopRepository;
     private final PasswordEncoder passwordEncoder;
     private final SettingsService settingsService;
+    private final TenantRepository tenantRepository;
+    private final EntityManager entityManager;
+    private final TransactionTemplate transactionTemplate;
 
-    public DatabaseSeeder(UserRepository userRepository, ShopRepository shopRepository, PasswordEncoder passwordEncoder, SettingsService settingsService) {
+    public DatabaseSeeder(UserRepository userRepository, ShopRepository shopRepository, PasswordEncoder passwordEncoder, SettingsService settingsService, TenantRepository tenantRepository, EntityManager entityManager, TransactionTemplate transactionTemplate) {
         this.userRepository = userRepository;
         this.shopRepository = shopRepository;
         this.passwordEncoder = passwordEncoder;
         this.settingsService = settingsService;
+        this.tenantRepository = tenantRepository;
+        this.entityManager = entityManager;
+        this.transactionTemplate = transactionTemplate;
     }
 
     @Override
-    @Transactional
     public void run(String... args) throws Exception {
-        settingsService.seedDefaultSettings();
-        seedAdminUser();
-        seedShopsAndShopAdmins();
+        Tenant defaultTenant = transactionTemplate.execute(status -> seedTenantAndBackfill());
+        try {
+            settingsService.seedDefaultSettings();
+        } catch (Exception e) {
+            System.err.println("Failed to seed default settings: " + e.getMessage());
+        }
+        transactionTemplate.execute(status -> {
+            seedAdminUser(defaultTenant);
+            seedShopsAndShopAdmins(defaultTenant);
+            return null;
+        });
     }
 
-    private void seedAdminUser() {
+    private Tenant seedTenantAndBackfill() {
+        Tenant defaultTenant = tenantRepository.findByTenantCode("COOPFED_KILINOCHCHI").orElseGet(() -> {
+            Tenant tenant = Tenant.builder()
+                    .tenantCode("COOPFED_KILINOCHCHI")
+                    .tenantName("COOPFED Kilinochchi Pilot")
+                    .tenantType("COOPFED")
+                    .isActive(true)
+                    .build();
+            return tenantRepository.save(tenant);
+        });
+
+        // Exact tables based on actual entity mappings
+        String[] schemasAndTables = {
+                "admin.shops", "admin.users", "admin.shop_terminals",
+                "admin.system_settings", "admin.ui_preferences", "admin.audit_log", "admin.utility_bill",
+                "grocery.products", "grocery.suppliers", "grocery.shop_items",
+                "grocery.stock_ledger", "grocery.stock_movements", "grocery.purchase_invoices",
+                "grocery.purchase_invoice_items", "grocery.sales", "grocery.sale_items",
+                "grocery.cash_sessions", "grocery.sequence_counters", "grocery.stock_adjustment_log",
+                "accounting.chart_of_accounts", "accounting.journal_entries", "accounting.journal_entry_lines"
+        };
+
+        for (String fullTable : schemasAndTables) {
+            String[] parts = fullTable.split("\\.");
+            String schema = parts[0];
+            String table = parts[1];
+
+            try {
+                // 1. Check if table exists
+                Number tableExists = (Number) entityManager.createNativeQuery(
+                        "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = :schema AND table_name = :table"
+                ).setParameter("schema", schema).setParameter("table", table).getSingleResult();
+
+                if (tableExists.intValue() == 0) {
+                    System.out.println("Skipping tenant backfill for missing table " + fullTable);
+                    continue;
+                }
+
+                // 2. Check if tenant_id column exists
+                Number columnExists = (Number) entityManager.createNativeQuery(
+                        "SELECT COUNT(*) FROM information_schema.columns WHERE table_schema = :schema AND table_name = :table AND column_name = 'tenant_id'"
+                ).setParameter("schema", schema).setParameter("table", table).getSingleResult();
+
+                if (columnExists.intValue() == 0) {
+                    System.out.println("Skipping tenant backfill for missing column tenant_id in " + fullTable);
+                    continue;
+                }
+
+                // 3. Perform update only if both exist
+                entityManager.createNativeQuery(
+                        "UPDATE " + fullTable + " SET tenant_id = :tenantId WHERE tenant_id IS NULL"
+                ).setParameter("tenantId", defaultTenant.getId()).executeUpdate();
+
+                System.out.println("Successfully backfilled tenant_id for " + fullTable);
+            } catch (Exception e) {
+                System.err.println("Exception while checking/backfilling table " + fullTable + ": " + e.getMessage());
+            }
+        }
+        
+        return defaultTenant;
+    }
+
+    private void seedAdminUser(Tenant tenant) {
         if (!userRepository.existsByUsername("admin")) {
             User admin = User.builder()
                     .name("System Admin")
                     .username("admin")
                     .email("admin@example.com")
                     .password(passwordEncoder.encode("admin123"))
-                    .role("ADMIN")
+                    .role("TENANT_ADMIN")
                     .shop(null)
+                    .tenant(tenant)
                     .build();
             userRepository.save(admin);
             System.out.println("Default admin user created.");
+        } else {
+            // Ensure existing admin is tied to tenant
+            User admin = userRepository.findByUsername("admin").get();
+            if (admin.getTenant() == null) {
+                admin.setTenant(tenant);
+                userRepository.save(admin);
+            }
         }
     }
 
-    private void seedShopsAndShopAdmins() {
+    private void seedShopsAndShopAdmins(Tenant tenant) {
         for (int i = 1; i <= 4; i++) {
             final int index = i;
             String shopCode = "SHOP_" + index;
@@ -61,10 +149,16 @@ public class DatabaseSeeder implements CommandLineRunner {
                         .address("Address for " + shopName)
                         .contactNumber("123456789" + index)
                         .active(true)
+                        .tenant(tenant)
                         .build();
                 System.out.println(shopName + " created.");
                 return shopRepository.save(newShop);
             });
+            
+            if (shop.getTenant() == null) {
+                shop.setTenant(tenant);
+                shopRepository.save(shop);
+            }
 
             String shopAdminUsername = "shop" + index + "admin";
             if (!userRepository.existsByUsername(shopAdminUsername)) {
@@ -75,6 +169,7 @@ public class DatabaseSeeder implements CommandLineRunner {
                         .password(passwordEncoder.encode("shop123"))
                         .role("SHOP_ADMIN")
                         .shop(shop)
+                        .tenant(tenant)
                         .build();
                 userRepository.save(shopAdmin);
                 System.out.println("Admin for " + shopName + " created.");
@@ -82,3 +177,4 @@ public class DatabaseSeeder implements CommandLineRunner {
         }
     }
 }
+

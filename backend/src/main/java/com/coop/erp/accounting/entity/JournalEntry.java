@@ -1,16 +1,29 @@
 package com.coop.erp.accounting.entity;
 
 import jakarta.persistence.*;
+import com.coop.erp.admin.entity.Tenant;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.*;
+import com.coop.erp.admin.entity.Tenant;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import org.hibernate.annotations.CreationTimestamp;
 
 import java.time.LocalDate;
+import com.coop.erp.admin.entity.Tenant;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import java.time.LocalDateTime;
+import com.coop.erp.admin.entity.Tenant;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import java.util.ArrayList;
+import com.coop.erp.admin.entity.Tenant;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import java.util.List;
+import com.coop.erp.admin.entity.Tenant;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import java.util.UUID;
 
 @Entity
+@org.hibernate.annotations.Filter(name = "tenantFilter", condition = "tenant_id = :tenantId")
 @Table(name = "journal_entries", schema = "accounting")
 @Getter
 @Setter
@@ -53,4 +66,11 @@ public class JournalEntry {
     @OneToMany(mappedBy = "journalEntry", cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default
     private List<JournalEntryLine> lines = new ArrayList<>();
+
+    @JsonIgnore
+    @ManyToOne(fetch = jakarta.persistence.FetchType.LAZY)
+    @JoinColumn(name = "tenant_id")
+    private Tenant tenant;
 }
+
+

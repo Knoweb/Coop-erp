@@ -156,7 +156,7 @@ const SystemUsersPage: React.FC = () => {
             <Typography variant="h4" className="page-title" sx={{ fontWeight: 'bold', mb: 1, color: "var(--text-primary)" }}>
                 System Users
             </Typography>
-            <Typography variant="body1" sx={{ color: '#ffff', mb: 4 }}>
+            <Typography color="text.secondary">
                 Manage main shop administrative users.
             </Typography>
 

@@ -1,15 +1,26 @@
 package com.coop.erp.inventory.entity;
 
 import com.coop.erp.core.entity.Shop;
+import com.coop.erp.admin.entity.Tenant;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
+import com.coop.erp.admin.entity.Tenant;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.*;
+import com.coop.erp.admin.entity.Tenant;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import org.hibernate.annotations.CreationTimestamp;
 
 import java.math.BigDecimal;
+import com.coop.erp.admin.entity.Tenant;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import java.time.LocalDateTime;
+import com.coop.erp.admin.entity.Tenant;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import java.util.UUID;
 
 @Entity
+@org.hibernate.annotations.Filter(name = "tenantFilter", condition = "tenant_id = :tenantId")
 @Table(name = "stock_movements", schema = "grocery")
 @Getter
 @Setter
@@ -62,4 +73,11 @@ public class StockMovement {
 
     @Column(name = "terminal_id")
     private UUID terminalId;
+
+    @JsonIgnore
+    @ManyToOne(fetch = jakarta.persistence.FetchType.LAZY)
+    @JoinColumn(name = "tenant_id")
+    private Tenant tenant;
 }
+
+

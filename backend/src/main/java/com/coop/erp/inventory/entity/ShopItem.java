@@ -1,13 +1,20 @@
 package com.coop.erp.inventory.entity;
 
 import com.coop.erp.core.entity.Shop;
+import com.coop.erp.admin.entity.Tenant;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
+import com.coop.erp.admin.entity.Tenant;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.*;
 
 import java.time.LocalDateTime;
+import com.coop.erp.admin.entity.Tenant;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import java.util.UUID;
 
 @Entity
+@org.hibernate.annotations.Filter(name = "tenantFilter", condition = "tenant_id = :tenantId")
 @Table(name = "shop_items", schema = "grocery", uniqueConstraints = {
         @UniqueConstraint(columnNames = {"shop_id", "item_id"})
 })
@@ -43,4 +50,11 @@ public class ShopItem {
 
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
+
+    @JsonIgnore
+    @ManyToOne(fetch = jakarta.persistence.FetchType.LAZY)
+    @JoinColumn(name = "tenant_id")
+    private Tenant tenant;
 }
+
+

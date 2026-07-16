@@ -33,6 +33,8 @@ export const loginUser = async (usernameOrEmail: string, password: string): Prom
         localStorage.setItem('jwt_token', token);
         localStorage.setItem('user_role', actualRole);
         if (payload.sub) localStorage.setItem('username', payload.sub);
+        if (payload.tenantId) localStorage.setItem('tenantId', payload.tenantId);
+        if (payload.tenantCode) localStorage.setItem('tenantCode', payload.tenantCode);
         if (payload.shopId) localStorage.setItem('shopId', payload.shopId);
         if (payload.shopCode) localStorage.setItem('shopCode', payload.shopCode);
         if (payload.shopName) localStorage.setItem('shopName', payload.shopName);
@@ -54,6 +56,8 @@ export const logoutUser = (): void => {
     localStorage.removeItem('shopId');
     localStorage.removeItem('shopCode');
     localStorage.removeItem('shopName');
+    localStorage.removeItem('tenantId');
+    localStorage.removeItem('tenantCode');
     
     // Clear old global theme key side effect
     localStorage.removeItem('theme');

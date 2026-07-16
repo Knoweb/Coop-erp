@@ -6,7 +6,9 @@ import com.coop.erp.accounting.entity.NormalBalance;
 import com.coop.erp.accounting.repository.ChartOfAccountRepository;
 import com.coop.erp.inventory.entity.PurchaseInvoice;
 import com.coop.erp.inventory.entity.Sale;
+import com.coop.erp.inventory.entity.SaleItem;
 import com.coop.erp.inventory.repository.PurchaseInvoiceRepository;
+import com.coop.erp.inventory.repository.SaleItemRepository;
 import com.coop.erp.inventory.repository.SaleRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.boot.CommandLineRunner;
@@ -22,6 +24,7 @@ public class AccountingSeeder implements CommandLineRunner {
 
     private final ChartOfAccountRepository chartOfAccountRepository;
     private final SaleRepository saleRepository;
+    private final SaleItemRepository saleItemRepository;
     private final PurchaseInvoiceRepository purchaseInvoiceRepository;
     private final JournalEntryService journalEntryService;
 
@@ -66,16 +69,21 @@ public class AccountingSeeder implements CommandLineRunner {
         }
     }
 
-    private void backfillJournalEntries() {
+    public void backfillJournalEntries() {
         // Backfill Sales
         List<Sale> sales = saleRepository.findAll();
         for (Sale sale : sales) {
             try {
                 // Determine COGS if costPrice was available
                 BigDecimal totalCogs = BigDecimal.ZERO;
-                if (sale.getItems() != null) {
-                    for (var item : sale.getItems()) {
-                        BigDecimal cost = item.getItem().getCostPrice();
+                List<SaleItem> items = saleItemRepository.findBySaleId(sale.getId());
+                if (items != null) {
+                    for (SaleItem item : items) {
+                        BigDecimal cost = null;
+                        if (item.getItem() != null && item.getItem().getCostPrice() != null) {
+                            cost = item.getItem().getCostPrice();
+                        }
+                        
                         if (cost != null) {
                             totalCogs = totalCogs.add(cost.multiply(BigDecimal.valueOf(item.getQuantity())));
                         }
@@ -136,3 +144,4 @@ public class AccountingSeeder implements CommandLineRunner {
         }
     }
 }
+

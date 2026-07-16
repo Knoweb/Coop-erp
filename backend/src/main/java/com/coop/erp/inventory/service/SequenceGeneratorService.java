@@ -8,6 +8,7 @@ import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
+import com.coop.erp.auth.util.TenantContext;
 
 @Service
 @RequiredArgsConstructor
@@ -17,7 +18,10 @@ public class SequenceGeneratorService {
 
     @Transactional(propagation = Propagation.MANDATORY)
     public String generateSaleNumber(String shopCode, LocalDate date) {
-        String scope = "SALE-" + shopCode;
+        String tenantCode = TenantContext.getCurrentTenantCode();
+        if (tenantCode == null) tenantCode = "GLOBAL";
+        
+        String scope = tenantCode + "-" + shopCode + "-SALE";
         
         SequenceCounter counter = repository.findByScopeAndSequenceDateForUpdate(scope, date)
                 .orElseGet(() -> {
@@ -33,9 +37,10 @@ public class SequenceGeneratorService {
         counter.setNextValue(currentVal + 1);
         repository.save(counter);
         
-        // Format: SHOPCODE-YYYYMMDD-000001
+        // Format: TENANT-SHOPCODE-YYYYMMDD-000001
         String dateStr = date.toString().replace("-", ""); // e.g. 20260716
         String sequenceStr = String.format("%06d", currentVal);
-        return String.format("%s-%s-%s", shopCode, dateStr, sequenceStr);
+        return String.format("%s-%s-%s-%s", tenantCode, shopCode, dateStr, sequenceStr);
     }
 }
+

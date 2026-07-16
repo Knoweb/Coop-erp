@@ -18,4 +18,22 @@ api.interceptors.request.use((config) => {
     return Promise.reject(error);
 });
 
+api.interceptors.response.use(
+    (response) => response,
+    (error) => {
+        if (error.response) {
+            const status = error.response.status;
+            const message = error.response.data?.message || '';
+
+            if (status === 401 || message.includes('Tenant context is missing') || message.includes('Please login again')) {
+                console.warn('Session expired or tenant context missing. Redirecting to login...');
+                localStorage.clear();
+                window.location.href = '/login';
+                return Promise.reject(new Error('Session expired. Please login again.'));
+            }
+        }
+        return Promise.reject(error);
+    }
+);
+
 export default api;

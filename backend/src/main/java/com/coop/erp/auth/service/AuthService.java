@@ -42,8 +42,11 @@ public class AuthService {
         String shopId = user.getShop() != null ? user.getShop().getId().toString() : null;
         String shopCode = user.getShop() != null ? user.getShop().getCode() : null;
         String shopName = user.getShop() != null ? user.getShop().getName() : null;
+        
+        String tenantId = user.getTenant() != null ? user.getTenant().getId().toString() : null;
+        String tenantCode = user.getTenant() != null ? user.getTenant().getTenantCode() : null;
 
-        String token = jwtService.generateToken(user.getUsername(), user.getRole(), shopId, shopCode, shopName);
+        String token = jwtService.generateToken(user.getUsername(), user.getRole(), shopId, shopCode, shopName, tenantId, tenantCode);
 
         UserDetailsDto userDetailsDto = UserDetailsDto.builder()
                 .id(user.getId())
@@ -53,6 +56,8 @@ public class AuthService {
                 .shopId(user.getShop() != null ? user.getShop().getId() : null)
                 .shopCode(shopCode)
                 .shopName(shopName)
+                .tenantId(user.getTenant() != null ? user.getTenant().getId() : null)
+                .tenantCode(tenantCode)
                 .build();
 
         return new AuthResponse(token, userDetailsDto);
