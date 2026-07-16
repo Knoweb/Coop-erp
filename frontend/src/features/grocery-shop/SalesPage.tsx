@@ -13,6 +13,7 @@ import {
   DialogTitle,
   Divider,
   IconButton,
+  MenuItem,
   Paper,
   Snackbar,
   Table,
@@ -30,6 +31,7 @@ import AddIcon from "@mui/icons-material/Add";
 import api from "../../api/axiosConfig";
 import { getAdminStock } from "../../services/adminStockService";
 import { getShopStock } from "../../services/shopStockService";
+import { getTerminalInfo } from "../../services/authService";
 
 type SaleItemRequest = {
   productId: string;
@@ -41,6 +43,10 @@ type SaleItemRequest = {
 type SaleRequest = {
   saleType: "CUSTOMER" | "SHOP";
   targetShopId?: string;
+  terminalId?: string;
+  paymentMethod?: string;
+  paidAmount?: number;
+  notes?: string;
   items: SaleItemRequest[];
 };
 
@@ -55,6 +61,7 @@ type SaleResponse = {
   notes?: string;
   saleDate: string;
   createdBy: string;
+  terminalCode?: string;
   items: any[];
 };
 
@@ -89,6 +96,9 @@ function SalesPage() {
 
   const [saleType, setSaleType] = useState<"CUSTOMER" | "SHOP">("CUSTOMER");
   const [targetShopId, setTargetShopId] = useState("");
+  const [paymentMethod, setPaymentMethod] = useState("CASH");
+  const [paidAmount, setPaidAmount] = useState<number | "">("");
+  const [cardReference, setCardReference] = useState("");
 
   const [lineItems, setLineItems] = useState<any[]>([
     { productId: "", quantity: "", unitPrice: "", discountPercentage: "" }
@@ -98,9 +108,9 @@ function SalesPage() {
   const [products, setProducts] = useState<Product[]>([]);
   const [selectedSale, setSelectedSale] = useState<SaleResponse | null>(null);
 
-  const loadData = async () => {
+  const loadData = async (isPoll = false) => {
     try {
-      setLoading(true);
+      if (!isPoll) setLoading(true);
       const url = isAdmin ? "/admin/sales" : "/shop/sales";
       const res = await api.get(url);
 
@@ -109,7 +119,7 @@ function SalesPage() {
       );
       setSalesList(sortedSales);
 
-      if (isAdmin) {
+      if (isAdmin && !isPoll) {
         const shopsRes = await api.get("/admin/shops");
         setShops(shopsRes.data);
       }
@@ -130,15 +140,19 @@ function SalesPage() {
 
     } catch (err) {
       console.error(err);
-      setError("Failed to load sales data.");
+      if (!isPoll) setError("Failed to load sales data.");
     } finally {
-      setLoading(false);
+      if (!isPoll) setLoading(false);
     }
   };
 
   useEffect(() => {
     loadData();
-  }, []);
+    const interval = setInterval(() => {
+      loadData(true);
+    }, 5000);
+    return () => clearInterval(interval);
+  }, [isAdmin]);
 
   const handleSaleTypeChange = (
     _event: React.MouseEvent<HTMLElement>,
@@ -222,6 +236,9 @@ function SalesPage() {
   const resetForm = () => {
     setSaleType("CUSTOMER");
     setTargetShopId("");
+    setPaymentMethod("CASH");
+    setPaidAmount("");
+    setCardReference("");
     setLineItems([{ productId: "", quantity: "", unitPrice: "", discountPercentage: "" }]);
   };
 
@@ -247,6 +264,19 @@ function SalesPage() {
         return false;
       }
     }
+
+    // Payment validation for CUSTOMER sales
+    if (saleType === "CUSTOMER") {
+        const grandTotal = calculateGrandTotal();
+        const pAmount = Number(paidAmount);
+        
+        if (paymentMethod === "CASH") {
+            if (paidAmount === "" || pAmount < grandTotal) return false;
+        } else if (paymentMethod === "CARD") {
+            if (paidAmount !== "" && pAmount < grandTotal) return false;
+        }
+    }
+
     return true;
   };
 
@@ -259,9 +289,14 @@ function SalesPage() {
     }
 
     setSubmitting(true);
+    const { terminalId } = getTerminalInfo();
     const payload: SaleRequest = {
       saleType: isAdmin ? saleType : "CUSTOMER",
       targetShopId: isAdmin && saleType === "SHOP" ? targetShopId : undefined,
+      terminalId: terminalId || undefined,
+      paymentMethod: saleType === "CUSTOMER" ? paymentMethod : undefined,
+      paidAmount: saleType === "CUSTOMER" ? (Number(paidAmount) || undefined) : undefined,
+      notes: saleType === "CUSTOMER" && paymentMethod === "CARD" && cardReference ? `Card Ref: ${cardReference}` : undefined,
       items: getValidItemsForSubmission().map(item => ({
         productId: item.productId,
         quantity: Number(item.quantity),
@@ -286,13 +321,23 @@ function SalesPage() {
 
   return (
     <Box sx={{ width: "100%", maxWidth: 1400, mx: "auto", boxSizing: "border-box", overflowX: "hidden" }}>
-      <Box sx={{ mb: 4 }}>
-        <Typography variant="h4" className="page-title" sx={{ fontWeight: "bold" }} gutterBottom>
-          Create Sale Order
-        </Typography>
-        <Typography color="text.secondary">
-          Create and issue a new sale from {isAdmin ? "main shop" : "shop"} inventory.
-        </Typography>
+      <Box sx={{ mb: 4, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <Box>
+            <Typography variant="h4" className="page-title" sx={{ fontWeight: "bold" }} gutterBottom>
+            Create Sale Order
+            </Typography>
+            <Typography color="text.secondary">
+            Create and issue a new sale from {isAdmin ? "main shop" : "shop"} inventory.
+            </Typography>
+        </Box>
+        {!isAdmin && getTerminalInfo().terminalCode && (
+            <Chip 
+                label={`Terminal: ${getTerminalInfo().terminalCode}`} 
+                color="primary" 
+                variant="outlined" 
+                sx={{ fontWeight: 'bold' }} 
+            />
+        )}
       </Box>
 
       {isAdmin && (
@@ -534,6 +579,95 @@ function SalesPage() {
                       Rs. {formatMoney(calculateGrandTotal())}
                     </Typography>
                   </Box>
+
+                  {saleType === "CUSTOMER" && (
+                    <Paper elevation={0} sx={{ mt: 3, p: 3, border: "1px solid", borderColor: "divider", borderRadius: 2, textAlign: "left", bgcolor: (theme) => theme.palette.mode === 'dark' ? 'background.paper' : '#f9fafb' }}>
+                      <Typography variant="h6" sx={{ mb: 2, fontWeight: "bold" }}>Payment Details</Typography>
+                      <Box sx={{ display: 'grid', gap: 3, gridTemplateColumns: { xs: '1fr', sm: paymentMethod === 'CARD' ? '1fr 1fr 1fr' : '1fr 1fr' } }}>
+                        <TextField
+                          select
+                          label="Payment Method"
+                          value={paymentMethod}
+                          onChange={(e) => {
+                              setPaymentMethod(e.target.value);
+                              if (e.target.value === "CARD" || e.target.value === "CASH") {
+                                  setPaidAmount(calculateGrandTotal());
+                              }
+                          }}
+                          fullWidth
+                        >
+                          <MenuItem value="CASH">Cash</MenuItem>
+                          <MenuItem value="CARD">Card</MenuItem>
+                        </TextField>
+                        
+                        <TextField
+                          label="Paid Amount"
+                          type="number"
+                          value={paidAmount}
+                          onChange={(e) => setPaidAmount(e.target.value === "" ? "" : Number(e.target.value))}
+                          fullWidth
+                          disabled={paymentMethod === "CARD"}
+                          placeholder={calculateGrandTotal().toString()}
+                          helperText={
+                              paymentMethod === "CASH" && Number(paidAmount) > 0 && Number(paidAmount) < calculateGrandTotal()
+                                  ? "Paid amount must be greater than or equal to total"
+                                  : ""
+                          }
+                          error={paymentMethod === "CASH" && Number(paidAmount) > 0 && Number(paidAmount) < calculateGrandTotal()}
+                        />
+
+                        {paymentMethod === "CARD" && (
+                          <TextField
+                            label="Card Reference (Optional)"
+                            value={cardReference}
+                            onChange={(e) => setCardReference(e.target.value)}
+                            fullWidth
+                            placeholder="e.g. Txn1234"
+                          />
+                        )}
+                      </Box>
+                      
+                      {(() => {
+                         const grandTotal = calculateGrandTotal();
+                         const paidVal = Number(paidAmount) || 0;
+                         const diff = paidVal - grandTotal;
+                         
+                         let label = "Balance/Change";
+                         let color = "info.main";
+                         let borderColor = "info.main";
+                         let bgColor = (theme: any) => (theme.palette.info.main + "1A");
+                         let valueStr = "Rs. 0.00";
+                         
+                         if (paymentMethod === "CASH" && paidAmount !== "") {
+                             if (diff > 0) {
+                                 label = "Change to Return";
+                                 color = "success.main";
+                                 borderColor = "success.main";
+                                 bgColor = (theme: any) => (theme.palette.success.main + "1A");
+                                 valueStr = `Rs. ${formatMoney(diff)}`;
+                             } else if (diff < 0) {
+                                 label = "Remaining Balance";
+                                 color = "error.main";
+                                 borderColor = "error.main";
+                                 bgColor = (theme: any) => (theme.palette.error.main + "1A");
+                                 valueStr = `Rs. ${formatMoney(Math.abs(diff))}`;
+                             } else {
+                                 valueStr = `Rs. 0.00`;
+                             }
+                         } else if (paymentMethod === "CARD") {
+                             valueStr = `Rs. 0.00`;
+                         }
+                         
+                         return (
+                            <Box sx={{ mt: 3, p: 2, borderRadius: 2, border: "1px solid", borderColor, bgcolor: bgColor, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                               <Typography sx={{ fontWeight: "bold", color, fontSize: "1.1rem" }}>{label}</Typography>
+                               <Typography sx={{ fontSize: "1.75rem", fontWeight: 900, color }}>{valueStr}</Typography>
+                            </Box>
+                         );
+                      })()}
+                    </Paper>
+                  )}
+
                   <Button
                     type="submit"
                     variant="contained"
@@ -591,7 +725,7 @@ function SalesPage() {
                       </TableCell>
                       <TableCell>{sale.targetShopName || "-"}</TableCell>
                       <TableCell sx={{ fontWeight: "bold" }}>Rs. {formatMoney(sale.totalAmount)}</TableCell>
-                      <TableCell>{sale.createdBy}</TableCell>
+                      <TableCell>{sale.createdBy} {sale.terminalCode ? `(${sale.terminalCode})` : ''}</TableCell>
                       <TableCell>
                         <Button size="small" variant="outlined" onClick={() => setSelectedSale(sale)}>
                           View Details

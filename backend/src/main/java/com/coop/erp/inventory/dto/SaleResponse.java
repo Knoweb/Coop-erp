@@ -22,8 +22,15 @@ public class SaleResponse {
     private String notes;
     private LocalDateTime saleDate;
     private String createdBy;
+    private String cashierUsername;
+    private String terminalCode;
+    private String shopCode;
     private String sourceName;
     private String status;
+    private String paymentMethod;
+    private String paymentStatus;
+    private BigDecimal paidAmount;
+    private BigDecimal balanceAmount;
     private Integer itemsCount;
     private Integer totalQuantity;
     private List<SaleItemResponse> items;

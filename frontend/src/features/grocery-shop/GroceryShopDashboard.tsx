@@ -39,9 +39,13 @@ const GroceryShopDashboard: React.FC = () => {
         };
 
         fetchDashboardData();
+        const interval = setInterval(() => {
+            fetchDashboardData();
+        }, 5000);
+        return () => clearInterval(interval);
     }, []);
 
-    if (isLoading) {
+    if (isLoading && !stats) {
         return (
             <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '80vh' }}>
                 <CircularProgress size={60} sx={{ color: '#0f172a' }} />

@@ -21,6 +21,7 @@ export interface SecuritySettings {
 }
 
 export interface UserPreferences {
+    terminalId?: string;
     defaultTheme: string;
     dashboardRefreshIntervalSeconds: number;
     itemsPerPage: number;
@@ -73,8 +74,8 @@ export const settingsService = {
         await api.put('/admin/settings/user-preferences', payload);
     },
 
-    getShopUserPreferences: async (): Promise<UserPreferences> => {
-        const response = await api.get('/shop/settings/user-preferences');
+    getShopUserPreferences: async (terminalId: string): Promise<UserPreferences> => {
+        const response = await api.get('/shop/settings/user-preferences', { params: { terminalId } });
         return response.data;
     },
     updateShopUserPreferences: async (payload: UserPreferences): Promise<void> => {

@@ -22,14 +22,16 @@ export const useThemeContext = () => {
 export const getThemeStorageKey = (): string => {
   const role = localStorage.getItem("user_role")?.replace(/^ROLE_/, "");
   const shopId = localStorage.getItem("shopId");
-  const shopCode = localStorage.getItem("shopCode");
+  const terminalId = localStorage.getItem("terminalId");
+  const terminalCode = localStorage.getItem("terminalCode");
 
   if (role === "ADMIN") {
     return "theme_ADMIN";
   }
 
   if (role === "SHOP_ADMIN" || role === "SHOP_USER") {
-    return `theme_SHOP_${shopId || shopCode}`;
+    const terminalKey = terminalId || terminalCode || "NO_TERMINAL";
+    return `theme_SHOP_${shopId}_${terminalKey}`;
   }
 
   return "theme_GUEST";
@@ -45,6 +47,10 @@ export const ThemeProviderWrapper: React.FC<Props> = ({ children }) => {
   // Load from localStorage or Backend on startup
   useEffect(() => {
     const initializeTheme = async () => {
+      // Clean up old global theme keys
+      localStorage.removeItem("theme");
+      localStorage.removeItem("defaultTheme");
+
       const role = localStorage.getItem("user_role")?.replace(/^ROLE_/, "");
       const themeKey = getThemeStorageKey();
       const storedTheme = localStorage.getItem(themeKey) as ThemeMode | null;
@@ -63,11 +69,17 @@ export const ThemeProviderWrapper: React.FC<Props> = ({ children }) => {
           applyTheme("Light");
         }
       } else if (role === "SHOP_ADMIN" || role === "SHOP_USER") {
-        try {
-          const prefs = await settingsService.getShopUserPreferences();
-          applyTheme(prefs.defaultTheme as ThemeMode || "Light");
-        } catch (error) {
-          applyTheme("Light");
+        // Only fetch if a terminal is selected
+        const terminalId = localStorage.getItem("terminalId");
+        if (terminalId) {
+          try {
+            const prefs = await settingsService.getShopUserPreferences(terminalId);
+            applyTheme(prefs.defaultTheme as ThemeMode || "Light");
+          } catch (error) {
+            applyTheme("Light");
+          }
+        } else {
+          applyTheme("Light"); // Default until terminal is selected
         }
       } else {
         applyTheme("Light");

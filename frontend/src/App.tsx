@@ -21,6 +21,8 @@ import ItemPage from "./features/grocery-shop/ItemPage";
 import AdminPurchasesPage from "./features/admin/AdminPurchasesPage";
 import StockLedgerPage from "./features/grocery-shop/StockLedgerPage";
 import SalesPage from "./features/grocery-shop/SalesPage";
+import SalesHistoryPage from "./features/grocery-shop/SalesHistoryPage";
+import CashClosingPage from "./features/grocery-shop/CashClosingPage";
 import ShopPurchaseHistoryPage from "./features/grocery-shop/ShopPurchaseHistoryPage";
 
 import BalanceSheetPage from "./features/admin/reports/BalanceSheetPage";
@@ -101,6 +103,8 @@ function App() {
             <Route path="products" element={<ItemPage />} />
             <Route path="inventory" element={<StockLedgerPage />} />
             <Route path="sales" element={<SalesPage />} />
+            <Route path="sales-history" element={<SalesHistoryPage />} />
+            <Route path="cash-closing" element={<CashClosingPage />} />
             <Route path="purchase-history" element={<ShopPurchaseHistoryPage />} />
             <Route path="customers" element={<div style={{padding: '20px'}}>Customers Module Coming Soon</div>} />
             <Route path="users" element={<ShopUsersPage />} />

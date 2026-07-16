@@ -20,7 +20,10 @@ import { Settings as SettingsIcon } from '@mui/icons-material';
 import { settingsService, type UserPreferences } from '../admin/services/settingsService';
 import { useThemeContext, type ThemeMode } from '../../context/ThemeContext';
 
+import { getTerminalInfo } from '../../services/authService';
+
 const ShopSettingsPage: React.FC = () => {
+    const terminal = getTerminalInfo();
     const [userPreferences, setUserPreferences] = useState<UserPreferences | null>(null);
     const [isSaving, setIsSaving] = useState(false);
     const [notification, setNotification] = useState<{ open: boolean, message: string, severity: 'success' | 'error' }>({ open: false, message: '', severity: 'success' });
@@ -28,12 +31,14 @@ const ShopSettingsPage: React.FC = () => {
     const { setThemeMode } = useThemeContext();
 
     useEffect(() => {
-        loadSettings();
-    }, []);
+        if (terminal && terminal.terminalId) {
+            loadSettings(terminal.terminalId);
+        }
+    }, [terminal?.terminalId]);
 
-    const loadSettings = async () => {
+    const loadSettings = async (terminalId: string) => {
         try {
-            const prefs = await settingsService.getShopUserPreferences();
+            const prefs = await settingsService.getShopUserPreferences(terminalId);
             setUserPreferences(prefs);
         } catch (error) {
             console.error('Failed to load user preferences', error);
@@ -41,10 +46,10 @@ const ShopSettingsPage: React.FC = () => {
     };
 
     const handleSave = async () => {
-        if (!userPreferences) return;
+        if (!userPreferences || !terminal || !terminal.terminalId) return;
         setIsSaving(true);
         try {
-            await settingsService.updateShopUserPreferences(userPreferences);
+            await settingsService.updateShopUserPreferences({ ...userPreferences, terminalId: terminal.terminalId });
             setThemeMode(userPreferences.defaultTheme as ThemeMode);
             setNotification({ open: true, message: 'User Preferences saved successfully', severity: 'success' });
         } catch (error) {
@@ -56,10 +61,20 @@ const ShopSettingsPage: React.FC = () => {
     };
 
     const handleCancel = () => {
-        loadSettings();
+        if (terminal && terminal.terminalId) {
+            loadSettings(terminal.terminalId);
+        }
     };
 
-    if (!userPreferences) return <Typography>Loading settings...</Typography>;
+    if (!terminal || !terminal.terminalId) {
+        return (
+            <Box sx={{ p: 3 }}>
+                <Alert severity="warning">Please select a POS terminal first to manage preferences.</Alert>
+            </Box>
+        );
+    }
+
+    if (!userPreferences) return <Typography sx={{ p: 3 }}>Loading settings...</Typography>;
 
     return (
         <Box sx={{ p: 3 }}>

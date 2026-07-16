@@ -2,7 +2,9 @@ package com.coop.erp.inventory.repository;
 
 import com.coop.erp.inventory.entity.StockLedger;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
+import jakarta.persistence.LockModeType;
 
 import java.util.List;
 import java.util.Optional;
@@ -12,7 +14,15 @@ public interface StockLedgerRepository extends JpaRepository<StockLedger, UUID> 
 
     Optional<StockLedger> findByItemIdAndShopId(UUID itemId, UUID shopId);
 
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("SELECT s FROM StockLedger s WHERE s.item.id = :itemId AND s.shop.id = :shopId")
+    Optional<StockLedger> findByItemIdAndShopIdForUpdate(UUID itemId, UUID shopId);
+
     Optional<StockLedger> findByItemIdAndShopIsNull(UUID itemId);
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("SELECT s FROM StockLedger s WHERE s.item.id = :itemId AND s.shop IS NULL")
+    Optional<StockLedger> findByItemIdAndShopIsNullForUpdate(UUID itemId);
 
     List<StockLedger> findByShopId(UUID shopId);
 

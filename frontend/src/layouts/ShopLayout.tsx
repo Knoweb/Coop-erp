@@ -9,13 +9,23 @@ import {
 } from "@mui/material";
 import SettingsIcon from "@mui/icons-material/Settings";
 import { Outlet, useLocation, useNavigate } from "react-router-dom";
-import { logoutUser } from "../services/authService"; 
+import { logoutUser, getTerminalInfo } from "../services/authService"; 
+import { useState, useEffect } from "react";
+import TerminalSelectionModal from "../features/auth/TerminalSelectionModal";
 
 const drawerWidth = 240;
 
 function ShopLayout() {
   const navigate = useNavigate();
   const location = useLocation();
+  const [showTerminalModal, setShowTerminalModal] = useState(false);
+
+  useEffect(() => {
+    const { terminalId } = getTerminalInfo();
+    if (!terminalId) {
+      setShowTerminalModal(true);
+    }
+  }, []);
 
   const role = localStorage.getItem("user_role");
   
@@ -23,7 +33,9 @@ function ShopLayout() {
     { label: "Dashboard", path: "/shop/dashboard" },
     { label: "Stock / Inventory", path: "/shop/inventory" },
     { label: "Purchase History", path: "/shop/purchase-history" },
-    { label: "Sales", path: "/shop/sales" },
+    { label: "Sales (POS)", path: "/shop/sales" },
+    { label: "Sales History", path: "/shop/sales-history" },
+    { label: "Cash Closing", path: "/shop/cash-closing" },
     { label: "Reports", path: "/shop/reports" },
     { label: "Settings", path: "/shop/settings", icon: <SettingsIcon /> },
   ];
@@ -142,6 +154,11 @@ function ShopLayout() {
       >
         <Outlet />
       </Box>
+      <TerminalSelectionModal 
+        open={showTerminalModal} 
+        onTerminalSelected={() => setShowTerminalModal(false)}
+        onClose={() => { logoutUser(); navigate('/login'); }}
+      />
     </Box>
   );
 }

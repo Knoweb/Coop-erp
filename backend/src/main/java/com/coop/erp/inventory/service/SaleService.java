@@ -1,5 +1,7 @@
 package com.coop.erp.inventory.service;
 
+import com.coop.erp.admin.entity.ShopTerminal;
+import com.coop.erp.admin.repository.ShopTerminalRepository;
 import com.coop.erp.core.entity.Shop;
 import com.coop.erp.core.repository.ShopRepository;
 import com.coop.erp.inventory.dto.SaleRequest;
@@ -9,14 +11,17 @@ import com.coop.erp.inventory.entity.Sale;
 import com.coop.erp.inventory.entity.SaleItem;
 import com.coop.erp.inventory.entity.SaleType;
 import com.coop.erp.inventory.entity.StockLedger;
+import com.coop.erp.inventory.entity.StockMovement;
+import com.coop.erp.inventory.entity.CashSession;
+import com.coop.erp.inventory.entity.PaymentMethod;
+import com.coop.erp.inventory.entity.PaymentStatus;
 import com.coop.erp.accounting.service.JournalEntryService;
-import com.coop.erp.inventory.entity.ItemProduct;
 import com.coop.erp.inventory.repository.ItemProductRepository;
 import com.coop.erp.inventory.repository.SaleRepository;
 import com.coop.erp.inventory.repository.StockLedgerRepository;
+import com.coop.erp.inventory.repository.StockMovementRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
@@ -35,17 +40,29 @@ public class SaleService {
     private final ItemProductRepository itemProductRepository;
     private final ShopRepository shopRepository;
     private final JournalEntryService journalEntryService;
+    private final SequenceGeneratorService sequenceGeneratorService;
+    private final StockMovementRepository stockMovementRepository;
+    private final ShopTerminalRepository shopTerminalRepository;
+    private final CashSessionService cashSessionService;
 
     @Transactional
     public SaleResponse createAdminSale(SaleRequest request, String username) {
         Sale sale = new Sale();
-        sale.setSaleNumber("SALE-" + System.currentTimeMillis());
         sale.setSaleType(request.getSaleType());
         sale.setSourceShop(null); // Admin inventory
         sale.setNotes(request.getNotes());
         sale.setSaleDate(LocalDateTime.now());
         sale.setCreatedBy(username);
         sale.setCreatedAt(LocalDateTime.now());
+        
+        if (request.getTerminalId() != null) {
+            ShopTerminal terminal = shopTerminalRepository.findById(request.getTerminalId())
+                .orElseThrow(() -> new IllegalArgumentException("Terminal not found"));
+            sale.setTerminalId(terminal.getId());
+            sale.setTerminalCode(terminal.getTerminalCode());
+        }
+
+        sale.setSaleNumber(sequenceGeneratorService.generateSaleNumber("ADMIN", sale.getSaleDate().toLocalDate()));
 
         Shop targetShop = null;
         if (request.getSaleType() == SaleType.SHOP) {
@@ -65,8 +82,8 @@ public class SaleService {
             ItemProduct product = itemProductRepository.findById(itemReq.getProductId())
                     .orElseThrow(() -> new IllegalArgumentException("Product not found: " + itemReq.getProductId()));
 
-            // Reduce Admin Stock
-            StockLedger adminStock = stockLedgerRepository.findByItemIdAndShopIsNull(product.getId())
+            // Reduce Admin Stock with pessimistic locking
+            StockLedger adminStock = stockLedgerRepository.findByItemIdAndShopIsNullForUpdate(product.getId())
                     .orElseThrow(() -> new IllegalArgumentException("Product not in Admin stock: " + product.getName()));
             if (adminStock.getCurrentQty() < itemReq.getQuantity()) {
                 throw new IllegalArgumentException("Insufficient stock in Admin inventory for: " + product.getName());
@@ -74,10 +91,22 @@ public class SaleService {
             adminStock.setCurrentQty(adminStock.getCurrentQty() - itemReq.getQuantity());
             adminStock.setLastUpdated(LocalDateTime.now());
             stockLedgerRepository.save(adminStock);
+            
+            StockMovement adminMovement = StockMovement.builder()
+                .item(product)
+                .shop(null)
+                .movementType("SALE_OUT")
+                .quantityOut(itemReq.getQuantity())
+                .balanceAfter(adminStock.getCurrentQty())
+                .unitPrice(itemReq.getUnitPrice())
+                .createdBy(username)
+                .terminalId(sale.getTerminalId())
+                .build();
+            stockMovementRepository.save(adminMovement);
 
             // Increase Shop Stock if SHOP sale
             if (request.getSaleType() == SaleType.SHOP) {
-                StockLedger shopStock = stockLedgerRepository.findByItemIdAndShopId(product.getId(), targetShop.getId())
+                StockLedger shopStock = stockLedgerRepository.findByItemIdAndShopIdForUpdate(product.getId(), targetShop.getId())
                         .orElseGet(() -> {
                             StockLedger newStock = new StockLedger();
                             newStock.setItem(product);
@@ -88,6 +117,17 @@ public class SaleService {
                 shopStock.setCurrentQty(shopStock.getCurrentQty() + itemReq.getQuantity());
                 shopStock.setLastUpdated(LocalDateTime.now());
                 stockLedgerRepository.save(shopStock);
+                
+                StockMovement shopMovement = StockMovement.builder()
+                    .item(product)
+                    .shop(targetShop)
+                    .movementType("TRANSFER_IN")
+                    .quantityIn(itemReq.getQuantity())
+                    .balanceAfter(shopStock.getCurrentQty())
+                    .unitPrice(itemReq.getUnitPrice())
+                    .createdBy(username)
+                    .build();
+                stockMovementRepository.save(shopMovement);
             }
 
             SaleItem saleItem = new SaleItem();
@@ -157,9 +197,8 @@ public class SaleService {
         
         Shop sourceShop = shopRepository.findById(shopId)
                 .orElseThrow(() -> new IllegalArgumentException("Shop not found."));
-
+                
         Sale sale = new Sale();
-        sale.setSaleNumber("SALE-" + System.currentTimeMillis());
         sale.setSaleType(SaleType.CUSTOMER); // Shop can only do Customer Sales
         sale.setSourceShop(sourceShop);
         sale.setTargetShop(null);
@@ -167,6 +206,34 @@ public class SaleService {
         sale.setSaleDate(LocalDateTime.now());
         sale.setCreatedBy(username);
         sale.setCreatedAt(LocalDateTime.now());
+
+        if (request.getTerminalId() != null) {
+            ShopTerminal terminal = shopTerminalRepository.findById(request.getTerminalId())
+                .orElseThrow(() -> new IllegalArgumentException("Terminal not found"));
+            
+            if (!terminal.getShop().getId().equals(shopId)) {
+                throw new IllegalArgumentException("Terminal does not belong to the current shop.");
+            }
+            if (!Boolean.TRUE.equals(terminal.getIsActive())) {
+                throw new IllegalArgumentException("Terminal is inactive.");
+            }
+            sale.setTerminalId(terminal.getId());
+            sale.setTerminalCode(terminal.getTerminalCode());
+        } else {
+            throw new IllegalArgumentException("Terminal ID is required for shop sales to process payments correctly.");
+        }
+
+        CashSession activeSession = cashSessionService.getCurrentOpenSession(sale.getTerminalId(), username)
+                .orElseThrow(() -> new IllegalStateException("No open cash session found. Please open a shift before creating a sale."));
+
+        sale.setCashSession(activeSession);
+        
+        PaymentMethod paymentMethod = request.getPaymentMethod() != null ? request.getPaymentMethod() : PaymentMethod.CASH;
+        sale.setPaymentMethod(paymentMethod);
+        sale.setPaymentStatus(request.getPaymentStatus() != null ? request.getPaymentStatus() : PaymentStatus.PAID);
+        sale.setPaidAmount(request.getPaidAmount() != null ? request.getPaidAmount() : BigDecimal.ZERO);
+        
+        sale.setSaleNumber(sequenceGeneratorService.generateSaleNumber(sourceShop.getCode(), sale.getSaleDate().toLocalDate()));
 
         BigDecimal subtotal = BigDecimal.ZERO;
         BigDecimal totalDiscount = BigDecimal.ZERO;
@@ -176,8 +243,8 @@ public class SaleService {
             ItemProduct product = itemProductRepository.findById(itemReq.getProductId())
                     .orElseThrow(() -> new IllegalArgumentException("Product not found: " + itemReq.getProductId()));
 
-            // Reduce Shop Stock
-            StockLedger shopStock = stockLedgerRepository.findByItemIdAndShopId(product.getId(), shopId)
+            // Reduce Shop Stock with pessimistic locking
+            StockLedger shopStock = stockLedgerRepository.findByItemIdAndShopIdForUpdate(product.getId(), shopId)
                     .orElseThrow(() -> new IllegalArgumentException("Product not in stock for this shop: " + product.getName()));
             if (shopStock.getCurrentQty() < itemReq.getQuantity()) {
                 throw new IllegalArgumentException("Insufficient stock in Shop inventory for: " + product.getName());
@@ -185,6 +252,18 @@ public class SaleService {
             shopStock.setCurrentQty(shopStock.getCurrentQty() - itemReq.getQuantity());
             shopStock.setLastUpdated(LocalDateTime.now());
             stockLedgerRepository.save(shopStock);
+            
+            StockMovement shopMovement = StockMovement.builder()
+                .item(product)
+                .shop(sourceShop)
+                .movementType("SALE_OUT")
+                .quantityOut(itemReq.getQuantity())
+                .balanceAfter(shopStock.getCurrentQty())
+                .unitPrice(itemReq.getUnitPrice())
+                .createdBy(username)
+                .terminalId(sale.getTerminalId())
+                .build();
+            stockMovementRepository.save(shopMovement);
 
             SaleItem saleItem = new SaleItem();
             saleItem.setSale(sale);
@@ -210,6 +289,24 @@ public class SaleService {
         sale.setSubtotal(subtotal);
         sale.setTotalDiscount(totalDiscount);
         sale.setTotalAmount(subtotal.subtract(totalDiscount));
+        
+        if (sale.getPaidAmount().compareTo(BigDecimal.ZERO) == 0 && sale.getPaymentStatus() == PaymentStatus.PAID) {
+            sale.setPaidAmount(sale.getTotalAmount());
+        }
+        sale.setBalanceAmount(sale.getTotalAmount().subtract(sale.getPaidAmount()));
+
+        // Update Cash Session Totals
+        BigDecimal totalAmount = sale.getTotalAmount();
+        activeSession.setTotalSales(activeSession.getTotalSales().add(totalAmount));
+        
+        if (paymentMethod == PaymentMethod.CASH) {
+            activeSession.setCashSalesTotal(activeSession.getCashSalesTotal().add(totalAmount));
+            activeSession.setExpectedCash(activeSession.getExpectedCash().add(totalAmount));
+        } else if (paymentMethod == PaymentMethod.CARD) {
+            activeSession.setCardSalesTotal(activeSession.getCardSalesTotal().add(totalAmount));
+        } else if (paymentMethod == PaymentMethod.CREDIT) {
+            activeSession.setCreditSalesTotal(activeSession.getCreditSalesTotal().add(totalAmount));
+        }
         
         Sale savedSale = saleRepository.save(sale);
 
@@ -255,6 +352,12 @@ public class SaleService {
                 .collect(Collectors.toList());
     }
 
+    public List<SaleResponse> getShopSalesHistoryFiltered(UUID shopId, LocalDateTime fromDate, LocalDateTime toDate, UUID terminalId, String cashierId, PaymentMethod paymentMethod) {
+        return saleRepository.findShopSalesHistory(shopId, fromDate, toDate, terminalId, cashierId, paymentMethod).stream()
+                .map(this::mapToResponse)
+                .collect(Collectors.toList());
+    }
+
     public List<SaleResponse> getShopPurchaseHistory(UUID shopId, LocalDateTime fromDate, LocalDateTime toDate, String search) {
         String safeSearch = (search == null) ? "" : search;
         return saleRepository.findPurchaseHistoryWithFilters(shopId, fromDate, toDate, safeSearch).stream()
@@ -295,8 +398,15 @@ public class SaleService {
                 .notes(sale.getNotes())
                 .saleDate(sale.getSaleDate())
                 .createdBy(sale.getCreatedBy())
+                .cashierUsername(sale.getCreatedBy())
+                .terminalCode(sale.getTerminalCode())
+                .shopCode(sale.getSourceShop() != null ? sale.getSourceShop().getCode() : "ADMIN")
                 .sourceName(sale.getSourceShop() == null ? "Main Shop" : sale.getSourceShop().getName())
                 .status(sale.getTargetShop() != null ? "RECEIVED" : "COMPLETED")
+                .paymentMethod(sale.getPaymentMethod() != null ? sale.getPaymentMethod().name() : null)
+                .paymentStatus(sale.getPaymentStatus() != null ? sale.getPaymentStatus().name() : null)
+                .paidAmount(sale.getPaidAmount())
+                .balanceAmount(sale.getBalanceAmount())
                 .itemsCount(sale.getItems().size())
                 .totalQuantity(totalQuantity)
                 .items(itemResponses)

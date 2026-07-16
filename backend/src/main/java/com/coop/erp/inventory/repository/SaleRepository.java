@@ -2,8 +2,11 @@ package com.coop.erp.inventory.repository;
 
 import com.coop.erp.inventory.entity.Sale;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
@@ -47,4 +50,21 @@ public interface SaleRepository extends JpaRepository<Sale, UUID> {
     java.math.BigDecimal sumTotalAmountBySaleDateBefore(@org.springframework.data.repository.query.Param("asOf") java.time.LocalDateTime asOf);
 
     List<Sale> findBySaleDateBetween(java.time.LocalDateTime from, java.time.LocalDateTime to);
+
+    @Query("SELECT s FROM Sale s WHERE s.sourceShop.id = :shopId " +
+           "AND s.saleType = 'CUSTOMER' " +
+           "AND (cast(:fromDate as java.time.LocalDateTime) IS NULL OR s.saleDate >= :fromDate) " +
+           "AND (cast(:toDate as java.time.LocalDateTime) IS NULL OR s.saleDate <= :toDate) " +
+           "AND (cast(:terminalId as uuid) IS NULL OR s.terminalId = :terminalId) " +
+           "AND (:cashierId IS NULL OR s.createdBy = :cashierId) " +
+           "AND (:paymentMethod IS NULL OR s.paymentMethod = :paymentMethod) " +
+           "ORDER BY s.saleDate DESC")
+    List<Sale> findShopSalesHistory(
+            @Param("shopId") UUID shopId,
+            @Param("fromDate") LocalDateTime fromDate,
+            @Param("toDate") LocalDateTime toDate,
+            @Param("terminalId") UUID terminalId,
+            @Param("cashierId") String cashierId,
+            @Param("paymentMethod") com.coop.erp.inventory.entity.PaymentMethod paymentMethod
+    );
 }

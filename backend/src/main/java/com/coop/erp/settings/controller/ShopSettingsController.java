@@ -16,8 +16,8 @@ public class ShopSettingsController {
     private final SettingsService settingsService;
 
     @GetMapping("/user-preferences")
-    public ResponseEntity<UserPreferencesDto> getUserPreferences() {
-        return ResponseEntity.ok(settingsService.getShopUiPreferences());
+    public ResponseEntity<UserPreferencesDto> getUserPreferences(@RequestParam String terminalId) {
+        return ResponseEntity.ok(settingsService.getShopUiPreferences(terminalId));
     }
 
     @PutMapping("/user-preferences")

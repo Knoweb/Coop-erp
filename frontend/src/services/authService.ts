@@ -58,4 +58,20 @@ export const logoutUser = (): void => {
     // Clear old global theme key side effect
     localStorage.removeItem('theme');
     localStorage.removeItem('defaultTheme');
+    
+    // Clear terminal info
+    localStorage.removeItem('terminalId');
+    localStorage.removeItem('terminalCode');
+};
+
+export const setTerminalInfo = (terminalId: string, terminalCode: string) => {
+    localStorage.setItem('terminalId', terminalId);
+    localStorage.setItem('terminalCode', terminalCode);
+};
+
+export const getTerminalInfo = () => {
+    return {
+        terminalId: localStorage.getItem('terminalId'),
+        terminalCode: localStorage.getItem('terminalCode')
+    };
 };

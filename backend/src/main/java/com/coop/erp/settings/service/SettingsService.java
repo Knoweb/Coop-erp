@@ -11,6 +11,7 @@ import com.coop.erp.settings.repository.SystemSettingRepository;
 import com.coop.erp.settings.repository.UiPreferenceRepository;
 import com.coop.erp.core.entity.User;
 import com.coop.erp.core.repository.UserRepository;
+import com.coop.erp.admin.repository.ShopTerminalRepository;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
@@ -24,6 +25,7 @@ public class SettingsService {
     private final SystemSettingRepository repository;
     private final UiPreferenceRepository uiPreferenceRepository;
     private final UserRepository userRepository;
+    private final ShopTerminalRepository shopTerminalRepository;
     private final ObjectMapper objectMapper;
 
     private static final String BUSINESS_PROFILE_KEY = "BUSINESS_PROFILE";
@@ -129,22 +131,56 @@ public class SettingsService {
         saveUiPreferences("ADMIN", "ADMIN", dto);
     }
 
-    public UserPreferencesDto getShopUiPreferences() {
+    public UserPreferencesDto getShopUiPreferences(String terminalId) {
+        if (terminalId == null || terminalId.trim().isEmpty()) {
+            throw new IllegalArgumentException("Terminal is required for shop preferences.");
+        }
+
         String username = SecurityContextHolder.getContext().getAuthentication().getName();
         User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new RuntimeException("User not found: " + username));
         
-        String shopId = user.getShop() != null ? user.getShop().getId().toString() : "UNKNOWN";
-        return getUiPreferences("SHOP", shopId);
+        if (user.getShop() == null) {
+            throw new RuntimeException("User is not assigned to a shop");
+        }
+        
+        // Validate terminal belongs to shop
+        boolean validTerminal = shopTerminalRepository.findById(java.util.UUID.fromString(terminalId))
+                .map(t -> t.getShop().getId().equals(user.getShop().getId()) && Boolean.TRUE.equals(t.getIsActive()))
+                .orElse(false);
+                
+        if (!validTerminal) {
+            throw new IllegalArgumentException("Invalid or inactive terminal for this shop.");
+        }
+
+        UserPreferencesDto prefs = getUiPreferences("TERMINAL", terminalId);
+        prefs.setTerminalId(terminalId);
+        return prefs;
     }
 
     public void updateShopUiPreferences(UserPreferencesDto dto) {
+        if (dto.getTerminalId() == null || dto.getTerminalId().trim().isEmpty()) {
+            throw new IllegalArgumentException("Terminal is required for shop preferences.");
+        }
+
         String username = SecurityContextHolder.getContext().getAuthentication().getName();
         User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new RuntimeException("User not found: " + username));
         
-        String shopId = user.getShop() != null ? user.getShop().getId().toString() : "UNKNOWN";
-        saveUiPreferences("SHOP", shopId, dto);
+        if (user.getShop() == null) {
+            throw new RuntimeException("User is not assigned to a shop");
+        }
+        
+        // Validate terminal belongs to shop
+        boolean validTerminal = shopTerminalRepository.findById(java.util.UUID.fromString(dto.getTerminalId()))
+                .map(t -> t.getShop().getId().equals(user.getShop().getId()) && Boolean.TRUE.equals(t.getIsActive()))
+                .orElse(false);
+                
+        if (!validTerminal) {
+            throw new IllegalArgumentException("Invalid or inactive terminal for this shop.");
+        }
+
+        saveUiPreferences("TERMINAL", dto.getTerminalId(), dto);
     }
 
     private UserPreferencesDto getUiPreferences(String scopeType, String scopeId) {

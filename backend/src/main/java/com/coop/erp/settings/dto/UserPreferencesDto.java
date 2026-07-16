@@ -10,6 +10,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class UserPreferencesDto {
+    private String terminalId; // Used for shop terminal-level preferences
     private String defaultTheme; // LIGHT, DARK, SYSTEM
     private int dashboardRefreshIntervalSeconds;
     private int itemsPerPage;

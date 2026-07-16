@@ -58,10 +58,36 @@ public class Sale {
     @Column(name = "created_by", nullable = false)
     private String createdBy;
 
+    @Column(name = "terminal_id")
+    private UUID terminalId;
+
+    @Column(name = "terminal_code", length = 50)
+    private String terminalCode;
+
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
 
     @OneToMany(mappedBy = "sale", cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default
     private List<SaleItem> items = new ArrayList<>();
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "cash_session_id")
+    private CashSession cashSession;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "payment_method", length = 20)
+    private PaymentMethod paymentMethod;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "payment_status", length = 20)
+    private PaymentStatus paymentStatus;
+
+    @Column(name = "paid_amount", precision = 12, scale = 2)
+    @Builder.Default
+    private BigDecimal paidAmount = BigDecimal.ZERO;
+
+    @Column(name = "balance_amount", precision = 12, scale = 2)
+    @Builder.Default
+    private BigDecimal balanceAmount = BigDecimal.ZERO;
 }

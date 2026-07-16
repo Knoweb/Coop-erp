@@ -8,6 +8,8 @@ import {
 import { Add as AddIcon, Edit as EditIcon, Refresh as RefreshIcon, PowerSettingsNew as PowerIcon } from '@mui/icons-material';
 import { shopAdminService } from './services/shopAdminService';
 import type { Shop } from './services/shopAdminService';
+import ShopTerminalsModal from './ShopTerminalsModal';
+import PointOfSaleIcon from '@mui/icons-material/PointOfSale';
 
 const ManageShopsPage: React.FC = () => {
     const [shops, setShops] = useState<Shop[]>([]);
@@ -24,6 +26,9 @@ const ManageShopsPage: React.FC = () => {
         contactNumber: '',
         active: true
     });
+
+    const [terminalsModalOpen, setTerminalsModalOpen] = useState(false);
+    const [selectedShopForTerminals, setSelectedShopForTerminals] = useState<{id: string, name: string} | null>(null);
 
     const fetchShops = async () => {
         setLoading(true);
@@ -182,6 +187,13 @@ const ManageShopsPage: React.FC = () => {
                                         >
                                             <PowerIcon />
                                         </IconButton>
+                                        <IconButton 
+                                            color="secondary" 
+                                            onClick={() => { setSelectedShopForTerminals({id: shop.id, name: shop.name}); setTerminalsModalOpen(true); }}
+                                            title="Manage Terminals"
+                                        >
+                                            <PointOfSaleIcon />
+                                        </IconButton>
                                     </TableCell>
                                 </TableRow>
                             ))
@@ -265,6 +277,15 @@ const ManageShopsPage: React.FC = () => {
                     </Button>
                 </DialogActions>
             </Dialog>
+
+            {selectedShopForTerminals && (
+                <ShopTerminalsModal 
+                    open={terminalsModalOpen}
+                    shopId={selectedShopForTerminals.id}
+                    shopName={selectedShopForTerminals.name}
+                    onClose={() => setTerminalsModalOpen(false)}
+                />
+            )}
         </Box>
     );
 };
