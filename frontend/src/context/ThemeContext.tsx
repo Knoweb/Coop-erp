@@ -95,7 +95,7 @@ export const ThemeProviderWrapper: React.FC<Props> = ({ children }) => {
     if (themeKey !== "theme_GUEST") {
       localStorage.setItem(themeKey, mode);
     }
-    
+
     // Apply class to document body
     const normalized = mode === "Dark" ? "dark" : "light";
     document.documentElement.setAttribute("data-theme", normalized);

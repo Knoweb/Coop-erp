@@ -18,7 +18,7 @@ import java.util.stream.Collectors;
 @RestController
 @RequestMapping("/api/v1/admin/shops/{shopId}/terminals")
 @RequiredArgsConstructor
-@PreAuthorize("hasAuthority('ADMIN')")
+@PreAuthorize("hasAnyAuthority('ADMIN', 'TENANT_ADMIN')")
 public class AdminShopTerminalController {
 
     private final ShopTerminalRepository shopTerminalRepository;

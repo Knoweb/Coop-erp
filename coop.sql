@@ -46,6 +46,7 @@ CREATE TABLE IF NOT EXISTS admin.system_settings (
 
 CREATE TABLE IF NOT EXISTS admin.audit_log (
     id UUID PRIMARY KEY DEFAULT public.uuid_generate_v4(),
+    tenant_id UUID REFERENCES public.tenants(id),
     user_id UUID NOT NULL,
     service_name VARCHAR(255) NOT NULL,
     action VARCHAR(255) NOT NULL,
@@ -55,6 +56,7 @@ CREATE TABLE IF NOT EXISTS admin.audit_log (
 
 CREATE TABLE IF NOT EXISTS admin.utility_bill (
     id UUID PRIMARY KEY DEFAULT public.uuid_generate_v4(),
+    tenant_id UUID REFERENCES public.tenants(id),
     utility_type VARCHAR(50) NOT NULL, 
     billing_month VARCHAR(7) NOT NULL, 
     total_amount NUMERIC(12, 2) NOT NULL,
@@ -179,6 +181,18 @@ CREATE INDEX IF NOT EXISTS idx_purchase_invoices_supplier ON grocery.purchase_in
 CREATE INDEX IF NOT EXISTS idx_sales_sale_number ON grocery.sales(sale_number);
 CREATE INDEX IF NOT EXISTS idx_sales_source_shop ON grocery.sales(source_shop_id);
 CREATE INDEX IF NOT EXISTS idx_sales_target_shop ON grocery.sales(target_shop_id);
+
+-- Performance Indexes for SaaS Multi-Tenant Scale
+CREATE INDEX IF NOT EXISTS idx_users_tenant_username ON admin.users(tenant_id, username);
+CREATE INDEX IF NOT EXISTS idx_shops_tenant_code ON admin.shops(tenant_id, code);
+CREATE INDEX IF NOT EXISTS idx_shop_terminals_tenant_shop ON admin.shop_terminals(tenant_id, shop_id);
+CREATE INDEX IF NOT EXISTS idx_products_tenant_category ON grocery.products(tenant_id, category);
+CREATE INDEX IF NOT EXISTS idx_suppliers_tenant ON grocery.suppliers(tenant_id);
+CREATE INDEX IF NOT EXISTS idx_stock_ledger_tenant_shop_item ON grocery.stock_ledger(tenant_id, shop_id, item_id);
+CREATE INDEX IF NOT EXISTS idx_sales_tenant_source_date ON grocery.sales(tenant_id, source_shop_id, sale_date);
+CREATE INDEX IF NOT EXISTS idx_sales_tenant_source_term_date ON grocery.sales(tenant_id, source_shop_id, terminal_id, sale_date);
+CREATE INDEX IF NOT EXISTS idx_sale_items_tenant_sale ON grocery.sale_items(tenant_id, sale_id);
+CREATE INDEX IF NOT EXISTS idx_journal_entries_tenant_date ON accounting.journal_entries(tenant_id, entry_date);
 
 -- ==============================================================================
 -- 4. SEED DATA

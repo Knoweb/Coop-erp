@@ -15,7 +15,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 @RestController
 @RequestMapping("/api/v1/admin/suppliers")
 @RequiredArgsConstructor
-@PreAuthorize("hasAuthority('ADMIN')")
+@PreAuthorize("hasAnyAuthority('ADMIN', 'TENANT_ADMIN')")
 public class AdminSupplierController {
 
     private final SupplierService supplierService;

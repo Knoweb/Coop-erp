@@ -35,7 +35,7 @@ public class SecurityConfig {
                         .requestMatchers("/api/v1/auth/**").permitAll()
                         .requestMatchers("/error").permitAll()
                         .requestMatchers("/actuator/health").permitAll()
-                        .requestMatchers("/api/v1/admin/**").hasAuthority("ADMIN")
+                        .requestMatchers("/api/v1/admin/**").hasAnyAuthority("ADMIN", "TENANT_ADMIN")
                         .requestMatchers("/api/v1/shop/**").hasAnyAuthority("SHOP_ADMIN", "SHOP_USER")
                         .anyRequest().authenticated()
                 )

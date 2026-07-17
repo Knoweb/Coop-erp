@@ -16,7 +16,7 @@ import java.util.Optional;
 @RestController
 @RequestMapping("/api/v1/admin/stock")
 @RequiredArgsConstructor
-@PreAuthorize("hasAuthority('ADMIN')")
+@PreAuthorize("hasAnyAuthority('ADMIN', 'TENANT_ADMIN')")
 public class AdminStockController {
 
     private final StockLedgerService stockLedgerService;

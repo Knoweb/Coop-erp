@@ -47,8 +47,72 @@ public class DatabaseSeeder implements CommandLineRunner {
         transactionTemplate.execute(status -> {
             seedAdminUser(defaultTenant);
             seedShopsAndShopAdmins(defaultTenant);
+            
+            // Seed a second test tenant to verify isolation
+            Tenant testTenant2 = seedTestTenant2();
+            seedAdminUserForTenant(testTenant2, "tenant2admin", "tenant2admin123");
+            seedShopForTenant(testTenant2, "T2_SHOP_1", "Test Tenant 2 Shop");
+            
             return null;
         });
+    }
+
+    private Tenant seedTestTenant2() {
+        return tenantRepository.findByTenantCode("TEST_TENANT_2").orElseGet(() -> {
+            Tenant tenant = Tenant.builder()
+                    .tenantCode("TEST_TENANT_2")
+                    .tenantName("Test Tenant 2")
+                    .tenantType("DISTRIBUTOR")
+                    .isActive(true)
+                    .build();
+            return tenantRepository.save(tenant);
+        });
+    }
+
+    private void seedAdminUserForTenant(Tenant tenant, String username, String password) {
+        if (!userRepository.existsByUsername(username)) {
+            User admin = User.builder()
+                    .name(tenant.getTenantName() + " Admin")
+                    .username(username)
+                    .email(username + "@example.com")
+                    .password(passwordEncoder.encode(password))
+                    .role("TENANT_ADMIN")
+                    .shop(null)
+                    .tenant(tenant)
+                    .build();
+            userRepository.save(admin);
+            System.out.println("Admin user for " + tenant.getTenantCode() + " created.");
+        }
+    }
+
+    private void seedShopForTenant(Tenant tenant, String shopCode, String shopName) {
+        Shop shop = shopRepository.findByCode(shopCode).orElseGet(() -> {
+            Shop newShop = Shop.builder()
+                    .code(shopCode)
+                    .name(shopName)
+                    .address("Address for " + shopName)
+                    .contactNumber("987654321")
+                    .active(true)
+                    .tenant(tenant)
+                    .build();
+            System.out.println(shopName + " created under " + tenant.getTenantCode());
+            return shopRepository.save(newShop);
+        });
+
+        String shopAdminUsername = shopCode.toLowerCase() + "admin";
+        if (!userRepository.existsByUsername(shopAdminUsername)) {
+            User shopAdmin = User.builder()
+                    .name(shopName + " Admin")
+                    .username(shopAdminUsername)
+                    .email(shopAdminUsername + "@example.com")
+                    .password(passwordEncoder.encode("shop123"))
+                    .role("SHOP_ADMIN")
+                    .shop(shop)
+                    .tenant(tenant)
+                    .build();
+            userRepository.save(shopAdmin);
+            System.out.println("Admin for " + shopName + " created.");
+        }
     }
 
     private Tenant seedTenantAndBackfill() {

@@ -26,13 +26,13 @@ public class DashboardController {
     }
 
     @GetMapping("/admin/dashboard/shop-product-counts")
-    @PreAuthorize("hasAnyAuthority('ADMIN', 'ROLE_ADMIN', 'ROLE_SUPER_ADMIN')")
+    @PreAuthorize("hasAnyAuthority('ADMIN', 'TENANT_ADMIN', 'ROLE_ADMIN', 'ROLE_SUPER_ADMIN')")
     public List<ShopProductCountDto> getAllShopProductCounts() {
         return dashboardService.getAllShopSelectedProductCounts();
     }
 
     @GetMapping("/admin/dashboard/total-products")
-    @PreAuthorize("hasAnyAuthority('ADMIN', 'ROLE_ADMIN', 'ROLE_SUPER_ADMIN')")
+    @PreAuthorize("hasAnyAuthority('ADMIN', 'TENANT_ADMIN', 'ROLE_ADMIN', 'ROLE_SUPER_ADMIN')")
     public Map<String, Long> getTotalProducts() {
         long count = dashboardService.getTotalProductCount();
         return Map.of("totalProducts", count);
