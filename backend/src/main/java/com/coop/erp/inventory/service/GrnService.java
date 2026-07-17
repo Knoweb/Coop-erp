@@ -14,16 +14,19 @@ import com.coop.erp.inventory.repository.PurchaseInvoiceItemRepository;
 import com.coop.erp.inventory.repository.PurchaseInvoiceRepository;
 import com.coop.erp.inventory.repository.StockLedgerRepository;
 import com.coop.erp.inventory.repository.SupplierRepository;
+import com.coop.erp.admin.service.AuditLogService;
 import com.coop.erp.core.entity.Shop;
 import com.coop.erp.core.entity.User;
 import com.coop.erp.core.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
+import com.coop.erp.auth.util.TenantContext;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -36,6 +39,7 @@ public class GrnService {
     private final StockLedgerRepository stockLedgerRepository;
     private final UserRepository userRepository;
     private final JournalEntryService journalEntryService;
+    private final AuditLogService auditLogService;
 
     private Shop getCurrentUserShop() {
         String username = SecurityContextHolder.getContext().getAuthentication().getName();
@@ -65,6 +69,8 @@ public class GrnService {
 
         PurchaseInvoice savedInvoice = purchaseInvoiceRepository.save(purchaseInvoice);
 
+        UUID tenantId = TenantContext.getCurrentTenantId();
+
         for (GrnItemRequest itemRequest : request.getItems()) {
             if (itemRequest.getQuantity() == null || itemRequest.getQuantity() <= 0) {
                 throw new org.springframework.web.server.ResponseStatusException(org.springframework.http.HttpStatus.BAD_REQUEST, "Item quantity must be greater than 0");
@@ -89,7 +95,7 @@ public class GrnService {
 
             purchaseInvoiceItemRepository.save(invoiceItem);
 
-            increaseStock(item, itemRequest.getQuantity(), currentShop);
+            increaseStock(item, itemRequest.getQuantity(), currentShop, tenantId);
         }
 
         // Accounting Entry
@@ -114,6 +120,15 @@ public class GrnService {
             System.err.println("Failed to create journal entry for purchase: " + e.getMessage());
         }
 
+        auditLogService.logTenantAction(
+                "GRN_CREATED",
+                "PURCHASE_INVOICE",
+                savedInvoice.getId().toString(),
+                "Created GRN / Purchase Invoice: " + savedInvoice.getInvoiceNumber() + " from Supplier: " + supplier.getName(),
+                null,
+                String.format("{\"totalAmount\": %s}", savedInvoice.getTotalAmount())
+        );
+
         return buildResponse(savedInvoice);
     }
 
@@ -131,25 +146,35 @@ public class GrnService {
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
     }
 
-    private void increaseStock(ItemProduct item, Integer quantity, Shop shop) {
+    private void increaseStock(ItemProduct item, Integer quantity, Shop shop, UUID tenantId) {
         StockLedger stockLedger;
         
         if (shop != null) {
-            stockLedger = stockLedgerRepository.findByItemIdAndShopId(item.getId(), shop.getId())
+            stockLedger = stockLedgerRepository.findShopStockForUpdate(tenantId, shop.getId(), item.getId())
                     .orElseGet(() -> {
                         StockLedger newStock = new StockLedger();
                         newStock.setItem(item);
                         newStock.setShop(shop);
+                        newStock.setTenant(shop.getTenant());
                         newStock.setCurrentQty(0);
                         newStock.setLastUpdated(LocalDateTime.now());
                         return newStock;
                     });
         } else {
-            stockLedger = stockLedgerRepository.findByItemIdAndShopIsNull(item.getId())
+            stockLedger = stockLedgerRepository.findMainStockForUpdate(tenantId, item.getId())
                     .orElseGet(() -> {
                         StockLedger newStock = new StockLedger();
                         newStock.setItem(item);
                         newStock.setShop(null);
+                        
+                        // We need the Tenant object to set the relationship if we are saving it
+                        // In an actual scenario, we'd fetch tenant if null.
+                        // But wait! There's a helper trick: user.getTenant() is already what tenantId represents.
+                        // Let's create a proxy Tenant
+                        com.coop.erp.admin.entity.Tenant proxyTenant = new com.coop.erp.admin.entity.Tenant();
+                        proxyTenant.setId(tenantId);
+                        newStock.setTenant(proxyTenant);
+                        
                         newStock.setCurrentQty(0);
                         newStock.setLastUpdated(LocalDateTime.now());
                         return newStock;

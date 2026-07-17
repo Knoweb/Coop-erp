@@ -33,6 +33,7 @@ function AdminLayout() {
     { label: "Manage Shops", path: "/admin/shops" },
     { label: "Shop Users", path: "/admin/shop-users" },
     { label: "System Users", path: "/admin/system-users" },
+    { label: "Audit Logs", path: "/admin/audit-logs" },
     { label: "Settings", path: "/admin/settings" },
   ];
 

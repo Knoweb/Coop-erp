@@ -16,15 +16,26 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
+import com.coop.erp.admin.repository.TenantRepository;
+import com.coop.erp.auth.util.TenantContext;
+
 @Service
 @RequiredArgsConstructor
 public class JournalEntryService {
 
     private final JournalEntryRepository journalEntryRepository;
     private final ChartOfAccountRepository chartOfAccountRepository;
+    private final TenantRepository tenantRepository;
 
     @Transactional
     public JournalEntry postEntry(String referenceType, UUID referenceId, LocalDate entryDate, String description, String createdBy, List<JournalLineRequest> lineRequests) {
+        UUID tenantId = TenantContext.getCurrentTenantId();
+        var tenant = tenantId != null ? tenantRepository.findById(tenantId).orElse(null) : null;
+        return postEntry(referenceType, referenceId, entryDate, description, createdBy, tenant, lineRequests);
+    }
+
+    @Transactional
+    public JournalEntry postEntry(String referenceType, UUID referenceId, LocalDate entryDate, String description, String createdBy, com.coop.erp.admin.entity.Tenant tenant, List<JournalLineRequest> lineRequests) {
         // Idempotency check
         if (referenceType != null && referenceId != null) {
             journalEntryRepository.findByReferenceTypeAndReferenceId(referenceType, referenceId)
@@ -45,6 +56,7 @@ public class JournalEntryService {
                 .status(JournalEntryStatus.POSTED)
                 .createdBy(createdBy)
                 .createdAt(LocalDateTime.now())
+                .tenant(tenant)
                 .build();
 
         for (JournalLineRequest req : lineRequests) {
@@ -71,6 +83,7 @@ public class JournalEntryService {
                     .description(req.getDescription() != null ? req.getDescription() : description)
                     .debit(debit)
                     .credit(credit)
+                    .tenant(tenant)
                     .build();
 
             entry.getLines().add(line);

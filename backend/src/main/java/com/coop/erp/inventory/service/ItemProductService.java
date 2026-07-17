@@ -3,6 +3,7 @@ package com.coop.erp.inventory.service;
 import com.coop.erp.inventory.dto.ItemProductRequest;
 import com.coop.erp.inventory.entity.ItemProduct;
 import com.coop.erp.inventory.repository.ItemProductRepository;
+import com.coop.erp.admin.service.AuditLogService;
 
 import com.coop.erp.core.entity.Shop;
 import com.coop.erp.core.repository.ShopRepository;
@@ -27,6 +28,7 @@ public class ItemProductService {
     private final ShopRepository shopRepository;
     private final ShopItemRepository shopItemRepository;
     private final StockLedgerRepository stockLedgerRepository;
+    private final AuditLogService auditLogService;
 
     @PostConstruct
     public void backfillOldProductsForMainShop() {
@@ -111,6 +113,14 @@ public class ItemProductService {
 
         ItemProduct savedItem = itemProductRepository.save(item);
         provisionMainShopStock(savedItem);
+        auditLogService.logTenantAction(
+                "PRODUCT_CREATED",
+                "PRODUCT",
+                savedItem.getId().toString(),
+                "Created product: " + savedItem.getName(),
+                null,
+                null
+        );
         return savedItem;
     }
 
@@ -123,7 +133,16 @@ public class ItemProductService {
         item.setDefaultReorderLevel(request.getDefaultReorderLevel());
         item.setUnitPrice(request.getUnitPrice());
 
-        return itemProductRepository.save(item);
+        ItemProduct savedItem = itemProductRepository.save(item);
+        auditLogService.logTenantAction(
+                "PRODUCT_UPDATED",
+                "PRODUCT",
+                savedItem.getId().toString(),
+                "Updated product: " + savedItem.getName(),
+                null,
+                null
+        );
+        return savedItem;
     }
 
     public List<ItemProduct> getLowStockItems() {

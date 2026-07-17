@@ -45,6 +45,7 @@ public class DatabaseSeeder implements CommandLineRunner {
             System.err.println("Failed to seed default settings: " + e.getMessage());
         }
         transactionTemplate.execute(status -> {
+            seedPlatformAdminUser();
             seedAdminUser(defaultTenant);
             seedShopsAndShopAdmins(defaultTenant);
             
@@ -55,6 +56,22 @@ public class DatabaseSeeder implements CommandLineRunner {
             
             return null;
         });
+    }
+
+    private void seedPlatformAdminUser() {
+        if (!userRepository.existsByUsername("superadmin")) {
+            User admin = User.builder()
+                    .name("Platform Admin")
+                    .username("superadmin")
+                    .email("superadmin@example.com")
+                    .password(passwordEncoder.encode("superadmin123"))
+                    .role("PLATFORM_ADMIN")
+                    .shop(null)
+                    .tenant(null)
+                    .build();
+            userRepository.save(admin);
+            System.out.println("Default platform admin user created.");
+        }
     }
 
     private Tenant seedTestTenant2() {

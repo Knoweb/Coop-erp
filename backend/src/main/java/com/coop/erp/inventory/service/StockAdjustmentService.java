@@ -11,6 +11,9 @@ import com.coop.erp.inventory.repository.StockLedgerRepository;
 import com.coop.erp.core.entity.Shop;
 import com.coop.erp.core.entity.User;
 import com.coop.erp.core.repository.UserRepository;
+import com.coop.erp.auth.util.TenantContext;
+import com.coop.erp.admin.service.AuditLogService;
+import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
@@ -19,6 +22,7 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -28,6 +32,7 @@ public class StockAdjustmentService {
     private final StockLedgerRepository stockLedgerRepository;
     private final ItemProductRepository itemProductRepository;
     private final UserRepository userRepository;
+    private final AuditLogService auditLogService;
 
     private Shop getCurrentUserShop() {
         String username = SecurityContextHolder.getContext().getAuthentication().getName();
@@ -39,11 +44,13 @@ public class StockAdjustmentService {
         return user.getShop();
     }
 
+    @Transactional
     public StockAdjustmentResponse createStockAdjustment(StockAdjustmentRequest request) {
+        UUID tenantId = TenantContext.getCurrentTenantId();
         ItemProduct item = itemProductRepository.findById(request.getItemId())
                 .orElseThrow(() -> new RuntimeException("Item not found"));
 
-        StockLedger stockLedger = stockLedgerRepository.findByItemIdAndShopIsNull(request.getItemId())
+        StockLedger stockLedger = stockLedgerRepository.findMainStockForUpdate(tenantId, request.getItemId())
                 .orElseThrow(() -> new RuntimeException("Stock record not found for selected item"));
 
         Integer previousQty = stockLedger.getCurrentQty();
@@ -101,6 +108,15 @@ public class StockAdjustmentService {
                 .build();
 
         StockAdjustmentLog savedLog = stockAdjustmentLogRepository.save(adjustmentLog);
+        
+        auditLogService.logTenantAction(
+                "STOCK_ADJUSTMENT",
+                "STOCK",
+                item.getId().toString(),
+                "Adjusted stock for item: " + item.getName() + " (" + adjustmentType + ") by " + quantityChanged,
+                String.valueOf(previousQty),
+                String.valueOf(newQty)
+        );
 
         return buildResponse(savedLog);
     }

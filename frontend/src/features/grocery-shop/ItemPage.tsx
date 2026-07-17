@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import type { SyntheticEvent } from "react";
 import {
   Alert,
@@ -57,6 +58,7 @@ const formatMoney = (value: number | string | undefined) => {
 };
 
 function ItemPage() {
+  const navigate = useNavigate();
   const [items, setItems] = useState<ItemProduct[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [searchBy, setSearchBy] = useState("all");
@@ -236,9 +238,16 @@ function ItemPage() {
 
   return (
     <Box>
-      <Typography variant="h4" className="page-title" sx={{ fontWeight: "bold" }} gutterBottom>
-        Item / Product Management
-      </Typography>
+      <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 2 }}>
+        <Typography variant="h4" className="page-title" sx={{ fontWeight: "bold", mb: 0 }}>
+          Item / Product Management
+        </Typography>
+        {isAdmin && (
+          <Button variant="contained" color="secondary" onClick={() => navigate("/admin/products/import")}>
+            Bulk Import
+          </Button>
+        )}
+      </Box>
 
       <Typography color="text.secondary">
         {isAdmin 

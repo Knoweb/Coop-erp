@@ -20,6 +20,10 @@ import com.coop.erp.inventory.repository.ItemProductRepository;
 import com.coop.erp.inventory.repository.SaleRepository;
 import com.coop.erp.inventory.repository.StockLedgerRepository;
 import com.coop.erp.inventory.repository.StockMovementRepository;
+import com.coop.erp.auth.util.TenantContext;
+import com.coop.erp.core.exception.InsufficientStockException;
+import com.coop.erp.admin.repository.TenantRepository;
+import com.coop.erp.admin.service.AuditLogService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -44,9 +48,13 @@ public class SaleService {
     private final StockMovementRepository stockMovementRepository;
     private final ShopTerminalRepository shopTerminalRepository;
     private final CashSessionService cashSessionService;
+    private final TenantRepository tenantRepository;
+    private final AuditLogService auditLogService;
 
     @Transactional
     public SaleResponse createAdminSale(SaleRequest request, String username) {
+        UUID tenantId = TenantContext.getCurrentTenantId();
+        
         Sale sale = new Sale();
         sale.setSaleType(request.getSaleType());
         sale.setSourceShop(null); // Admin inventory
@@ -54,6 +62,8 @@ public class SaleService {
         sale.setSaleDate(LocalDateTime.now());
         sale.setCreatedBy(username);
         sale.setCreatedAt(LocalDateTime.now());
+        sale.setTenant(tenantRepository.findById(tenantId).orElseThrow(() -> new IllegalArgumentException("Tenant not found")));
+
         
         if (request.getTerminalId() != null) {
             ShopTerminal terminal = shopTerminalRepository.findById(request.getTerminalId())
@@ -83,10 +93,10 @@ public class SaleService {
                     .orElseThrow(() -> new IllegalArgumentException("Product not found: " + itemReq.getProductId()));
 
             // Reduce Admin Stock with pessimistic locking
-            StockLedger adminStock = stockLedgerRepository.findByItemIdAndShopIsNullForUpdate(product.getId())
+            StockLedger adminStock = stockLedgerRepository.findMainStockForUpdate(tenantId, product.getId())
                     .orElseThrow(() -> new IllegalArgumentException("Product not in Admin stock: " + product.getName()));
             if (adminStock.getCurrentQty() < itemReq.getQuantity()) {
-                throw new IllegalArgumentException("Insufficient stock in Admin inventory for: " + product.getName());
+                throw new InsufficientStockException("Insufficient stock in Admin inventory for: " + product.getName() + ". Available: " + adminStock.getCurrentQty());
             }
             adminStock.setCurrentQty(adminStock.getCurrentQty() - itemReq.getQuantity());
             adminStock.setLastUpdated(LocalDateTime.now());
@@ -106,11 +116,12 @@ public class SaleService {
 
             // Increase Shop Stock if SHOP sale
             if (request.getSaleType() == SaleType.SHOP) {
-                StockLedger shopStock = stockLedgerRepository.findByItemIdAndShopIdForUpdate(product.getId(), targetShop.getId())
+                StockLedger shopStock = stockLedgerRepository.findShopStockForUpdate(tenantId, targetShop.getId(), product.getId())
                         .orElseGet(() -> {
                             StockLedger newStock = new StockLedger();
                             newStock.setItem(product);
                             newStock.setShop(sale.getTargetShop());
+                            newStock.setTenant(sale.getTargetShop().getTenant());
                             newStock.setCurrentQty(0);
                             return newStock;
                         });
@@ -166,8 +177,10 @@ public class SaleService {
                 }
             }
 
+            String cashAccount = (savedSale.getPaymentMethod() == PaymentMethod.CARD) ? "1010" : "1000";
+
             List<JournalEntryService.JournalLineRequest> lines = new ArrayList<>(List.of(
-                    new JournalEntryService.JournalLineRequest("1000", "Sale Receipt", savedSale.getTotalAmount(), BigDecimal.ZERO),
+                    new JournalEntryService.JournalLineRequest(cashAccount, "Sale Receipt", savedSale.getTotalAmount(), BigDecimal.ZERO),
                     new JournalEntryService.JournalLineRequest("4000", "Sale Revenue", BigDecimal.ZERO, savedSale.getTotalAmount())
             ));
 
@@ -185,6 +198,15 @@ public class SaleService {
                     lines
             );
         }
+
+        auditLogService.logTenantAction(
+                "SALE_CREATED",
+                "SALE",
+                savedSale.getId().toString(),
+                "Created Admin Sale: " + savedSale.getSaleNumber(),
+                null,
+                String.format("{\"totalAmount\": %s}", savedSale.getTotalAmount())
+        );
 
         return mapToResponse(savedSale);
     }
@@ -206,6 +228,7 @@ public class SaleService {
         sale.setSaleDate(LocalDateTime.now());
         sale.setCreatedBy(username);
         sale.setCreatedAt(LocalDateTime.now());
+        sale.setTenant(sourceShop.getTenant());
 
         if (request.getTerminalId() != null) {
             ShopTerminal terminal = shopTerminalRepository.findById(request.getTerminalId())
@@ -239,15 +262,17 @@ public class SaleService {
         BigDecimal totalDiscount = BigDecimal.ZERO;
         List<SaleItem> items = new ArrayList<>();
 
+        UUID tenantId = TenantContext.getCurrentTenantId();
+
         for (SaleRequest.SaleItemRequest itemReq : request.getItems()) {
             ItemProduct product = itemProductRepository.findById(itemReq.getProductId())
                     .orElseThrow(() -> new IllegalArgumentException("Product not found: " + itemReq.getProductId()));
 
             // Reduce Shop Stock with pessimistic locking
-            StockLedger shopStock = stockLedgerRepository.findByItemIdAndShopIdForUpdate(product.getId(), shopId)
+            StockLedger shopStock = stockLedgerRepository.findShopStockForUpdate(tenantId, shopId, product.getId())
                     .orElseThrow(() -> new IllegalArgumentException("Product not in stock for this shop: " + product.getName()));
             if (shopStock.getCurrentQty() < itemReq.getQuantity()) {
-                throw new IllegalArgumentException("Insufficient stock in Shop inventory for: " + product.getName());
+                throw new InsufficientStockException("Insufficient stock in Shop inventory for: " + product.getName() + ". Available: " + shopStock.getCurrentQty());
             }
             shopStock.setCurrentQty(shopStock.getCurrentQty() - itemReq.getQuantity());
             shopStock.setLastUpdated(LocalDateTime.now());
@@ -318,8 +343,10 @@ public class SaleService {
             }
         }
 
+        String cashAccount = (savedSale.getPaymentMethod() == PaymentMethod.CARD) ? "1010" : "1000";
+
         List<JournalEntryService.JournalLineRequest> lines = new ArrayList<>(List.of(
-                new JournalEntryService.JournalLineRequest("1000", "Sale Receipt", savedSale.getTotalAmount(), BigDecimal.ZERO),
+                new JournalEntryService.JournalLineRequest(cashAccount, "Sale Receipt", savedSale.getTotalAmount(), BigDecimal.ZERO),
                 new JournalEntryService.JournalLineRequest("4000", "Sale Revenue", BigDecimal.ZERO, savedSale.getTotalAmount())
         ));
 
@@ -335,6 +362,17 @@ public class SaleService {
                 "Shop Sale " + savedSale.getSaleNumber(),
                 savedSale.getCreatedBy(),
                 lines
+        );
+
+        auditLogService.logShopAction(
+                sourceShop.getId(),
+                sale.getTerminalId(),
+                "SALE_CREATED",
+                "SALE",
+                savedSale.getId().toString(),
+                "Created Shop Sale: " + savedSale.getSaleNumber(),
+                null,
+                String.format("{\"totalAmount\": %s}", savedSale.getTotalAmount())
         );
 
         return mapToResponse(savedSale);

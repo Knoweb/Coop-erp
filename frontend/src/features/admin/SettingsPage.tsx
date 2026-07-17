@@ -7,10 +7,13 @@ import {
     Business as BusinessIcon, 
     Security as SecurityIcon, 
     Person as PersonIcon, 
-    SettingsBackupRestore as BackupIcon 
+    SettingsBackupRestore as BackupIcon,
+    Download as DownloadIcon 
 } from '@mui/icons-material';
 import { useThemeContext, type ThemeMode } from "../../context/ThemeContext";
 import { settingsService, type UserPreferences, type BusinessProfile, type SecuritySettings, type BackupSettings } from './services/settingsService';
+import { useAuth } from '../../context/AuthContext';
+import axios from 'axios';
 
 type ActiveTab = 'business' | 'security' | 'preferences' | 'backup';
 
@@ -27,6 +30,12 @@ const SettingsPage: React.FC = () => {
     const [backupSettings, setBackupSettings] = useState<BackupSettings | null>(null);
 
     const { setThemeMode } = useThemeContext();
+    const { token } = useAuth();
+
+    // Export date ranges
+    const [exportFromDate, setExportFromDate] = useState<string>('');
+    const [exportToDate, setExportToDate] = useState<string>('');
+    const [isExporting, setIsExporting] = useState(false);
 
     const settingCards: { id: ActiveTab, title: string, icon: React.ReactNode, desc: string }[] = [
         { id: 'business', title: 'Business Profile', icon: <BusinessIcon fontSize="large" color="primary" />, desc: 'Manage main shop details, tax information, and receipts.' },
@@ -189,6 +198,49 @@ const SettingsPage: React.FC = () => {
         }
     };
 
+    const handleExport = async (endpoint: string, filenamePrefix: string, useDates: boolean = false) => {
+        setIsExporting(true);
+        try {
+            let url = `http://localhost:8080/api/v1/admin/exports/${endpoint}`;
+            if (useDates && (exportFromDate || exportToDate)) {
+                const params = new URLSearchParams();
+                if (exportFromDate) params.append('fromDate', `${exportFromDate}T00:00:00`);
+                if (exportToDate) params.append('toDate', `${exportToDate}T23:59:59`);
+                url += `?${params.toString()}`;
+            }
+
+            const response = await axios.get(url, {
+                headers: {
+                    Authorization: `Bearer ${token}`
+                },
+                responseType: 'blob'
+            });
+
+            const contentDisposition = response.headers['content-disposition'];
+            let filename = `${filenamePrefix}.csv`;
+            if (contentDisposition) {
+                const filenameMatch = contentDisposition.match(/filename="?([^"]+)"?/);
+                if (filenameMatch && filenameMatch.length === 2) {
+                    filename = filenameMatch[1];
+                }
+            }
+
+            const downloadUrl = window.URL.createObjectURL(new Blob([response.data]));
+            const link = document.createElement('a');
+            link.href = downloadUrl;
+            link.setAttribute('download', filename);
+            document.body.appendChild(link);
+            link.click();
+            link.parentNode?.removeChild(link);
+            showNotification(`Export ${filenamePrefix} downloaded successfully.`, 'success');
+        } catch (err: any) {
+            console.error(err);
+            showNotification('Failed to export data. Check permissions or try again.', 'error');
+        } finally {
+            setIsExporting(false);
+        }
+    };
+
     return (
         <Box sx={{ p: 3 }}>
             <Box sx={{ mb: 4 }}>
@@ -302,36 +354,43 @@ const SettingsPage: React.FC = () => {
                                 </Box>
                             )}
 
-                            {activeTab === 'backup' && backupSettings && (
+                            {activeTab === 'backup' && (
                                 <Box>
-                                    <Typography variant="h5" sx={{ mb: 3, fontWeight: 'bold' }}>Backup & Maintenance</Typography>
-                                    <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' }, gap: 3 }}>
-                                        <Box sx={{ gridColumn: '1 / -1' }}>
-                                            <FormControlLabel control={<Switch checked={backupSettings.autoBackupEnabled ?? false} onChange={e => setBackupSettings({...backupSettings, autoBackupEnabled: e.target.checked})} color="primary" />} label="Enable Auto Backup" />
-                                        </Box>
-                                        <TextField fullWidth select label="Backup Frequency" value={backupSettings.backupFrequency ?? "Daily"} onChange={e => setBackupSettings({...backupSettings, backupFrequency: e.target.value})}>
-                                            <MenuItem value="Daily">Daily</MenuItem>
-                                            <MenuItem value="Weekly">Weekly</MenuItem>
-                                            <MenuItem value="Monthly">Monthly</MenuItem>
-                                        </TextField>
-                                        <TextField fullWidth type="time" label="Backup Time" slotProps={{ inputLabel: { shrink: true } }} value={backupSettings.backupTime ?? ""} onChange={e => setBackupSettings({...backupSettings, backupTime: e.target.value})} />
-                                        <TextField fullWidth type="number" label="Retention Days" value={backupSettings.retentionDays ?? ""} onChange={e => setBackupSettings({...backupSettings, retentionDays: parseInt(e.target.value) || 0})} />
-                                        
-                                        <Box sx={{ gridColumn: '1 / -1', display: 'flex', flexDirection: 'column', gap: 1 }}>
-                                            <Typography variant="body2" color="text.secondary">
-                                                Last Backup At: {backupSettings.lastBackupAt || 'N/A'}
-                                            </Typography>
-                                            <Typography variant="body2" color="text.secondary">
-                                                Last Backup Status: {backupSettings.lastBackupStatus || 'Never Run'}
-                                            </Typography>
-                                        </Box>
+                                    <Typography variant="h5" sx={{ mb: 1, fontWeight: 'bold' }}>Backup & Maintenance</Typography>
+                                    <Alert severity="info" sx={{ mb: 3 }}>
+                                        Exports are limited to your tenant data only.
+                                    </Alert>
+                                    
+                                    <Typography variant="h6" sx={{ mb: 2 }}>1. Master Data Exports</Typography>
+                                    <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap', mb: 4 }}>
+                                        <Button variant="outlined" startIcon={isExporting ? <CircularProgress size={20} /> : <DownloadIcon />} onClick={() => handleExport('products', 'products')} disabled={isExporting}>Export Products</Button>
+                                        <Button variant="outlined" startIcon={isExporting ? <CircularProgress size={20} /> : <DownloadIcon />} onClick={() => handleExport('suppliers', 'suppliers')} disabled={isExporting}>Export Suppliers</Button>
+                                        <Button variant="outlined" startIcon={isExporting ? <CircularProgress size={20} /> : <DownloadIcon />} onClick={() => handleExport('shops', 'shops')} disabled={isExporting}>Export Shops</Button>
+                                        <Button variant="outlined" startIcon={isExporting ? <CircularProgress size={20} /> : <DownloadIcon />} onClick={() => handleExport('stock', 'stock')} disabled={isExporting}>Export Stock</Button>
                                     </Box>
-                                    <Box sx={{ mt: 3, display: 'flex', justifyContent: 'space-between' }}>
-                                        <Button variant="outlined" color="warning" onClick={handleRunBackupNow}>Run Backup Now</Button>
-                                        <Box sx={{ display: 'flex', gap: 2 }}>
-                                            <Button variant="outlined" onClick={() => handleCancel('backup')}>Cancel</Button>
-                                            <Button variant="contained" onClick={handleSaveBackup} disabled={isSaving}>{isSaving ? 'Saving...' : 'Save Changes'}</Button>
-                                        </Box>
+
+                                    <Typography variant="h6" sx={{ mb: 2 }}>2. Transaction Exports</Typography>
+                                    <Box sx={{ display: 'flex', gap: 2, mb: 3 }}>
+                                        <TextField 
+                                            label="From Date" 
+                                            type="date" 
+                                            slotProps={{ inputLabel: { shrink: true } }} 
+                                            value={exportFromDate} 
+                                            onChange={(e) => setExportFromDate(e.target.value)} 
+                                        />
+                                        <TextField 
+                                            label="To Date" 
+                                            type="date" 
+                                            slotProps={{ inputLabel: { shrink: true } }} 
+                                            value={exportToDate} 
+                                            onChange={(e) => setExportToDate(e.target.value)} 
+                                        />
+                                    </Box>
+                                    <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
+                                        <Button variant="outlined" startIcon={isExporting ? <CircularProgress size={20} /> : <DownloadIcon />} onClick={() => handleExport('sales', 'sales', true)} disabled={isExporting}>Export Sales</Button>
+                                        <Button variant="outlined" startIcon={isExporting ? <CircularProgress size={20} /> : <DownloadIcon />} onClick={() => handleExport('purchases', 'purchases', true)} disabled={isExporting}>Export Purchases</Button>
+                                        <Button variant="outlined" startIcon={isExporting ? <CircularProgress size={20} /> : <DownloadIcon />} onClick={() => handleExport('cash-sessions', 'cash-sessions', true)} disabled={isExporting}>Export Cash Sessions</Button>
+                                        <Button variant="outlined" startIcon={isExporting ? <CircularProgress size={20} /> : <DownloadIcon />} onClick={() => handleExport('audit-logs', 'audit-logs', true)} disabled={isExporting}>Export Audit Logs</Button>
                                     </Box>
                                 </Box>
                             )}

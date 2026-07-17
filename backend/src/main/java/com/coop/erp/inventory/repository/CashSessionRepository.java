@@ -27,4 +27,6 @@ public interface CashSessionRepository extends JpaRepository<CashSession, UUID> 
             @Param("toDate") LocalDate toDate,
             @Param("terminalId") UUID terminalId
     );
+    
+    List<CashSession> findByOpenedAtBetween(java.time.LocalDateTime start, java.time.LocalDateTime end);
 }

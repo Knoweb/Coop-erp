@@ -10,11 +10,14 @@ import com.coop.erp.core.entity.Shop;
 import com.coop.erp.core.entity.User;
 import com.coop.erp.core.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import com.coop.erp.auth.util.TenantContext;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -108,15 +111,18 @@ public class StockLedgerService {
                 .toList();
     }
 
+    @Transactional
     public StockReduceResponse reduceStock(StockReduceRequest request, java.util.UUID shopId) {
-        StockLedger stockLedger = stockLedgerRepository.findByItemIdAndShopId(request.getItemId(), shopId)
-                .orElseGet(() -> {
-                    if (shopId == null) {
-                        return stockLedgerRepository.findByItemIdAndShopIsNull(request.getItemId())
-                                .orElseThrow(() -> new RuntimeException("Stock record not found for selected item"));
-                    }
-                    throw new RuntimeException("Stock record not found for selected item");
-                });
+        UUID tenantId = TenantContext.getCurrentTenantId();
+        
+        StockLedger stockLedger;
+        if (shopId != null) {
+            stockLedger = stockLedgerRepository.findShopStockForUpdate(tenantId, shopId, request.getItemId())
+                .orElseThrow(() -> new RuntimeException("Stock record not found for selected item"));
+        } else {
+            stockLedger = stockLedgerRepository.findMainStockForUpdate(tenantId, request.getItemId())
+                .orElseThrow(() -> new RuntimeException("Stock record not found for selected item"));
+        }
 
         Integer previousQuantity = stockLedger.getCurrentQty();
 
@@ -143,15 +149,18 @@ public class StockLedgerService {
                 .build();
     }
 
+    @Transactional
     public StockAdjustResponse adjustStockToActualQuantity(StockAdjustRequest request, java.util.UUID shopId) {
-        StockLedger stockLedger = stockLedgerRepository.findByItemIdAndShopId(request.getItemId(), shopId)
-                .orElseGet(() -> {
-                    if (shopId == null) {
-                        return stockLedgerRepository.findByItemIdAndShopIsNull(request.getItemId())
-                                .orElseThrow(() -> new RuntimeException("Stock record not found for selected item"));
-                    }
-                    throw new RuntimeException("Stock record not found for selected item");
-                });
+        UUID tenantId = TenantContext.getCurrentTenantId();
+        
+        StockLedger stockLedger;
+        if (shopId != null) {
+            stockLedger = stockLedgerRepository.findShopStockForUpdate(tenantId, shopId, request.getItemId())
+                .orElseThrow(() -> new RuntimeException("Stock record not found for selected item"));
+        } else {
+            stockLedger = stockLedgerRepository.findMainStockForUpdate(tenantId, request.getItemId())
+                .orElseThrow(() -> new RuntimeException("Stock record not found for selected item"));
+        }
 
         Integer previousQuantity = stockLedger.getCurrentQty();
         Integer actualQuantity = request.getActualQuantity();

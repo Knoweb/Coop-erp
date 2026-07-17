@@ -17,7 +17,6 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import java.util.UUID;
 
 @Entity
-@org.hibernate.annotations.Filter(name = "tenantFilter", condition = "tenant_id = :tenantId")
 @Table(name = "sequence_counters", schema = "grocery", uniqueConstraints = {
         @UniqueConstraint(columnNames = {"scope", "sequence_date"})
 })

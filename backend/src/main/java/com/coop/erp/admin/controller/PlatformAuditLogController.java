@@ -2,7 +2,6 @@ package com.coop.erp.admin.controller;
 
 import com.coop.erp.admin.entity.AuditLog;
 import com.coop.erp.admin.repository.AuditLogRepository;
-import com.coop.erp.auth.util.TenantContext;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -19,33 +18,51 @@ import java.time.LocalDateTime;
 import java.util.UUID;
 
 @RestController
-@RequestMapping("/api/v1/admin/audit-logs")
+@RequestMapping("/api/v1/platform")
 @RequiredArgsConstructor
-public class AuditLogController {
+public class PlatformAuditLogController {
 
     private final AuditLogRepository repository;
 
-    @GetMapping
-    @PreAuthorize("hasAnyAuthority('ADMIN', 'TENANT_ADMIN')")
-    public ResponseEntity<Page<AuditLog>> getAuditLogs(
+    @GetMapping("/audit-logs")
+    @PreAuthorize("hasAuthority('PLATFORM_ADMIN')")
+    public ResponseEntity<Page<AuditLog>> getPlatformLogs(
+            @RequestParam(required = false) LocalDateTime fromDate,
+            @RequestParam(required = false) LocalDateTime toDate,
+            @RequestParam(required = false) UUID tenantId,
+            @RequestParam(required = false) String action,
+            @RequestParam(required = false) String entityType,
+            @RequestParam(required = false) String username,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "25") int size) {
+            
+        return ResponseEntity.ok(getLogs(tenantId, fromDate, toDate, action, entityType, username, page, size));
+    }
+    
+    @GetMapping("/tenants/{tenantId}/audit-logs")
+    @PreAuthorize("hasAuthority('PLATFORM_ADMIN')")
+    public ResponseEntity<Page<AuditLog>> getTenantLogs(
+            @PathVariable UUID tenantId,
             @RequestParam(required = false) LocalDateTime fromDate,
             @RequestParam(required = false) LocalDateTime toDate,
             @RequestParam(required = false) String action,
             @RequestParam(required = false) String entityType,
             @RequestParam(required = false) String username,
-            @RequestParam(required = false) UUID shopId,
-            @RequestParam(required = false) UUID terminalId,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "25") int size) {
             
-        UUID tenantId = TenantContext.getCurrentTenantId();
-        
+        return ResponseEntity.ok(getLogs(tenantId, fromDate, toDate, action, entityType, username, page, size));
+    }
+    
+    private Page<AuditLog> getLogs(UUID tenantId, LocalDateTime fromDate, LocalDateTime toDate, String action, String entityType, String username, int page, int size) {
         Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
 
         Specification<AuditLog> spec = (root, query, cb) -> {
             List<Predicate> predicates = new ArrayList<>();
-            predicates.add(cb.equal(root.get("tenant").get("id"), tenantId));
             
+            if (tenantId != null) {
+                predicates.add(cb.equal(root.get("tenant").get("id"), tenantId));
+            }
             if (fromDate != null) {
                 predicates.add(cb.greaterThanOrEqualTo(root.get("createdAt"), fromDate));
             }
@@ -61,15 +78,9 @@ public class AuditLogController {
             if (username != null && !username.isEmpty()) {
                 predicates.add(cb.equal(root.get("username"), username));
             }
-            if (shopId != null) {
-                predicates.add(cb.equal(root.get("shopId"), shopId));
-            }
-            if (terminalId != null) {
-                predicates.add(cb.equal(root.get("terminalId"), terminalId));
-            }
             return cb.and(predicates.toArray(new Predicate[0]));
         };
 
-        return ResponseEntity.ok(repository.findAll(spec, pageable));
+        return repository.findAll(spec, pageable);
     }
 }

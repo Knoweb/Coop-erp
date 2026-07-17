@@ -2,9 +2,8 @@ package com.coop.erp.admin.service;
 
 import com.coop.erp.admin.dto.UserDto;
 import com.coop.erp.core.entity.User;
-import com.coop.erp.admin.entity.AuditLog;
+import com.coop.erp.admin.service.AuditLogService;
 import com.coop.erp.core.repository.UserRepository;
-import com.coop.erp.admin.repository.AuditLogRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -21,7 +20,7 @@ public class UserService {
 
     private final UserRepository repository;
     private final PasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
-    private final AuditLogRepository auditLogRepository;
+    private final AuditLogService auditLogService;
 
     @Transactional
     public UserDto.Response createUser(UserDto.CreateRequest request) {
@@ -39,17 +38,14 @@ public class UserService {
 
         User savedUser = repository.save(user);
 
-        // 2. WRITE TO THE AUDIT LEDGER IMMEDIATELY AFTER SAVING
-        AuditLog log = AuditLog.builder()
-                // Ideally, you get the logged-in admin's ID from Spring Security.
-                // For now, we use a placeholder or the new user's ID just to test.
-                .userId(savedUser.getId())
-                .serviceName("ADMIN-SERVICE")
-                .action("CREATE_USER")
-                .description("Provisioned new account for username: " + request.username() + " with role: " + request.role())
-                .build();
-
-        auditLogRepository.save(log); // Save the record!
+        auditLogService.logTenantAction(
+                "USER_CREATED", 
+                "USER", 
+                savedUser.getId().toString(), 
+                "Provisioned new account for username: " + request.username() + " with role: " + request.role(),
+                null,
+                null
+        );
 
         return mapToResponse(savedUser);
     }
@@ -67,7 +63,15 @@ public class UserService {
         User user = repository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("User not found"));
         user.setIsActive(!user.getIsActive());
-        repository.save(user);
+        User savedUser = repository.save(user);
+        auditLogService.logTenantAction(
+                "USER_STATUS_CHANGED",
+                "USER",
+                savedUser.getId().toString(),
+                "Changed status to " + savedUser.getIsActive() + " for user " + savedUser.getUsername(),
+                String.valueOf(!savedUser.getIsActive()),
+                String.valueOf(savedUser.getIsActive())
+        );
     }
 
     private UserDto.Response mapToResponse(User user) {
@@ -92,5 +96,13 @@ public class UserService {
         // Hash the new password and override the old one
         user.setPassword(passwordEncoder.encode(newRawPassword));
         repository.save(user);
+        auditLogService.logTenantAction(
+                "USER_UPDATED",
+                "USER",
+                user.getId().toString(),
+                "Reset password for user " + user.getUsername(),
+                null,
+                null
+        );
     }
 }

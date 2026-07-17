@@ -9,6 +9,7 @@ import com.coop.erp.core.repository.ShopRepository;
 import com.coop.erp.inventory.entity.CashSession;
 import com.coop.erp.inventory.entity.CashSessionStatus;
 import com.coop.erp.inventory.repository.CashSessionRepository;
+import com.coop.erp.admin.service.AuditLogService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -28,6 +29,7 @@ public class CashSessionService {
     private final ShopRepository shopRepository;
     private final ShopTerminalRepository shopTerminalRepository;
     private final UserRepository userRepository;
+    private final AuditLogService auditLogService;
 
     @Transactional(readOnly = true)
     public Optional<CashSession> getCurrentOpenSession(UUID terminalId, String username) {
@@ -64,7 +66,18 @@ public class CashSessionService {
                 .status(CashSessionStatus.OPEN)
                 .build();
 
-        return cashSessionRepository.save(session);
+        CashSession savedSession = cashSessionRepository.save(session);
+        auditLogService.logShopAction(
+                shop.getId(),
+                terminal.getId(),
+                "CASH_SESSION_OPENED",
+                "CASH_SESSION",
+                savedSession.getId().toString(),
+                "Opened cash session on terminal " + terminal.getTerminalCode() + " by " + user.getUsername(),
+                null,
+                String.format("{\"openingCash\": %s}", openingCash)
+        );
+        return savedSession;
     }
 
     @Transactional
@@ -88,7 +101,18 @@ public class CashSessionService {
         session.setStatus(CashSessionStatus.CLOSED);
         session.setNotes(notes);
 
-        return cashSessionRepository.save(session);
+        CashSession savedSession = cashSessionRepository.save(session);
+        auditLogService.logShopAction(
+                savedSession.getShop().getId(),
+                savedSession.getTerminal().getId(),
+                "CASH_SESSION_CLOSED",
+                "CASH_SESSION",
+                savedSession.getId().toString(),
+                "Closed cash session on terminal " + savedSession.getTerminal().getTerminalCode() + " by " + username,
+                String.format("{\"expectedCash\": %s}", savedSession.getExpectedCash()),
+                String.format("{\"actualCash\": %s, \"difference\": %s}", savedSession.getActualCash(), savedSession.getDifference())
+        );
+        return savedSession;
     }
 
     @Transactional(readOnly = true)

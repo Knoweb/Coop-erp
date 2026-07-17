@@ -93,8 +93,10 @@ public class AccountingSeeder implements CommandLineRunner {
                 // If internal shop transfer, we might skip revenue. For now, we backfill Customer sales.
                 if (sale.getSaleType() != null && sale.getSaleType().name().equals("CUSTOMER") || sale.getTargetShop() == null) {
                     
+                    String cashAccount = (sale.getPaymentMethod() != null && sale.getPaymentMethod().name().equals("CARD")) ? "1010" : "1000";
+
                     List<JournalEntryService.JournalLineRequest> lines = new java.util.ArrayList<>(List.of(
-                            new JournalEntryService.JournalLineRequest("1000", "Sale Receipt", sale.getTotalAmount(), BigDecimal.ZERO),
+                            new JournalEntryService.JournalLineRequest(cashAccount, "Sale Receipt", sale.getTotalAmount(), BigDecimal.ZERO),
                             new JournalEntryService.JournalLineRequest("4000", "Sale Revenue", BigDecimal.ZERO, sale.getTotalAmount())
                     ));
 
@@ -109,6 +111,7 @@ public class AccountingSeeder implements CommandLineRunner {
                             sale.getSaleDate().toLocalDate(),
                             "Backfill Sale " + sale.getSaleNumber(),
                             sale.getCreatedBy(),
+                            sale.getTenant(),
                             lines
                     );
                 }
@@ -134,6 +137,7 @@ public class AccountingSeeder implements CommandLineRunner {
                         purchase.getInvoiceDate(),
                         "Backfill Purchase " + purchase.getInvoiceNumber(),
                         "System",
+                        purchase.getTenant(),
                         lines
                 );
             } catch (IllegalArgumentException e) {

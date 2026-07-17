@@ -13,11 +13,13 @@ import ShopUsersPage from "./features/admin/ShopUsersPage";
 
 import SystemUsersPage from "./features/admin/SystemUsersPage";
 import SettingsPage from "./features/admin/SettingsPage";
+import AuditLogsPage from "./features/admin/AuditLogsPage";
 
 import GroceryShopDashboard from "./features/grocery-shop/GroceryShopDashboard";
 import SupplierPage from "./features/grocery-shop/SupplierPage";
 import ShopSettingsPage from "./features/grocery-shop/ShopSettingsPage";
 import ItemPage from "./features/grocery-shop/ItemPage";
+import ProductsImportPage from "./features/grocery-shop/ProductsImportPage";
 import AdminPurchasesPage from "./features/admin/AdminPurchasesPage";
 import StockLedgerPage from "./features/grocery-shop/StockLedgerPage";
 import SalesPage from "./features/grocery-shop/SalesPage";
@@ -30,6 +32,15 @@ import IncomeStatementPage from "./features/admin/reports/IncomeStatementPage";
 import TrialBalancePage from "./features/admin/reports/TrialBalancePage";
 import CashFlowPage from "./features/admin/reports/CashFlowPage";
 import GeneralLedgerPage from "./features/admin/reports/GeneralLedgerPage";
+
+import PlatformLayout from "./layouts/PlatformLayout";
+import PlatformDashboard from "./features/platform/PlatformDashboard";
+import TenantsPage from "./features/platform/TenantsPage";
+import CreateTenantPage from "./features/platform/CreateTenantPage";
+import EditTenantPage from "./features/platform/EditTenantPage";
+import TenantAdminsPage from "./features/platform/TenantAdminsPage";
+import PlatformAuditLogsPage from "./features/platform/PlatformAuditLogsPage";
+import PlatformExportsPage from './features/platform/PlatformExportsPage';
 
 // --- UPGRADED: Role-Based Protected Route ---
 const ProtectedRoute = ({ allowedRoles }: { allowedRoles: string[] }) => {
@@ -58,7 +69,10 @@ const RootBoundary = () => {
   if (!token) return <Navigate to="/login" replace />;
 
   switch (role) {
-    case 'ADMIN': 
+    case 'PLATFORM_ADMIN':
+        return <Navigate to="/platform/dashboard" replace />;
+    case 'ADMIN':
+    case 'TENANT_ADMIN':
         return <Navigate to="/admin/dashboard" replace />;
     case 'SHOP_ADMIN':
     case 'SHOP_USER':
@@ -75,7 +89,20 @@ function App() {
       <Routes>
         <Route path="/login" element={<Login />} />
 
-        <Route element={<ProtectedRoute allowedRoles={['ROLE_ADMIN']} />}>
+        <Route element={<ProtectedRoute allowedRoles={['ROLE_PLATFORM_ADMIN']} />}>
+          <Route path="/platform" element={<PlatformLayout />}>
+            <Route index element={<Navigate to="dashboard" replace />} />
+            <Route path="dashboard" element={<PlatformDashboard />} />
+            <Route path="tenants" element={<TenantsPage />} />
+            <Route path="tenants/create" element={<CreateTenantPage />} />
+            <Route path="tenants/:id/edit" element={<EditTenantPage />} />
+            <Route path="tenants/:id/admins" element={<TenantAdminsPage />} />
+            <Route path="audit-logs" element={<PlatformAuditLogsPage />} />
+            <Route path="exports" element={<PlatformExportsPage />} />
+          </Route>
+        </Route>
+
+        <Route element={<ProtectedRoute allowedRoles={['ROLE_ADMIN', 'ROLE_TENANT_ADMIN']} />}>
           <Route path="/admin" element={<AdminLayout />}>
             <Route index element={<Navigate to="dashboard" replace />} />
             <Route path="dashboard" element={<AdminDashboard />} />
@@ -83,6 +110,7 @@ function App() {
             <Route path="shop-users" element={<ShopUsersPage />} />
             <Route path="system-users" element={<SystemUsersPage />} />
             <Route path="products" element={<ItemPage />} />
+            <Route path="products/import" element={<ProductsImportPage />} />
             <Route path="inventory" element={<StockLedgerPage />} />
             <Route path="purchases" element={<AdminPurchasesPage />} />
             <Route path="sales" element={<SalesPage />} />
@@ -92,6 +120,7 @@ function App() {
             <Route path="reports/trial-balance" element={<TrialBalancePage />} />
             <Route path="reports/cash-flow" element={<CashFlowPage />} />
             <Route path="reports/general-ledger" element={<GeneralLedgerPage />} />
+            <Route path="audit-logs" element={<AuditLogsPage />} />
             <Route path="settings" element={<SettingsPage />} />
           </Route>
         </Route>
