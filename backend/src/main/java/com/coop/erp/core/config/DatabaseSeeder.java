@@ -38,7 +38,7 @@ public class DatabaseSeeder implements CommandLineRunner {
 
     @Override
     public void run(String... args) throws Exception {
-        Tenant defaultTenant = transactionTemplate.execute(status -> seedTenantAndBackfill());
+        Tenant defaultTenant = seedTenantAndBackfill();
         try {
             settingsService.seedDefaultSettings();
         } catch (Exception e) {
@@ -160,32 +160,35 @@ public class DatabaseSeeder implements CommandLineRunner {
             String table = parts[1];
 
             try {
-                // 1. Check if table exists
-                Number tableExists = (Number) entityManager.createNativeQuery(
-                        "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = :schema AND table_name = :table"
-                ).setParameter("schema", schema).setParameter("table", table).getSingleResult();
+                transactionTemplate.execute(status -> {
+                    // 1. Check if table exists
+                    Number tableExists = (Number) entityManager.createNativeQuery(
+                            "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = :schema AND table_name = :table"
+                    ).setParameter("schema", schema).setParameter("table", table).getSingleResult();
 
-                if (tableExists.intValue() == 0) {
-                    System.out.println("Skipping tenant backfill for missing table " + fullTable);
-                    continue;
-                }
+                    if (tableExists.intValue() == 0) {
+                        System.out.println("Skipping tenant backfill for missing table " + fullTable);
+                        return null;
+                    }
 
-                // 2. Check if tenant_id column exists
-                Number columnExists = (Number) entityManager.createNativeQuery(
-                        "SELECT COUNT(*) FROM information_schema.columns WHERE table_schema = :schema AND table_name = :table AND column_name = 'tenant_id'"
-                ).setParameter("schema", schema).setParameter("table", table).getSingleResult();
+                    // 2. Check if tenant_id column exists
+                    Number columnExists = (Number) entityManager.createNativeQuery(
+                            "SELECT COUNT(*) FROM information_schema.columns WHERE table_schema = :schema AND table_name = :table AND column_name = 'tenant_id'"
+                    ).setParameter("schema", schema).setParameter("table", table).getSingleResult();
 
-                if (columnExists.intValue() == 0) {
-                    System.out.println("Skipping tenant backfill for missing column tenant_id in " + fullTable);
-                    continue;
-                }
+                    if (columnExists.intValue() == 0) {
+                        System.out.println("Skipping tenant backfill for missing column tenant_id in " + fullTable);
+                        return null;
+                    }
 
-                // 3. Perform update only if both exist
-                entityManager.createNativeQuery(
-                        "UPDATE " + fullTable + " SET tenant_id = :tenantId WHERE tenant_id IS NULL"
-                ).setParameter("tenantId", defaultTenant.getId()).executeUpdate();
+                    // 3. Perform update only if both exist
+                    entityManager.createNativeQuery(
+                            "UPDATE " + fullTable + " SET tenant_id = :tenantId WHERE tenant_id IS NULL"
+                    ).setParameter("tenantId", defaultTenant.getId()).executeUpdate();
 
-                System.out.println("Successfully backfilled tenant_id for " + fullTable);
+                    System.out.println("Successfully backfilled tenant_id for " + fullTable);
+                    return null;
+                });
             } catch (Exception e) {
                 System.err.println("Exception while checking/backfilling table " + fullTable + ": " + e.getMessage());
             }

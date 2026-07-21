@@ -24,7 +24,8 @@ import {
   TextField,
   Typography,
   ToggleButton,
-  ToggleButtonGroup
+  ToggleButtonGroup,
+  DialogContentText
 } from "@mui/material";
 import DeleteIcon from "@mui/icons-material/Delete";
 import AddIcon from "@mui/icons-material/Add";
@@ -107,6 +108,7 @@ function SalesPage() {
   const [shops, setShops] = useState<Shop[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
   const [selectedSale, setSelectedSale] = useState<SaleResponse | null>(null);
+  const [successSaleId, setSuccessSaleId] = useState<string | null>(null);
 
   const loadData = async (isPoll = false) => {
     try {
@@ -307,7 +309,10 @@ function SalesPage() {
 
     try {
       const url = isAdmin ? "/admin/sales" : "/shop/sales";
-      await api.post(url, payload);
+      const response = await api.post(url, payload);
+      if (response.data && response.data.id) {
+        setSuccessSaleId(response.data.id);
+      }
       setMessage("Sale recorded successfully.");
       resetForm();
       loadData();
@@ -811,6 +816,28 @@ function SalesPage() {
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setSelectedSale(null)}>Close</Button>
+        </DialogActions>
+      </Dialog>
+
+      <Dialog open={!!successSaleId} onClose={() => setSuccessSaleId(null)}>
+        <DialogTitle sx={{ fontWeight: "bold", color: "success.main" }}>Sale Successful!</DialogTitle>
+        <DialogContent>
+          <DialogContentText>
+            The sale has been successfully recorded in the system. Would you like to print the invoice now?
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setSuccessSaleId(null)} color="inherit">New Sale</Button>
+          <Button 
+            onClick={() => {
+              window.open(`/shop/documents/sales/${successSaleId}/invoice`, '_self');
+              setSuccessSaleId(null);
+            }} 
+            variant="contained" 
+            color="primary"
+          >
+            Print Invoice
+          </Button>
         </DialogActions>
       </Dialog>
 

@@ -41,7 +41,7 @@ export const SaleInvoicePrint: React.FC = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const response = await api.get(`/shop/print/sales/${saleId}/invoice`);
+        const response = await api.get(`/shop/documents/sales/${saleId}/invoice`);
         setData(response.data);
       } catch (error) {
         console.error('Failed to fetch sale data for print', error);

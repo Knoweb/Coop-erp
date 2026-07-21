@@ -563,7 +563,7 @@ function AdminPurchasesPage() {
                   <TableCell sx={{ fontWeight: "bold", color: "var(--text-color)" }}>Items Count</TableCell>
                   <TableCell sx={{ fontWeight: "bold", color: "var(--text-color)" }}>Total Quantity</TableCell>
                   <TableCell sx={{ fontWeight: "bold", color: "var(--text-color)" }}>Total Amount</TableCell>
-                  <TableCell sx={{ fontWeight: "bold", color: "var(--text-color)" }}>View Details</TableCell>
+                  <TableCell sx={{ fontWeight: "bold", color: "var(--text-color)" }}>Actions</TableCell>
                 </TableRow>
               </TableHead>
 
@@ -589,13 +589,24 @@ function AdminPurchasesPage() {
                       </TableCell>
                       
                       <TableCell>
-                        <Button
-                          variant="contained"
-                          size="small"
-                          onClick={() => setSelectedGrn(grn)}
-                        >
-                          View Details
-                        </Button>
+                        <Box sx={{ display: 'flex', gap: 1 }}>
+                          <Button
+                            variant="outlined"
+                            size="small"
+                            onClick={() => setSelectedGrn(grn)}
+                          >
+                            Details
+                          </Button>
+                          <Button
+                            variant="outlined"
+                            size="small"
+                            color="secondary"
+                            startIcon={<PrintIcon />}
+                            onClick={() => navigate(`/admin/documents/grn/${grn.id}/print`)}
+                          >
+                            Print GRN
+                          </Button>
+                        </Box>
                       </TableCell>
                     </TableRow>
                   );

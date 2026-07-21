@@ -420,6 +420,22 @@ public class SaleService {
                 .orElseThrow(() -> new IllegalArgumentException("Sale not found."));
     }
 
+    public SaleResponse getSaleByIdForPrint(UUID id, UUID requestingShopId, boolean isAdmin) {
+        Sale sale = saleRepository.findById(id)
+                .orElseThrow(() -> new org.springframework.web.server.ResponseStatusException(
+                        org.springframework.http.HttpStatus.NOT_FOUND, "Sale ID does not exist"));
+
+        if (!isAdmin && requestingShopId != null) {
+            boolean isSource = sale.getSourceShop() != null && sale.getSourceShop().getId().equals(requestingShopId);
+            boolean isTarget = sale.getTargetShop() != null && sale.getTargetShop().getId().equals(requestingShopId);
+            if (!isSource && !isTarget) {
+                throw new org.springframework.web.server.ResponseStatusException(
+                        org.springframework.http.HttpStatus.FORBIDDEN, "Sale belongs to another shop/tenant");
+            }
+        }
+        return mapToResponse(sale);
+    }
+
     private SaleResponse mapToResponse(Sale sale) {
         List<SaleResponse.SaleItemResponse> itemResponses = sale.getItems().stream().map(i -> 
                 SaleResponse.SaleItemResponse.builder()

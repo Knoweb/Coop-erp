@@ -22,6 +22,7 @@ export default function CashClosingPage() {
   const [actualCash, setActualCash] = useState<number>(0);
   const [notes, setNotes] = useState<string>('');
   const [error, setError] = useState<string>('');
+  const [closedSessionId, setClosedSessionId] = useState<string | null>(null);
 
   useEffect(() => {
     if (terminal) {
@@ -67,9 +68,10 @@ export default function CashClosingPage() {
       loadSession();
       setActualCash(0);
       setNotes('');
+      setClosedSessionId(closedSessionId);
       
-      // Redirect to print closing sheet
-      navigate(`/shop/documents/cash-sessions/${closedSessionId}/closing-sheet`);
+      // Auto-open in new tab instead of redirecting so user can still see buttons
+      window.open(`/shop/documents/cash-sessions/${closedSessionId}/closing-sheet`, '_blank');
     } catch (err: any) {
       setError(err.response?.data?.message || 'Failed to close session');
     }
@@ -90,7 +92,8 @@ export default function CashClosingPage() {
       {error && <Alert severity="error" sx={{ mb: 3 }}>{error}</Alert>}
 
       {!session ? (
-        <Card sx={{ maxWidth: 500, mx: 'auto', mt: 4 }}>
+        <Box>
+          <Card sx={{ maxWidth: 500, mx: 'auto', mt: 4 }}>
           <CardContent>
             <Typography variant="h6" sx={{ mb: 2 }}>Open New Shift</Typography>
             <TextField
@@ -106,6 +109,47 @@ export default function CashClosingPage() {
             </Button>
           </CardContent>
         </Card>
+
+        {closedSessionId ? (
+          <Card sx={{ maxWidth: 500, mx: 'auto', mt: 4 }}>
+            <CardContent>
+              <Alert severity="success" sx={{ mb: 3 }}>Shift closed successfully.</Alert>
+              <Typography variant="h6" sx={{ mb: 2 }}>Print Documents</Typography>
+              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                <Button 
+                  variant="outlined" 
+                  onClick={() => window.open(`/shop/documents/cash-sessions/${closedSessionId}/closing-sheet`, '_blank')}
+                >
+                  Print Closing Sheet
+                </Button>
+                <Button 
+                  variant="outlined" 
+                  onClick={() => window.open(`/shop/documents/cash-sessions/${closedSessionId}/denomination-sheet`, '_blank')}
+                >
+                  Print Denomination Sheet
+                </Button>
+                <Button 
+                  variant="text" 
+                  onClick={() => navigate('/shop/sales/history')}
+                >
+                  Go to Sales History
+                </Button>
+              </Box>
+            </CardContent>
+          </Card>
+        ) : (
+          <Card sx={{ maxWidth: 500, mx: 'auto', mt: 4 }}>
+            <CardContent>
+              <Typography variant="h6" sx={{ mb: 2, color: 'text.secondary' }}>Print Documents</Typography>
+              <Typography variant="body2" sx={{ mb: 2, color: 'text.secondary' }}>Close shift first to print closing sheet.</Typography>
+              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                <Button variant="outlined" disabled>Print Closing Sheet</Button>
+                <Button variant="outlined" disabled>Print Denomination Sheet</Button>
+              </Box>
+            </CardContent>
+          </Card>
+        )}
+      </Box>
       ) : (
         <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' }, gap: 3 }}>
           <Box>

@@ -87,6 +87,10 @@ export default function AccountingIntegrationPage() {
         </Tooltip>
       </Box>
 
+      <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+        Coop operations are posted to Ginum asynchronously. Failed items can be retried here.
+      </Typography>
+
       {error && (
         <Paper sx={{ p: 2, mb: 3, bgcolor: '#ffebee', color: '#c62828' }}>
           <Typography>{error}</Typography>
@@ -109,8 +113,10 @@ export default function AccountingIntegrationPage() {
           <TableBody>
             {logs.length === 0 && !loading && (
               <TableRow>
-                <TableCell colSpan={7} align="center" sx={{ py: 3 }}>
-                  <Typography color="text.secondary">No integration logs found.</Typography>
+                <TableCell colSpan={7} align="center" sx={{ py: 4 }}>
+                  <Typography variant="body1" color="text.secondary">
+                    No accounting postings yet. Complete a POS sale or GRN to create a posting.
+                  </Typography>
                 </TableCell>
               </TableRow>
             )}

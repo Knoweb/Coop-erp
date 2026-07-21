@@ -187,6 +187,11 @@ export default function SalesHistoryPage() {
         </Box>
       </Paper>
 
+      {sales.length > 0 && (
+        <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+          Use the Print Invoice action beside a sale to generate the printable invoice.
+        </Typography>
+      )}
       <TableContainer component={Paper}>
         <Table>
           <TableHead>
@@ -215,14 +220,21 @@ export default function SalesHistoryPage() {
                     variant="outlined" 
                     onClick={() => navigate(`/shop/documents/sales/${sale.id}/invoice`)}
                   >
-                    Print
+                    Print Invoice
                   </Button>
                 </TableCell>
               </TableRow>
             ))}
             {sales.length === 0 && (
               <TableRow>
-                <TableCell colSpan={7} align="center">No sales found for selected criteria.</TableCell>
+                <TableCell colSpan={7} align="center" sx={{ py: 4 }}>
+                  <Typography variant="body1" color="text.secondary" gutterBottom>
+                    No sales found. Create a sale from Sales (POS) first, then come back here to print the invoice.
+                  </Typography>
+                  <Button variant="contained" onClick={() => navigate('/shop/sales')} sx={{ mt: 2 }}>
+                    Go to POS
+                  </Button>
+                </TableCell>
               </TableRow>
             )}
           </TableBody>
