@@ -11,10 +11,12 @@ import {
 } from '@mui/material';
 import { cashSessionService, type CashSession } from '../../services/cashSessionService';
 import { getTerminalInfo } from '../../services/authService';
+import { useNavigate } from 'react-router-dom';
 
 export default function CashClosingPage() {
   const terminal = getTerminalInfo();
   const shopId = localStorage.getItem('shopId');
+  const navigate = useNavigate();
   const [session, setSession] = useState<CashSession | null>(null);
   const [openingCash, setOpeningCash] = useState<number>(0);
   const [actualCash, setActualCash] = useState<number>(0);
@@ -59,9 +61,15 @@ export default function CashClosingPage() {
     try {
       setError('');
       await cashSessionService.closeSession(session.id, actualCash, notes);
+      
+      const closedSessionId = session.id;
+      
       loadSession();
       setActualCash(0);
       setNotes('');
+      
+      // Redirect to print closing sheet
+      navigate(`/shop/documents/cash-sessions/${closedSessionId}/closing-sheet`);
     } catch (err: any) {
       setError(err.response?.data?.message || 'Failed to close session');
     }

@@ -15,7 +15,7 @@ import com.coop.erp.inventory.entity.StockMovement;
 import com.coop.erp.inventory.entity.CashSession;
 import com.coop.erp.inventory.entity.PaymentMethod;
 import com.coop.erp.inventory.entity.PaymentStatus;
-import com.coop.erp.accounting.service.JournalEntryService;
+import com.coop.erp.accounting.service.AccountingOutboxService;
 import com.coop.erp.inventory.repository.ItemProductRepository;
 import com.coop.erp.inventory.repository.SaleRepository;
 import com.coop.erp.inventory.repository.StockLedgerRepository;
@@ -43,7 +43,7 @@ public class SaleService {
     private final StockLedgerRepository stockLedgerRepository;
     private final ItemProductRepository itemProductRepository;
     private final ShopRepository shopRepository;
-    private final JournalEntryService journalEntryService;
+    private final AccountingOutboxService accountingOutboxService;
     private final SequenceGeneratorService sequenceGeneratorService;
     private final StockMovementRepository stockMovementRepository;
     private final ShopTerminalRepository shopTerminalRepository;
@@ -176,27 +176,30 @@ public class SaleService {
                     totalCogs = totalCogs.add(si.getItem().getCostPrice().multiply(BigDecimal.valueOf(si.getQuantity())));
                 }
             }
-
+        if (savedSale.getPaymentStatus() == PaymentStatus.PAID) {
             String cashAccount = (savedSale.getPaymentMethod() == PaymentMethod.CARD) ? "1010" : "1000";
-
-            List<JournalEntryService.JournalLineRequest> lines = new ArrayList<>(List.of(
-                    new JournalEntryService.JournalLineRequest(cashAccount, "Sale Receipt", savedSale.getTotalAmount(), BigDecimal.ZERO),
-                    new JournalEntryService.JournalLineRequest("4000", "Sale Revenue", BigDecimal.ZERO, savedSale.getTotalAmount())
+            
+            List<AccountingOutboxService.PostingLine> lines = new ArrayList<>(List.of(
+                    new AccountingOutboxService.PostingLine(cashAccount, savedSale.getTotalAmount(), BigDecimal.ZERO, "Sale Receipt"),
+                    new AccountingOutboxService.PostingLine("4000", BigDecimal.ZERO, savedSale.getTotalAmount(), "Sale Revenue")
             ));
 
             if (totalCogs.compareTo(BigDecimal.ZERO) > 0) {
-                lines.add(new JournalEntryService.JournalLineRequest("5000", "COGS", totalCogs, BigDecimal.ZERO));
-                lines.add(new JournalEntryService.JournalLineRequest("1200", "Inventory Reduction", BigDecimal.ZERO, totalCogs));
+                lines.add(new AccountingOutboxService.PostingLine("5000", totalCogs, BigDecimal.ZERO, "COGS"));
+                lines.add(new AccountingOutboxService.PostingLine("1200", BigDecimal.ZERO, totalCogs, "Inventory Reduction"));
             }
 
-            journalEntryService.postEntry(
+            accountingOutboxService.queuePosting(
+                    tenantId,
+                    null,
                     "SALE",
                     savedSale.getId(),
+                    "COOPFED_KILINOCHCHI",
                     savedSale.getSaleDate().toLocalDate(),
                     "Customer Sale " + savedSale.getSaleNumber(),
-                    savedSale.getCreatedBy(),
                     lines
             );
+        }
         }
 
         auditLogService.logTenantAction(
@@ -345,22 +348,24 @@ public class SaleService {
 
         String cashAccount = (savedSale.getPaymentMethod() == PaymentMethod.CARD) ? "1010" : "1000";
 
-        List<JournalEntryService.JournalLineRequest> lines = new ArrayList<>(List.of(
-                new JournalEntryService.JournalLineRequest(cashAccount, "Sale Receipt", savedSale.getTotalAmount(), BigDecimal.ZERO),
-                new JournalEntryService.JournalLineRequest("4000", "Sale Revenue", BigDecimal.ZERO, savedSale.getTotalAmount())
+        List<AccountingOutboxService.PostingLine> lines = new ArrayList<>(List.of(
+                new AccountingOutboxService.PostingLine(cashAccount, savedSale.getTotalAmount(), BigDecimal.ZERO, "Sale Receipt"),
+                new AccountingOutboxService.PostingLine("4000", BigDecimal.ZERO, savedSale.getTotalAmount(), "Sale Revenue")
         ));
 
         if (totalCogs.compareTo(BigDecimal.ZERO) > 0) {
-            lines.add(new JournalEntryService.JournalLineRequest("5000", "COGS", totalCogs, BigDecimal.ZERO));
-            lines.add(new JournalEntryService.JournalLineRequest("1200", "Inventory Reduction", BigDecimal.ZERO, totalCogs));
+            lines.add(new AccountingOutboxService.PostingLine("5000", totalCogs, BigDecimal.ZERO, "COGS"));
+            lines.add(new AccountingOutboxService.PostingLine("1200", BigDecimal.ZERO, totalCogs, "Inventory Reduction"));
         }
 
-        journalEntryService.postEntry(
+        accountingOutboxService.queuePosting(
+                tenantId,
+                sourceShop.getId(),
                 "SALE",
                 savedSale.getId(),
+                "COOPFED_KILINOCHCHI",
                 savedSale.getSaleDate().toLocalDate(),
                 "Shop Sale " + savedSale.getSaleNumber(),
-                savedSale.getCreatedBy(),
                 lines
         );
 
@@ -407,6 +412,12 @@ public class SaleService {
         return saleRepository.findByIdAndTargetShopId(id, shopId)
                 .map(this::mapToResponse)
                 .orElseThrow(() -> new IllegalArgumentException("Purchase history not found."));
+    }
+
+    public SaleResponse getSaleById(UUID id) {
+        return saleRepository.findById(id)
+                .map(this::mapToResponse)
+                .orElseThrow(() -> new IllegalArgumentException("Sale not found."));
     }
 
     private SaleResponse mapToResponse(Sale sale) {

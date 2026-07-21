@@ -128,6 +128,12 @@ public class StockAdjustmentService {
                 .toList();
     }
 
+    public StockAdjustmentResponse getById(UUID id) {
+        return stockAdjustmentLogRepository.findById(id)
+                .map(this::buildResponse)
+                .orElseThrow(() -> new RuntimeException("Stock adjustment not found"));
+    }
+
     private StockAdjustmentResponse buildResponse(StockAdjustmentLog log) {
         return StockAdjustmentResponse.builder()
                 .id(log.getId())

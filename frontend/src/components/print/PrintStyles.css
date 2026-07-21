@@ -1,0 +1,171 @@
+@media print {
+  body {
+    background-color: white !important;
+    color: black !important;
+    margin: 0;
+    padding: 0;
+  }
+  
+  /* Hide sidebar, topbar, and any non-print elements */
+  .sidebar, .topbar, .navbar, nav, aside, .btn-no-print, .actions, .no-print {
+    display: none !important;
+  }
+  
+  /* Reset layout constraints for print */
+  .layout-content, #root, .app-container {
+    padding: 0 !important;
+    margin: 0 !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    overflow: visible !important;
+    background: white !important;
+  }
+  
+  .print-page-wrapper {
+    width: 210mm;
+    min-height: 297mm;
+    margin: 0 auto;
+    background: white;
+    padding: 20mm;
+    box-sizing: border-box;
+  }
+  
+  /* Table styling for print */
+  table {
+    border-collapse: collapse !important;
+    width: 100% !important;
+  }
+  
+  th, td {
+    border: 1px solid black !important;
+    padding: 4px 8px !important;
+    color: black !important;
+  }
+  
+  th {
+    background-color: #f0f0f0 !important;
+    -webkit-print-color-adjust: exact;
+    color-adjust: exact;
+  }
+  
+  /* Remove box shadows and rounded corners */
+  * {
+    box-shadow: none !important;
+    border-radius: 0 !important;
+  }
+}
+
+/* Screen styles for previewing */
+.print-page-wrapper {
+  max-width: 210mm;
+  min-height: 297mm;
+  margin: 2rem auto;
+  background: white;
+  padding: 2rem;
+  box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+  color: black; /* Force black text on screen preview too */
+}
+
+.print-header {
+  text-align: center;
+  margin-bottom: 2rem;
+  border-bottom: 2px solid black;
+  padding-bottom: 1rem;
+}
+
+.print-header h1 {
+  margin: 0;
+  font-size: 1.5rem;
+  text-transform: uppercase;
+}
+
+.print-header h2 {
+  margin: 0.5rem 0 0;
+  font-size: 1.2rem;
+  font-weight: normal;
+}
+
+.print-header p {
+  margin: 0.25rem 0 0;
+  font-size: 0.9rem;
+}
+
+.print-meta {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 1.5rem;
+  font-size: 0.9rem;
+}
+
+.print-meta-column {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.print-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 2rem;
+  font-size: 0.9rem;
+}
+
+.print-table th, .print-table td {
+  border: 1px solid #ccc;
+  padding: 0.5rem;
+  text-align: left;
+}
+
+.print-table th {
+  background-color: #f9f9f9;
+  font-weight: bold;
+}
+
+.print-table td.numeric, .print-table th.numeric {
+  text-align: right;
+}
+
+.print-totals {
+  width: 50%;
+  margin-left: auto;
+  margin-bottom: 3rem;
+}
+
+.print-signatures {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 4rem;
+}
+
+.signature-block {
+  text-align: center;
+  width: 25%;
+}
+
+.signature-line {
+  border-bottom: 1px solid black;
+  height: 2rem;
+  margin-bottom: 0.5rem;
+}
+
+.print-actions-bar {
+  display: flex;
+  justify-content: space-between;
+  background: #f0f0f0;
+  padding: 1rem;
+  border-radius: 4px;
+  margin-bottom: 1rem;
+}
+
+.print-actions-bar button {
+  padding: 0.5rem 1rem;
+  background: #2563eb;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.print-actions-bar button.secondary {
+  background: #64748b;
+}

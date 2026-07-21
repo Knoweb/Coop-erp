@@ -9,7 +9,7 @@ import com.coop.erp.inventory.entity.PurchaseInvoiceItem;
 import com.coop.erp.inventory.entity.StockLedger;
 import com.coop.erp.inventory.entity.Supplier;
 import com.coop.erp.inventory.repository.ItemProductRepository;
-import com.coop.erp.accounting.service.JournalEntryService;
+import com.coop.erp.accounting.service.AccountingOutboxService;
 import com.coop.erp.inventory.repository.PurchaseInvoiceItemRepository;
 import com.coop.erp.inventory.repository.PurchaseInvoiceRepository;
 import com.coop.erp.inventory.repository.StockLedgerRepository;
@@ -38,7 +38,7 @@ public class GrnService {
     private final ItemProductRepository itemProductRepository;
     private final StockLedgerRepository stockLedgerRepository;
     private final UserRepository userRepository;
-    private final JournalEntryService journalEntryService;
+    private final AccountingOutboxService accountingOutboxService;
     private final AuditLogService auditLogService;
 
     private Shop getCurrentUserShop() {
@@ -100,24 +100,23 @@ public class GrnService {
 
         // Accounting Entry
         try {
-            List<JournalEntryService.JournalLineRequest> lines = List.of(
-                    new JournalEntryService.JournalLineRequest("1200", "Inventory Purchase", savedInvoice.getTotalAmount(), BigDecimal.ZERO),
-                    new JournalEntryService.JournalLineRequest("1000", "Payment", BigDecimal.ZERO, savedInvoice.getTotalAmount())
+            List<AccountingOutboxService.PostingLine> lines = List.of(
+                    new AccountingOutboxService.PostingLine("1200", savedInvoice.getTotalAmount(), BigDecimal.ZERO, "Inventory Purchase"),
+                    new AccountingOutboxService.PostingLine("2100", BigDecimal.ZERO, savedInvoice.getTotalAmount(), "Accounts Payable")
             );
 
-            String username = SecurityContextHolder.getContext().getAuthentication() != null ? 
-                    SecurityContextHolder.getContext().getAuthentication().getName() : "System";
-
-            journalEntryService.postEntry(
+            accountingOutboxService.queuePosting(
+                    tenantId,
+                    null, // Admin shop context or null
                     "PURCHASE",
                     savedInvoice.getId(),
+                    "COOPFED_KILINOCHCHI", // Example hardcoded or from tenant properties
                     savedInvoice.getInvoiceDate(),
                     "Purchase " + savedInvoice.getInvoiceNumber(),
-                    username,
                     lines
             );
         } catch (Exception e) {
-            System.err.println("Failed to create journal entry for purchase: " + e.getMessage());
+            System.err.println("Failed to queue accounting entry for purchase: " + e.getMessage());
         }
 
         auditLogService.logTenantAction(
@@ -137,6 +136,12 @@ public class GrnService {
                 .stream()
                 .map(this::buildResponse)
                 .toList();
+    }
+
+    public GrnResponse getGrnById(UUID id) {
+        PurchaseInvoice purchaseInvoice = purchaseInvoiceRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Purchase invoice / GRN not found"));
+        return buildResponse(purchaseInvoice);
     }
 
     private BigDecimal calculateTotalAmount(List<GrnItemRequest> items) {

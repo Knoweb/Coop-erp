@@ -20,3 +20,8 @@ spring:
     properties:
       hibernate:
         format_sql: true
+
+ginum:
+  api:
+    url: ${GINUM_API_URL:http://localhost:8081}
+    key: ${GINUM_API_KEY:local-dev-coop-api-key-change-me}

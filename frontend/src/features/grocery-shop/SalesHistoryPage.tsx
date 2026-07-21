@@ -19,10 +19,12 @@ import {
 } from '@mui/material';
 import api from '../../api/axiosConfig';
 import { getTerminalInfo } from '../../services/authService';
+import { useNavigate } from 'react-router-dom';
 
 type FilterType = 'TODAY' | 'YESTERDAY' | 'THIS_WEEK' | 'THIS_MONTH' | 'CUSTOM';
 
 export default function SalesHistoryPage() {
+  const navigate = useNavigate();
   const [sales, setSales] = useState<any[]>([]);
   const [fromDate, setFromDate] = useState<string>('');
   const [toDate, setToDate] = useState<string>('');
@@ -195,6 +197,7 @@ export default function SalesHistoryPage() {
               <TableCell>Cashier</TableCell>
               <TableCell>Payment Method</TableCell>
               <TableCell align="right">Total Amount</TableCell>
+              <TableCell align="center">Actions</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
@@ -206,11 +209,20 @@ export default function SalesHistoryPage() {
                 <TableCell>{sale.cashierUsername}</TableCell>
                 <TableCell>{sale.paymentMethod || 'N/A'}</TableCell>
                 <TableCell align="right">Rs. {sale.totalAmount.toFixed(2)}</TableCell>
+                <TableCell align="center">
+                  <Button 
+                    size="small" 
+                    variant="outlined" 
+                    onClick={() => navigate(`/shop/documents/sales/${sale.id}/invoice`)}
+                  >
+                    Print
+                  </Button>
+                </TableCell>
               </TableRow>
             ))}
             {sales.length === 0 && (
               <TableRow>
-                <TableCell colSpan={6} align="center">No sales found for selected criteria.</TableCell>
+                <TableCell colSpan={7} align="center">No sales found for selected criteria.</TableCell>
               </TableRow>
             )}
           </TableBody>

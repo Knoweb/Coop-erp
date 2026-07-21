@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Box, Typography, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, TablePagination, TextField, Button, Select, MenuItem, InputLabel, FormControl } from "@mui/material";
+import { Box, Typography, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, TablePagination, TextField, Button } from "@mui/material";
 
 export default function PlatformAuditLogsPage() {
   const [logs, setLogs] = useState<any[]>([]);

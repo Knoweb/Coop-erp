@@ -12,7 +12,6 @@ import {
 } from '@mui/icons-material';
 import { useThemeContext, type ThemeMode } from "../../context/ThemeContext";
 import { settingsService, type UserPreferences, type BusinessProfile, type SecuritySettings, type BackupSettings } from './services/settingsService';
-import { useAuth } from '../../context/AuthContext';
 import axios from 'axios';
 
 type ActiveTab = 'business' | 'security' | 'preferences' | 'backup';
@@ -30,7 +29,7 @@ const SettingsPage: React.FC = () => {
     const [backupSettings, setBackupSettings] = useState<BackupSettings | null>(null);
 
     const { setThemeMode } = useThemeContext();
-    const { token } = useAuth();
+    const token = localStorage.getItem('jwt_token');
 
     // Export date ranges
     const [exportFromDate, setExportFromDate] = useState<string>('');
@@ -173,30 +172,6 @@ const SettingsPage: React.FC = () => {
         }
     };
 
-    const handleSaveBackup = async () => {
-        if (!backupSettings) return;
-        setIsSaving(true);
-        try {
-            await settingsService.updateBackupSettings(backupSettings);
-            showNotification('Backup Settings saved successfully', 'success');
-        } catch (error) {
-            handleApiError(error, 'Failed to save Backup Settings');
-        } finally {
-            setIsSaving(false);
-        }
-    };
-
-    const handleRunBackupNow = async () => {
-        try {
-            const result = await settingsService.runManualBackup();
-            showNotification(result.message || 'Backup triggered successfully', 'success');
-            if (activeTab === 'backup') {
-                loadSettings('backup', true);
-            }
-        } catch (error: any) {
-            handleApiError(error, 'Failed to trigger backup');
-        }
-    };
 
     const handleExport = async (endpoint: string, filenamePrefix: string, useDates: boolean = false) => {
         setIsExporting(true);

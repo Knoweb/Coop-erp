@@ -14,6 +14,7 @@ import ShopUsersPage from "./features/admin/ShopUsersPage";
 import SystemUsersPage from "./features/admin/SystemUsersPage";
 import SettingsPage from "./features/admin/SettingsPage";
 import AuditLogsPage from "./features/admin/AuditLogsPage";
+import AccountingIntegrationPage from "./features/admin/AccountingIntegrationPage";
 
 import GroceryShopDashboard from "./features/grocery-shop/GroceryShopDashboard";
 import SupplierPage from "./features/grocery-shop/SupplierPage";
@@ -41,6 +42,9 @@ import EditTenantPage from "./features/platform/EditTenantPage";
 import TenantAdminsPage from "./features/platform/TenantAdminsPage";
 import PlatformAuditLogsPage from "./features/platform/PlatformAuditLogsPage";
 import PlatformExportsPage from './features/platform/PlatformExportsPage';
+
+// Print Pages
+import { PurchaseOrderPrint, GrnPrint, StockCountPrint, SaleInvoicePrint, CashClosingPrint } from './features/print';
 
 // --- UPGRADED: Role-Based Protected Route ---
 const ProtectedRoute = ({ allowedRoles }: { allowedRoles: string[] }) => {
@@ -120,8 +124,14 @@ function App() {
             <Route path="reports/trial-balance" element={<TrialBalancePage />} />
             <Route path="reports/cash-flow" element={<CashFlowPage />} />
             <Route path="reports/general-ledger" element={<GeneralLedgerPage />} />
+            <Route path="accounting-integration" element={<AccountingIntegrationPage />} />
             <Route path="audit-logs" element={<AuditLogsPage />} />
             <Route path="settings" element={<SettingsPage />} />
+            
+            {/* Print Routes */}
+            <Route path="documents/purchase-orders/:id/print" element={<PurchaseOrderPrint />} />
+            <Route path="documents/grn/:id/print" element={<GrnPrint />} />
+            <Route path="documents/stock-transfers/:id/print" element={<StockCountPrint />} />
           </Route>
         </Route>
 
@@ -139,6 +149,11 @@ function App() {
             <Route path="users" element={<ShopUsersPage />} />
             <Route path="reports" element={<div style={{padding: '20px'}}>Reports Module Coming Soon</div>} />
             <Route path="settings" element={<ShopSettingsPage />} />
+            
+            {/* Print Routes */}
+            <Route path="documents/sales/:saleId/invoice" element={<SaleInvoicePrint />} />
+            <Route path="documents/cash-sessions/:sessionId/closing-sheet" element={<CashClosingPrint />} />
+            <Route path="documents/cash-sessions/:sessionId/denomination-sheet" element={<CashClosingPrint />} />
           </Route>
         </Route>
 

@@ -121,4 +121,9 @@ public class CashSessionService {
         if (toDate == null) toDate = LocalDate.now();
         return cashSessionRepository.findSessionsByShopAndFilters(shopId, fromDate, toDate, terminalId);
     }
+
+    public CashSession getSessionById(UUID id) {
+        return cashSessionRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Cash session not found"));
+    }
 }

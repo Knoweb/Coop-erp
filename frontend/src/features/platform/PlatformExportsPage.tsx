@@ -1,11 +1,10 @@
 import React, { useState } from 'react';
-import { Box, Typography, Card, CardContent, Button, CircularProgress, Alert, Grid } from '@mui/material';
+import { Box, Typography, Card, CardContent, Button, CircularProgress, Alert } from '@mui/material';
 import { Download as DownloadIcon } from '@mui/icons-material';
-import { useAuth } from '../../context/AuthContext';
 import axios from 'axios';
 
 const PlatformExportsPage: React.FC = () => {
-    const { token } = useAuth();
+    const token = localStorage.getItem('jwt_token');
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
@@ -47,23 +46,23 @@ const PlatformExportsPage: React.FC = () => {
 
     return (
         <Box>
-            <Typography variant="h4" fontWeight={700} color="primary" gutterBottom>
+            <Typography variant="h4" sx={{ fontWeight: 700, mb: 1 }} color="primary">
                 Platform Data Exports
             </Typography>
-            <Typography variant="body1" color="text.secondary" paragraph>
+            <Typography variant="body1" color="text.secondary" sx={{ mb: 2 }}>
                 Export global platform metrics and tenant listings. Only Platform Admins have access to these exports.
             </Typography>
 
             {error && <Alert severity="error" sx={{ mb: 3 }}>{error}</Alert>}
 
-            <Grid container spacing={3}>
-                <Grid item xs={12} md={6}>
+            <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' }, gap: 3 }}>
+                <Box>
                     <Card>
                         <CardContent>
                             <Typography variant="h6" gutterBottom>
                                 Export Tenants
                             </Typography>
-                            <Typography variant="body2" color="text.secondary" paragraph>
+                            <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
                                 Download a complete list of all registered tenants in the system, including their statuses and domains.
                             </Typography>
                             <Button 
@@ -76,14 +75,14 @@ const PlatformExportsPage: React.FC = () => {
                             </Button>
                         </CardContent>
                     </Card>
-                </Grid>
-                <Grid item xs={12} md={6}>
+                </Box>
+                <Box>
                     <Card>
                         <CardContent>
                             <Typography variant="h6" gutterBottom>
                                 Export Tenant Usage Summary
                             </Typography>
-                            <Typography variant="body2" color="text.secondary" paragraph>
+                            <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
                                 Download aggregated usage statistics and summary data across all tenants.
                             </Typography>
                             <Button 
@@ -96,8 +95,8 @@ const PlatformExportsPage: React.FC = () => {
                             </Button>
                         </CardContent>
                     </Card>
-                </Grid>
-            </Grid>
+                </Box>
+            </Box>
         </Box>
     );
 };

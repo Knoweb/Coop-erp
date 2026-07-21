@@ -25,6 +25,8 @@ import {
 } from "@mui/material";
 import DeleteIcon from "@mui/icons-material/Delete";
 import AddIcon from "@mui/icons-material/Add";
+import PrintIcon from "@mui/icons-material/Print";
+import { useNavigate } from "react-router-dom";
 import api from "../../api/axiosConfig";
 import { getAdminSuppliers } from "../../services/adminSupplierService";
 import { getAdminItems } from "../../services/adminItemService";
@@ -97,6 +99,7 @@ function AdminPurchasesPage() {
   const [suppliers, setSuppliers] = useState<Supplier[]>([]);
   const [items, setItems] = useState<ItemProduct[]>([]);
   const [grns, setGrns] = useState<GrnResponse[]>([]);
+  const navigate = useNavigate();
 
   const [supplierId, setSupplierId] = useState("");
   const [invoiceNumber, setInvoiceNumber] = useState("");
@@ -671,6 +674,14 @@ function AdminPurchasesPage() {
         </DialogContent>
 
         <DialogActions>
+          {selectedGrn && (
+            <Button
+              startIcon={<PrintIcon />}
+              onClick={() => navigate(`/admin/documents/grn/${selectedGrn.id}/print`)}
+            >
+              Print Document
+            </Button>
+          )}
           <Button onClick={() => setSelectedGrn(null)}>Close</Button>
         </DialogActions>
       </Dialog>
